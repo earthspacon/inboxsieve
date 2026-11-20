@@ -1,7 +1,7 @@
 import { PLAN_LIMITS, type LeadInput, type LeadStatus } from '@inboxsieve/contract';
 
 import { buildSpamAnalysis, isRuleSpam } from '../analysis/rules';
-import { countMonthlyLeads, findLeadIdByDedupeKey, getBrandOwner, insertLead, transitionLead } from '../repo';
+import { countMonthlyLeads, findLeadByDedupeKey, getBrandOwner, insertLead, transitionLead } from '../repo';
 
 export type ParsedLead = { ok: true; lead: LeadInput } | { ok: false; error: string };
 
@@ -44,9 +44,10 @@ export async function admitLead({
   });
 
   if (!leadId) {
+    const existing = dedupeKey ? await findLeadByDedupeKey({ db, brandId, dedupeKey }) : null;
     return {
-      leadId: (dedupeKey && (await findLeadIdByDedupeKey({ db, brandId, dedupeKey }))) || '',
-      status: 'received',
+      leadId: existing?.id ?? '',
+      status: existing?.status ?? 'received',
       duplicate: true,
     };
   }

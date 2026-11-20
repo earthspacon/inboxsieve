@@ -130,6 +130,7 @@ describe('F4 lead processing', () => {
 
     expect(second.duplicate).toBe(true);
     expect(second.leadId).toBe(first.leadId);
+    expect(second.status).toBe(first.status);
     expect(await countRows({ sql: 'SELECT COUNT(*) AS n FROM leads WHERE brand_id = ?', binds: [brandId] })).toBe(1);
   });
 

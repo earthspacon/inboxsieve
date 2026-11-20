@@ -118,12 +118,11 @@ export async function insertLead({
   return id;
 }
 
-export async function findLeadIdByDedupeKey({ db, brandId, dedupeKey }: { db: D1Database; brandId: string; dedupeKey: string }) {
-  const row = await db
-    .prepare('SELECT id FROM leads WHERE brand_id = ? AND dedupe_key = ?')
+export async function findLeadByDedupeKey({ db, brandId, dedupeKey }: { db: D1Database; brandId: string; dedupeKey: string }) {
+  return db
+    .prepare('SELECT id, status FROM leads WHERE brand_id = ? AND dedupe_key = ?')
     .bind(brandId, dedupeKey)
-    .first<{ id: string }>();
-  return row?.id ?? null;
+    .first<{ id: string; status: LeadStatus }>();
 }
 
 export async function transitionLead({

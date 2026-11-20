@@ -120,7 +120,7 @@ const CASES: Record<string, (a: Tenant, b: Tenant) => Promise<unknown>> = {
   renameSource: (a, b) => repo.renameSource({ db, brandId: b.brandId, sourceId: a.sourceId, name: 'hijack', now: NOW }),
   rotateSourceToken: (a, b) => repo.rotateSourceToken({ db, brandId: b.brandId, sourceId: a.sourceId, now: NOW }),
   deleteSource: async (a, b) => (await repo.deleteSource({ db, brandId: b.brandId, sourceId: a.sourceId })) || null,
-  findLeadIdByDedupeKey: (_a, b) => repo.findLeadIdByDedupeKey({ db, brandId: b.brandId, dedupeKey: 'msg:tenant-a-only' }),
+  findLeadByDedupeKey: (_a, b) => repo.findLeadByDedupeKey({ db, brandId: b.brandId, dedupeKey: 'msg:tenant-a-only' }),
   transitionLead: (a, b) => repo.transitionLead({ db, brandId: b.brandId, leadId: a.leadId, from: 'analyzed', to: 'queued', now: NOW }),
   claimLead: (a, b) => repo.claimLead({ db, brandId: b.brandId, leadId: a.leadId, now: NOW }),
   queueRescore: async (a, b) => {
