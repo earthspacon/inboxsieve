@@ -1,0 +1,16 @@
+From: "Acme Studio Website" <wordpress@acme-studio.example>
+Reply-To: "Dana Reyes" <dana@northwind.example>
+To: owner@acme-studio.example
+Subject: New contact form submission
+Message-ID: <form-20261120-0001@acme-studio.example>
+Date: Fri, 20 Nov 2026 10:02:11 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.acme-studio.example; spf=pass smtp.mailfrom=acme-studio.example; dmarc=pass
+
+Name: Dana Reyes
+Email: dana@northwind.example
+Company: Northwind Logistics
+Message: Hi! I am the COO at Northwind. We want an AI agent that answers
+shipment questions from our customers and syncs them with our CRM.
+Budget is $15k-$20k and we would like it live within 6 weeks.

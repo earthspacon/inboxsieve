@@ -1,0 +1,26 @@
+{
+  "event_id": "01HTYPEFORM0000000000001",
+  "event_type": "form_response",
+  "form_response": {
+    "form_id": "abc123",
+    "submitted_at": "2026-11-20T10:06:00Z",
+    "definition": {
+      "id": "abc123",
+      "title": "Work with us",
+      "fields": [
+        { "id": "f_name", "title": "What's your name?", "type": "short_text", "ref": "name" },
+        { "id": "f_email", "title": "Your email", "type": "email", "ref": "email" },
+        { "id": "f_company", "title": "Company", "type": "short_text", "ref": "company" },
+        { "id": "f_service", "title": "Which service?", "type": "multiple_choice", "ref": "service" },
+        { "id": "f_details", "title": "Project details", "type": "long_text", "ref": "details" }
+      ]
+    },
+    "answers": [
+      { "type": "text", "text": "Hannah Lindqvist", "field": { "id": "f_name", "type": "short_text", "ref": "name" } },
+      { "type": "email", "email": "h.lindqvist@fjordvale-insurance.example", "field": { "id": "f_email", "type": "email", "ref": "email" } },
+      { "type": "text", "text": "Fjordvale Insurance", "field": { "id": "f_company", "type": "short_text", "ref": "company" } },
+      { "type": "choice", "choice": { "label": "Automation" }, "field": { "id": "f_service", "type": "multiple_choice", "ref": "service" } },
+      { "type": "text", "text": "RFP for claims intake automation, vendor selection by end of Q1.", "field": { "id": "f_details", "type": "long_text", "ref": "details" } }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+From: Gmail Team <forwarding-noreply@google.example>
+To: owner@acme-studio.example
+Subject: (#482915037) Gmail Forwarding Confirmation - Receive Mail from owner@acme-studio.example
+Message-ID: <fwd-confirm-482915037@google.example>
+Date: Fri, 20 Nov 2026 09:58:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+owner@acme-studio.example has requested to automatically forward mail to your email address.
+
+Confirmation code: 482915037
+
+To allow owner@acme-studio.example to automatically forward mail to your address, please click the link below to confirm the request:
+
+https://mail-settings.google.example/mail/vf-%5BANGjdJ8-sample-token%5D-Zm9yd2FyZA
+
+If you click the link and it appears to be broken, please copy and paste it into a new browser window.

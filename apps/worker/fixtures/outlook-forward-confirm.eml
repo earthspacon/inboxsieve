@@ -1,0 +1,12 @@
+From: Outlook <no-reply@outlook.example>
+To: owner@acme-studio.example
+Subject: Confirm forwarding to your InboxSieve address
+Message-ID: <outlook-verify-1@outlook.example>
+Date: Fri, 20 Nov 2026 09:59:00 +0000
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body><p>Someone asked to forward mail from owner@acme-studio.example to this address.</p>
+<p>Verification code: 7F3K-92QX</p>
+<p><a href="https://account.outlook.example/forwarding/confirm?code=7F3K-92QX">Confirm forwarding</a></p>
+<p>Learn more: https://support.outlook.example/forwarding</p></body></html>

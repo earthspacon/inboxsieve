@@ -1,0 +1,17 @@
+{
+  "eventId": "8f2a9c1e-tally-0001",
+  "eventType": "FORM_RESPONSE",
+  "createdAt": "2026-11-20T10:05:00.000Z",
+  "data": {
+    "responseId": "resp_01",
+    "formId": "form_01",
+    "formName": "Project inquiry",
+    "fields": [
+      { "key": "question_name", "label": "Your name", "type": "INPUT_TEXT", "value": "Maya Okafor" },
+      { "key": "question_email", "label": "Email", "type": "INPUT_EMAIL", "value": "maya@brightloop.example" },
+      { "key": "question_company", "label": "Company", "type": "INPUT_TEXT", "value": "Brightloop" },
+      { "key": "question_budget", "label": "Budget", "type": "MULTIPLE_CHOICE", "value": ["$25k-$40k"] },
+      { "key": "question_message", "label": "Tell us about your project", "type": "TEXTAREA", "value": "We want an AI agent that triages support tickets and pushes qualified ones into our CRM. Live by end of Q1." }
+    ]
+  }
+}

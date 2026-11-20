@@ -1,0 +1,16 @@
+{
+  "triggerType": "form_submission",
+  "payload": {
+    "name": "Contact Form",
+    "siteId": "site_01",
+    "id": "wf-submission-0001",
+    "submittedAt": "2026-11-20T10:07:00.000Z",
+    "data": {
+      "First Name": "Sofia",
+      "Last Name": "Marin",
+      "Email": "sofia@mapleborne-realty.example",
+      "Company": "Mapleborne Realty",
+      "Message": "We need a lead-intake workflow for our agents, budget around $8k, ideally next month."
+    }
+  }
+}
