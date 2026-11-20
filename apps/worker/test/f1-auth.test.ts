@@ -2,66 +2,7 @@ import { SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 
 import { db, uniqueEmail } from './helpers';
-
-const BASE = 'http://localhost:8787';
-const LINK_PATTERN = /https?:\/\/\S+\/api\/auth\/magic-link\/verify\S+/;
-
-async function requestMagicLink(email: string) {
-  return SELF.fetch(`${BASE}/api/auth/sign-in/magic-link`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      origin: BASE,
-    },
-    body: JSON.stringify({
-      email,
-      callbackURL: '/app',
-      errorCallbackURL: '/sign-in',
-    }),
-  });
-}
-
-async function readMagicLink(email: string) {
-  const response = await SELF.fetch(`${BASE}/dev/outbox?to=${encodeURIComponent(email)}`);
-  const mails: Array<{ body: string }> = await response.json();
-  const link = mails[0]?.body.match(LINK_PATTERN)?.[0];
-
-  if (!link) {
-    throw new Error('no magic link in the dev outbox');
-  }
-  return link;
-}
-
-async function followMagicLink(link: string) {
-  return SELF.fetch(link, { redirect: 'manual' });
-}
-
-function readSessionCookie(response: Response) {
-  const cookie = response.headers.getSetCookie().find((value) => value.includes('session_token='));
-
-  if (!cookie) {
-    throw new Error('no session cookie');
-  }
-  return {
-    header: cookie,
-    pair: cookie.split(';')[0],
-  };
-}
-
-async function signIn(email: string) {
-  await requestMagicLink(email);
-  const response = await followMagicLink(await readMagicLink(email));
-  return readSessionCookie(response).pair;
-}
-
-async function createTrialAccount(email: string) {
-  const response = await SELF.fetch(`${BASE}/dev/accounts`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email }),
-  });
-  return response.json<{ accountId: string; brandId: string }>();
-}
+import { BASE, createTrialAccount, followMagicLink, readMagicLink, readSessionCookie, requestMagicLink, signIn } from './session';
 
 describe('F1 sign-in (auth part)', () => {
   it('F1: the magic link from the dev outbox signs a trialing account in with an HttpOnly cookie', async () => {
