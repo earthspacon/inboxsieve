@@ -1,0 +1,15 @@
+{
+  "name": "inboxsieve",
+  "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "scripts": {
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
+  }
+}
