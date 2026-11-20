@@ -54,6 +54,24 @@ export async function createBrand({
   return row ? mapBrandRowToDto(row) : null;
 }
 
+export async function renameBrand({
+  db,
+  accountId,
+  brandId,
+  name,
+}: {
+  db: D1Database;
+  accountId: string;
+  brandId: string;
+  name: string;
+}) {
+  const row = await db
+    .prepare("UPDATE brands SET name = ? WHERE id = ? AND account_id = ? RETURNING *")
+    .bind(name, brandId, accountId)
+    .first<BrandRow>();
+  return row ? mapBrandRowToDto(row) : null;
+}
+
 export async function getBrandProfile({ db, brandId }: { db: D1Database; brandId: string }) {
   const row = await db
     .prepare("SELECT profile FROM brands WHERE id = ?")

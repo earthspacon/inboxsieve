@@ -40,12 +40,14 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 
 ## Account and brands
 
-| Route                            | Request                  | Response                                                                                                                                                                      |
-| -------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/me`                    | –                        | `200 Me & { brands: BrandDto[] }`. `account.access` is `full`, `read_only` or `locked`                                                                                        |
-| `GET /api/brands`                | –                        | `200 BrandDto[]`                                                                                                                                                              |
-| `POST /api/brands`               | `{ "name": string ≤80 }` | `201 BrandDto`; `403 plan_limit` (Solo 1, Agency 10)                                                                                                                          |
-| `GET /api/brands/:brandId/usage` | –                        | `200 UsageDto` `{ month: "2026-11", used, limit }`. `used` counts the account's leads this UTC month that went to analysis. Rule-filtered spam and parse failures don't count |
+| Route                                 | Request                  | Response                                                                                                                                                                      |
+| ------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/me`                         | –                        | `200 Me & { brands: BrandDto[] }`. `account.access` is `full`, `read_only` or `locked`                                                                                        |
+| `GET /api/brands`                     | –                        | `200 BrandDto[]`                                                                                                                                                              |
+| `POST /api/brands`                    | `{ "name": string ≤80 }` | `201 BrandDto`; `403 plan_limit` (Solo 1, Agency 10)                                                                                                                          |
+| `PATCH /api/brands/:brandId`          | `{ "name": string ≤80 }` | `200 BrandDto` (onboarding step 1)                                                                                                                                            |
+| `POST /api/brands/:brandId/test-lead` | –                        | `201 { id, status }`. Injects one sample lead through the first source of the brand and analyzes it ("Send a test lead"). `409 no_source` if the brand has no source          |
+| `GET /api/brands/:brandId/usage`      | –                        | `200 UsageDto` `{ month: "2026-11", used, limit }`. `used` counts the account's leads this UTC month that went to analysis. Rule-filtered spam and parse failures don't count |
 
 ## Business profile (F3)
 
@@ -119,4 +121,5 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 | ---------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | `POST /dev/accounts`         | `{ "email", "plan"?: "solo" \| "agency" }` | `201 { userId, accountId, brandId }`. Creates or updates a `trialing` account, standing in for billing until S5 |
 | `GET /dev/outbox?to=<email>` | –                                          | `200 [{ to, subject, body, createdAt }]`, newest first. Magic links land here                                   |
+| `POST /dev/usage`            | `{ "brandId", "count" }`                   | `201 { inserted }`. Inserts `count` analyzed leads that count to quota, for the usage-banner screenshot         |
 | `POST /dev/run-jobs`         | –                                          | `200 { processed }`. Runs the analysis sweep now instead of waiting for the cron                                |

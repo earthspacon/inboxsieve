@@ -1,243 +1,365 @@
-import { useStoreMap, useUnit } from "effector-react";
-import { ArrowLeft, Check, RefreshCw, Send, Sparkles } from "lucide-react";
+import { STAGE_TRANSITIONS, type LeadDetailDto } from "@inboxsieve/contract";
+import { useGate, useUnit } from "effector-react";
+import { ArrowLeft, Check, Copy, ExternalLink, Loader2, RotateCcw } from "lucide-react";
+import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { INTENT_LABELS, STAGE_CONFIG } from "../leads/config";
-import type { Analysis, Lead, Stage } from "../leads/config";
-import { $analyzingIds, $leads, draftApproved, draftChanged, reanalyzeClicked, stageChanged } from "../leads/model";
-import { Avatar, Card, formatDate, ScoreBadge, StagePill } from "./ui";
+import { INTENT_LABELS, STAGE_CONFIG, STATUS_LABELS } from "../leads/config";
+import { buildComposeLinks } from "../leads/lib";
+import {
+  $draft,
+  draftCopied,
+  draftEdited,
+  draftSaveClicked,
+  LeadGate,
+  leadRemote,
+  notSpamClicked,
+  repliedClicked,
+  retryClicked,
+  stageChosen,
+  wrongScoreSubmitted,
+} from "../leads/model";
+import { $brandId } from "../session/model";
+import {
+  Avatar,
+  Banner,
+  BUTTON_PRIMARY,
+  BUTTON_SECONDARY,
+  Card,
+  ErrorState,
+  formatDate,
+  INPUT,
+  LoadingState,
+  ScoreBadge,
+  StagePill,
+} from "../shared/ui";
 
-const APPROVABLE_STAGES: Stage[] = ["new", "qualified"];
+const PENDING_STATUSES = new Set(["received", "parsed", "queued", "analyzing"]);
 
 export const LeadPage = () => {
-  const { id = "" } = useParams();
-  const lead = useStoreMap({
-    store: $leads,
-    keys: [id],
-    fn: (leads, [leadId]) => leads[leadId] ?? null,
-  });
+  const { brandId } = useUnit({ brandId: $brandId });
+  const { leadId = "" } = useParams();
+  useGate(LeadGate, { brandId, leadId });
 
-  if (!lead) {
-    return (
-      <Card className="p-10 text-center text-sm text-slate-500">
-        Lead not found.{" "}
-        <Link to="/" className="text-brand-600 underline">
-          Back to inbox
-        </Link>
-      </Card>
-    );
-  }
   return (
     <div className="space-y-4">
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
+      <Link to="/app" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
         <ArrowLeft className="size-4" />
         Inbox
       </Link>
-      <LeadHeader lead={lead} />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-4">
-          <OriginalMessage lead={lead} />
-          <DraftEditor lead={lead} />
-        </div>
-        <div className="space-y-4">
-          <AnalysisCard lead={lead} />
-          <StageCard lead={lead} />
-        </div>
+      <LeadView brandId={brandId} leadId={leadId} />
+    </div>
+  );
+};
+
+const LeadView = ({ brandId, leadId }: { brandId: string; leadId: string }) => {
+  const { lead, status, error } = useUnit({
+    lead: leadRemote.$data,
+    status: leadRemote.$status,
+    error: leadRemote.$error,
+  });
+
+  if (status === "loading") {
+    return <LoadingState label="Loading lead…" />;
+  }
+  if (status === "error" || !lead) {
+    return <ErrorState message={error || "Lead not found"} onRetry={() => leadRemote.fx({ brandId, leadId })} />;
+  }
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+      <div className="min-w-0 space-y-4">
+        <LeadHeader lead={lead} />
+        <StatusNotice lead={lead} brandId={brandId} />
+        <MessageCard lead={lead} brandId={brandId} />
+        <DraftCard lead={lead} />
+      </div>
+      <div className="min-w-0 space-y-4">
+        <AnalysisCard lead={lead} />
+        <StageCard lead={lead} />
+        <FeedbackCard lead={lead} />
+        <HistoryCard lead={lead} />
       </div>
     </div>
   );
 };
 
-const LeadHeader = ({ lead }: { lead: Lead }) => {
-  const { analyzingIds } = useUnit({ analyzingIds: $analyzingIds });
+const LeadHeader = ({ lead }: { lead: LeadDetailDto }) => {
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Avatar name={lead.name} />
+    <Card className="flex items-start gap-3 p-4">
+      <Avatar name={lead.name || lead.email} />
       <div className="min-w-0 flex-1">
-        <h1 className="text-xl font-semibold tracking-tight lg:truncate">{lead.subject}</h1>
-        <p className="truncate text-sm text-slate-500">
-          {lead.name}
-          {lead.company ? ` · ${lead.company}` : ""} · {lead.email}
+        <h1 className="truncate text-lg font-semibold">{lead.subject || "(no subject)"}</h1>
+        <p className="truncate text-sm text-slate-600">
+          {lead.name} {lead.email && <span className="text-slate-400">&lt;{lead.email}&gt;</span>}
+          {lead.company && <span> · {lead.company}</span>}
         </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <ScoreBadge score={lead.score} category={lead.category} />
+          <StagePill stage={lead.stage} />
+          <span className="text-xs text-slate-400">{formatDate(lead.receivedAt)}</span>
+          {lead.repliedAt && <span className="text-xs text-emerald-700">Replied {formatDate(lead.repliedAt)}</span>}
+        </div>
       </div>
-      <ScoreBadge analysis={lead.analysis} isAnalyzing={analyzingIds.includes(lead.id)} />
-      <StagePill stage={lead.stage} />
-    </div>
-  );
-};
-
-const OriginalMessage = ({ lead }: { lead: Lead }) => {
-  return (
-    <Card className="p-5">
-      <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
-        <span className="font-medium tracking-wide uppercase">
-          Original {lead.source === "email" ? "email" : "form submission"}
-        </span>
-        <span>{formatDate(lead.receivedAt)}</span>
-      </div>
-      <p className="text-sm leading-relaxed whitespace-pre-line text-slate-800">{lead.message}</p>
     </Card>
   );
 };
 
-const DraftEditor = ({ lead }: { lead: Lead }) => {
-  const isSpam = lead.analysis?.category === "spam";
-  const canApprove = APPROVABLE_STAGES.includes(lead.stage) && lead.draft.trim().length > 0;
-
-  if (isSpam) {
+const StatusNotice = ({ lead, brandId }: { lead: LeadDetailDto; brandId: string }) => {
+  if (PENDING_STATUSES.has(lead.status)) {
     return (
-      <Card className="p-5 text-sm text-slate-500">
-        The agent marked this as spam and archived it. No reply drafted.
-      </Card>
+      <Banner tone="info">
+        <span className="inline-flex items-center gap-2">
+          <Loader2 className="size-4 animate-spin" />
+          {STATUS_LABELS[lead.status]}… Reload in a few seconds.
+        </span>
+      </Banner>
     );
   }
+  if (lead.status === "analysis_failed") {
+    return (
+      <Banner tone="danger">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span>The analysis failed 3 times{lead.lastError ? `: ${lead.lastError}` : "."}</span>
+          <button type="button" onClick={() => retryClicked()} className={BUTTON_SECONDARY}>
+            <RotateCcw className="size-4" />
+            Retry
+          </button>
+        </div>
+      </Banner>
+    );
+  }
+  if (lead.status === "over_quota") {
+    return (
+      <Banner tone="warning">
+        This lead arrived after you hit this month's limit. It's stored but not scored.{" "}
+        <Link to="/app/billing" className="font-semibold underline">
+          Upgrade
+        </Link>
+      </Banner>
+    );
+  }
+  if (lead.status === "parse_failed") {
+    return (
+      <Banner tone="warning">
+        We couldn't read this message.{" "}
+        <a
+          href={buildOriginalUrl({ lead, brandId })}
+          target="_blank"
+          rel="noreferrer"
+          className="font-semibold underline"
+        >
+          View original
+        </a>
+      </Banner>
+    );
+  }
+  return null;
+};
+
+const MessageCard = ({ lead, brandId }: { lead: LeadDetailDto; brandId: string }) => {
   return (
-    <Card className="p-5">
-      <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="size-4 text-brand-600" />
-        <h2 className="text-sm font-semibold">Draft reply</h2>
-        <span className="text-xs text-slate-400">edit before sending</span>
+    <Card className="space-y-2 p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Message</h2>
+        {lead.hasOriginal && (
+          <a
+            href={buildOriginalUrl({ lead, brandId })}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
+          >
+            View original
+            <ExternalLink className="size-3" />
+          </a>
+        )}
+      </div>
+      <p className="text-sm whitespace-pre-wrap text-slate-800">{lead.message || "(empty)"}</p>
+    </Card>
+  );
+};
+
+const DraftCard = ({ lead }: { lead: LeadDetailDto }) => {
+  const { draft } = useUnit({ draft: $draft });
+  const links = buildComposeLinks({
+    to: lead.email,
+    subject: lead.subject,
+    body: draft,
+  });
+  const canReply = lead.stage !== "spam" && lead.stage !== "lost";
+
+  return (
+    <Card className="space-y-3 p-4">
+      <div>
+        <h2 className="text-sm font-semibold">Reply draft</h2>
+        <p className="text-xs text-slate-500">Edit it, then send it from your own mail. We never send as you.</p>
       </div>
       <textarea
-        aria-label="Draft reply"
-        rows={11}
-        value={lead.draft}
-        onChange={(event) => draftChanged({ id: lead.id, draft: event.target.value })}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm leading-relaxed focus:border-brand-500 focus:outline-none"
+        aria-label="Reply draft"
+        rows={10}
+        value={draft}
+        onChange={(event) => draftEdited(event.target.value)}
+        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
       />
-      <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => reanalyzeClicked(lead.id)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          onClick={() => draftSaveClicked()}
+          disabled={draft === lead.draft}
+          className={BUTTON_SECONDARY}
         >
-          <RefreshCw className="size-4" />
-          Re-analyze
+          Save draft
         </button>
-        <button
-          type="button"
-          disabled={!canApprove}
-          onClick={() => draftApproved(lead.id)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          <Send className="size-4" />
-          Approve &amp; send
+        <button type="button" onClick={() => draftCopied()} className={BUTTON_SECONDARY}>
+          <Copy className="size-4" />
+          Copy
         </button>
+        <a href={links.gmail} target="_blank" rel="noreferrer" className={BUTTON_SECONDARY}>
+          Open in Gmail
+        </a>
+        <a href={links.outlook} target="_blank" rel="noreferrer" className={BUTTON_SECONDARY}>
+          Open in Outlook
+        </a>
+        <a href={links.mailto} className={BUTTON_SECONDARY}>
+          Mail app
+        </a>
+        {canReply && !lead.repliedAt && (
+          <button type="button" onClick={() => repliedClicked()} className={BUTTON_PRIMARY}>
+            <Check className="size-4" />
+            Mark replied
+          </button>
+        )}
       </div>
     </Card>
   );
 };
 
-const AnalysisCard = ({ lead }: { lead: Lead }) => {
+const AnalysisCard = ({ lead }: { lead: LeadDetailDto }) => {
   if (!lead.analysis) {
-    return <Card className="p-5 text-sm text-slate-500">The agent is reading this lead…</Card>;
+    return null;
   }
+  const { analysis } = lead;
   return (
-    <Card className="p-5">
-      <h2 className="mb-4 text-sm font-semibold">Agent assessment</h2>
-      <ScoreMeter score={lead.analysis.score} />
-      <p className="mt-4 text-sm text-slate-700">{lead.analysis.summary}</p>
-      <ExtractedFields analysis={lead.analysis} />
-      <h3 className="mt-4 mb-2 text-xs font-medium tracking-wide text-slate-500 uppercase">Why this score</h3>
-      <ul className="space-y-1.5">
-        {lead.analysis.reasons.map((reason) => {
-          return (
-            <li key={reason} className="flex gap-2 text-sm text-slate-700">
-              <Check className="mt-0.5 size-4 shrink-0 text-brand-600" />
-              {reason}
-            </li>
-          );
+    <Card className="space-y-3 p-4">
+      <h2 className="text-sm font-semibold">Why this score</h2>
+      <p className="text-sm text-slate-700">{analysis.summary}</p>
+      <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+        {analysis.reasons.map((reason) => {
+          return <li key={reason}>{reason}</li>;
         })}
       </ul>
+      <dl className="grid grid-cols-2 gap-2 text-xs">
+        <Fact label="Intent" value={INTENT_LABELS[analysis.intent]} />
+        <Fact label="Budget" value={analysis.budget ?? "—"} />
+        <Fact label="Timeline" value={analysis.timeline ?? "—"} />
+        <Fact label="Decision maker" value={analysis.decisionMaker ? "Yes" : "No"} />
+      </dl>
     </Card>
   );
 };
 
-const ScoreMeter = ({ score }: { score: number }) => {
+const Fact = ({ label, value }: { label: string; value: string }) => {
   return (
-    <div>
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">Fit score</span>
-        <span className="text-2xl font-semibold tabular-nums">
-          {score}
-          <span className="text-sm text-slate-400">/100</span>
-        </span>
-      </div>
-      <div className="mt-2 h-2 rounded-full bg-slate-100">
-        <div
-          className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-emerald-500"
-          style={{ width: `${score}%` }}
-        />
-      </div>
+    <div className="rounded-lg bg-slate-50 px-2 py-1.5">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="font-medium text-slate-800">{value}</dd>
     </div>
   );
 };
 
-const ExtractedFields = ({ analysis }: { analysis: Analysis }) => {
-  const rows = [
-    {
-      label: "Intent",
-      value: INTENT_LABELS[analysis.intent],
-    },
-    {
-      label: "Budget",
-      value: analysis.budget ?? "—",
-    },
-    {
-      label: "Timeline",
-      value: analysis.timeline ?? "—",
-    },
-    {
-      label: "Decision maker",
-      value: analysis.decisionMaker ? "Yes" : "Unknown",
-    },
-  ];
+const StageCard = ({ lead }: { lead: LeadDetailDto }) => {
+  const nextStages = STAGE_TRANSITIONS[lead.stage];
   return (
-    <dl className="mt-4 grid grid-cols-2 gap-3">
-      {rows.map(({ label, value }) => {
-        return (
-          <div key={label} className="rounded-lg bg-slate-50 px-3 py-2">
-            <dt className="text-[11px] text-slate-500">{label}</dt>
-            <dd className="text-sm font-medium">{value}</dd>
-          </div>
-        );
-      })}
-    </dl>
+    <Card className="space-y-3 p-4">
+      <h2 className="text-sm font-semibold">Stage</h2>
+      {lead.stage === "spam" && (
+        <button type="button" onClick={() => notSpamClicked()} className={`${BUTTON_PRIMARY} w-full`}>
+          Not spam
+        </button>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {nextStages
+          .filter((stage) => {
+            return lead.stage !== "spam" || stage !== "new";
+          })
+          .map((stage) => {
+            return (
+              <button key={stage} type="button" onClick={() => stageChosen(stage)} className={BUTTON_SECONDARY}>
+                Move to {STAGE_CONFIG[stage].label}
+              </button>
+            );
+          })}
+      </div>
+      {nextStages.length === 0 && <p className="text-sm text-slate-500">Won is final.</p>}
+    </Card>
   );
 };
 
-const StageCard = ({ lead }: { lead: Lead }) => {
-  const nextStages = STAGE_CONFIG[lead.stage].next;
+const FeedbackCard = ({ lead }: { lead: LeadDetailDto }) => {
+  const [expectedScore, setExpectedScore] = useState("");
+  const [note, setNote] = useState("");
+
+  if (lead.score === null) {
+    return null;
+  }
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    wrongScoreSubmitted({
+      expectedScore: Number(expectedScore),
+      note,
+    });
+    setExpectedScore("");
+    setNote("");
+  };
+
   return (
-    <Card className="p-5">
-      <h2 className="mb-3 text-sm font-semibold">Pipeline</h2>
-      <ol className="mb-4 space-y-1">
-        {lead.history.map((change) => {
+    <Card className="p-4">
+      <form onSubmit={submit} className="space-y-2">
+        <h2 className="text-sm font-semibold">Wrong score?</h2>
+        <label className="block text-xs text-slate-600">
+          What should it be (0–100)?
+          <input
+            required
+            type="number"
+            min={0}
+            max={100}
+            value={expectedScore}
+            onChange={(event) => setExpectedScore(event.target.value)}
+            className={INPUT}
+          />
+        </label>
+        <label className="block text-xs text-slate-600">
+          Why (optional)
+          <input value={note} maxLength={1000} onChange={(event) => setNote(event.target.value)} className={INPUT} />
+        </label>
+        <button type="submit" className={`${BUTTON_SECONDARY} w-full`}>
+          Send feedback
+        </button>
+      </form>
+    </Card>
+  );
+};
+
+const HistoryCard = ({ lead }: { lead: LeadDetailDto }) => {
+  return (
+    <Card className="space-y-2 p-4">
+      <h2 className="text-sm font-semibold">History</h2>
+      <ol className="space-y-1 text-xs text-slate-600">
+        {lead.events.map((event) => {
           return (
-            <li
-              key={`${change.stage}-${change.at}`}
-              className="flex items-center justify-between text-xs text-slate-500"
-            >
-              <StagePill stage={change.stage} />
-              {formatDate(change.at)}
+            <li key={`${event.type}-${event.at}-${event.to}`} className="flex justify-between gap-2">
+              <span>
+                {event.type}: {event.from ?? "—"} → {event.to ?? "—"}
+              </span>
+              <span className="shrink-0 text-slate-400">{formatDate(event.at)}</span>
             </li>
           );
         })}
       </ol>
-      <div className="flex flex-wrap gap-2">
-        {nextStages.map((stage) => {
-          return (
-            <button
-              key={stage}
-              type="button"
-              onClick={() => stageChanged({ id: lead.id, stage })}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Move to {STAGE_CONFIG[stage].label}
-            </button>
-          );
-        })}
-      </div>
     </Card>
   );
 };
+
+function buildOriginalUrl({ lead, brandId }: { lead: LeadDetailDto; brandId: string }) {
+  return `/api/brands/${brandId}/leads/${lead.id}/original`;
+}

@@ -83,6 +83,7 @@ const CASES: Record<string, (a: Tenant, b: Tenant) => Promise<unknown>> = {
   listBrands: async (a, b) =>
     (await repo.listBrands({ db, accountId: b.accountId })).filter((brand) => brand.id === a.brandId),
   getBrand: (a, b) => repo.getBrand({ db, accountId: b.accountId, brandId: a.brandId }),
+  renameBrand: (a, b) => repo.renameBrand({ db, accountId: b.accountId, brandId: a.brandId, name: "hijack" }),
   countBrands: async (_a, b) => (await repo.countBrands({ db, accountId: b.accountId })) - 1,
   createBrand: async (a, b) => {
     const brand = await repo.createBrand({ db, accountId: b.accountId, name: "B second", now: NOW });
@@ -180,6 +181,18 @@ const CASES: Record<string, (a: Tenant, b: Tenant) => Promise<unknown>> = {
       now: NOW,
     }),
   listFeedbackExamples: (_a, b) => repo.listFeedbackExamples({ db, brandId: b.brandId }),
+  hasNotSpamFeedback: async (a, b) => {
+    await repo.addFeedback({
+      db,
+      brandId: a.brandId,
+      leadId: a.leadId,
+      kind: "not_spam",
+      expectedScore: null,
+      note: "",
+      now: NOW,
+    });
+    return (await repo.hasNotSpamFeedback({ db, brandId: b.brandId, leadId: a.leadId })) || null;
+  },
 };
 
 function isEmpty(value: unknown) {
@@ -214,6 +227,7 @@ describe("tenancy", () => {
     await Promise.all(
       [
         "saveBrandProfile",
+        "renameBrand",
         "updateSourceState",
         "renameSource",
         "rotateSourceToken",

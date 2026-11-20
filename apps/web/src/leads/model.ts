@@ -1,122 +1,157 @@
-import { obj, str } from "@withease/contracts";
-import { attach, combine, createEffect, createEvent, createStore, sample } from "effector";
-import { persist } from "effector-storage/local";
+import type { LeadDetailDto, LeadStage, LeadSummaryDto, SourceDto } from "@inboxsieve/contract";
+import { combine, createEffect, createEvent, createStore, sample } from "effector";
+import { createGate } from "effector-react";
 
-import { $analyzerSettings } from "../settings/model";
-import { toastShown, type Toast } from "../shared/toast-model";
-import { demoAnalyzer } from "./analyzer";
-import type { Analysis, Category, Lead, LeadInput, Stage } from "./config";
-import { LeadContract } from "./contract";
-import { createLiveAnalyzer } from "./live-analyzer";
-import { applyAnalysis, approveDraft, moveLead } from "./lib";
-import { buildMockLeads } from "./mock-leads";
+import { meRefreshRequested } from "../session/model";
+import { apiRequest } from "../shared/api";
+import { createRemote } from "../shared/remote";
+import { toastShown } from "../shared/toast-model";
+import { buildLeadsQuery, DEFAULT_FILTERS, getInboxEmptyState, type LeadFilters } from "./lib";
 
-export type Filters = {
-  stage: Stage | "all";
-  category: Category | "all";
-  search: string;
+type BrandParams = { brandId: string };
+type LeadParams = { brandId: string; leadId: string };
+
+type LeadAction =
+  | { kind: "draft"; draft: string }
+  | { kind: "replied" }
+  | { kind: "stage"; stage: LeadStage }
+  | { kind: "not_spam" }
+  | { kind: "retry" };
+
+const ACTION_TOASTS: Record<LeadAction["kind"], string> = {
+  draft: "Draft saved",
+  replied: "Marked as replied",
+  stage: "Stage updated",
+  not_spam: "Moved to New. We'll learn from it.",
+  retry: "Queued for another try",
 };
+const PENDING_STATUSES = new Set(["received", "parsed", "queued", "analyzing"]);
+const REFRESH_DELAY_MS = 2000;
 
-const DEFAULT_FILTERS: Filters = {
-  stage: "all",
-  category: "all",
-  search: "",
-};
+export const InboxGate = createGate<BrandParams>();
+export const LeadGate = createGate<LeadParams>();
+export const PipelineGate = createGate<BrandParams>();
 
-export const appStarted = createEvent();
-export const filtersChanged = createEvent<Partial<Filters>>();
-export const draftChanged = createEvent<{ id: string; draft: string }>();
-export const draftApproved = createEvent<string>();
-export const stageChanged = createEvent<{ id: string; stage: Stage }>();
-export const reanalyzeClicked = createEvent<string>();
-export const simulateOpened = createEvent();
-export const simulateClosed = createEvent();
-export const leadSimulated = createEvent<LeadInput>();
+export const filtersChanged = createEvent<Partial<LeadFilters>>();
+export const filtersReset = createEvent();
+export const testLeadClicked = createEvent();
+export const draftEdited = createEvent<string>();
+export const draftSaveClicked = createEvent();
+export const draftCopied = createEvent();
+export const repliedClicked = createEvent();
+export const stageChosen = createEvent<LeadStage>();
+export const notSpamClicked = createEvent();
+export const wrongScoreSubmitted = createEvent<{ expectedScore: number; note: string }>();
+export const retryClicked = createEvent();
+export const pipelineMoveChosen = createEvent<{ leadId: string; stage: LeadStage }>();
 
-export const $leads = createStore<Record<string, Lead>>({});
-export const $filters = createStore(DEFAULT_FILTERS);
-export const $analyzingIds = createStore<string[]>([]);
-export const $isSimulateOpen = createStore(false);
+export const $filters = createStore<LeadFilters>(DEFAULT_FILTERS);
+export const $draft = createStore("");
 
-export const $leadList = $leads.map((leads) => {
-  return Object.values(leads).sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+export const inboxRemote = createRemote({
+  handler: ({ brandId, filters }: BrandParams & { filters: LeadFilters }) => {
+    return apiRequest<LeadSummaryDto[]>({ path: `/api/brands/${brandId}/leads?${buildLeadsQuery(filters)}` });
+  },
+  initial: [],
 });
 
-export const $visibleLeads = combine($leadList, $filters, (leads, { stage, category, search }) => {
-  const query = search.trim().toLowerCase();
-  return leads.filter((lead) => {
-    const matchesStage = stage === "all" || lead.stage === stage;
-    const matchesCategory = category === "all" || lead.analysis?.category === category;
-    const matchesSearch = !query || `${lead.name} ${lead.company} ${lead.subject}`.toLowerCase().includes(query);
-    return matchesStage && matchesCategory && matchesSearch;
+export const inboxSourcesRemote = createRemote({
+  handler: ({ brandId }: BrandParams) => {
+    return apiRequest<SourceDto[]>({ path: `/api/brands/${brandId}/sources` });
+  },
+  initial: [],
+});
+
+export const leadRemote = createRemote<LeadParams, LeadDetailDto | null>({
+  handler: ({ brandId, leadId }) => {
+    return apiRequest<LeadDetailDto>({ path: `/api/brands/${brandId}/leads/${leadId}` });
+  },
+  initial: null,
+});
+
+export const pipelineRemote = createRemote({
+  handler: ({ brandId }: BrandParams) => {
+    return apiRequest<LeadSummaryDto[]>({ path: `/api/brands/${brandId}/leads?limit=100` });
+  },
+  initial: [],
+});
+
+export const $inboxEmptyState = combine(
+  inboxRemote.$data,
+  inboxSourcesRemote.$data,
+  $filters,
+  (leads, sources, filters) => {
+    return getInboxEmptyState({
+      sourceCount: sources.length,
+      leadCount: leads.length,
+      filters,
+    });
+  },
+);
+
+const testLeadFx = createEffect(({ brandId }: BrandParams) => {
+  return apiRequest<{ id: string }>({
+    path: `/api/brands/${brandId}/test-lead`,
+    method: "POST",
   });
 });
 
-const seedFx = createEffect(() => {
-  return buildMockLeads({ now: Date.now() });
+export const $isTestLeadSending = testLeadFx.pending;
+
+const waitFx = createEffect(() => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, REFRESH_DELAY_MS);
+  });
 });
 
-const createLeadFx = createEffect((input: LeadInput): Lead => {
-  const receivedAt = new Date().toISOString();
-  return {
-    ...input,
-    id: `lead-${Date.now()}`,
-    source: "form",
-    receivedAt,
-    stage: "new",
-    history: [{ stage: "new", at: receivedAt }],
-    analysis: null,
-    draft: "",
+const leadActionFx = createEffect(({ brandId, leadId, action }: LeadParams & { action: LeadAction }) => {
+  const base = `/api/brands/${brandId}/leads/${leadId}`;
+  const requests: Record<LeadAction["kind"], () => Promise<LeadDetailDto>> = {
+    draft: () => {
+      return apiRequest({ path: `${base}/draft`, method: "PUT", body: action });
+    },
+    replied: () => {
+      return apiRequest({ path: `${base}/replied`, method: "POST" });
+    },
+    stage: () => {
+      return apiRequest({ path: `${base}/stage`, method: "PATCH", body: action });
+    },
+    not_spam: () => {
+      return apiRequest({ path: `${base}/not-spam`, method: "POST" });
+    },
+    retry: () => {
+      return apiRequest({ path: `${base}/retry`, method: "POST" });
+    },
   };
+  return requests[action.kind]();
 });
 
-const analyzeFx = attach({
-  source: $analyzerSettings,
-  effect: async ({ mode, apiKey }, { id, input }: { id: string; input: LeadInput }) => {
-    if (mode === "live" && !apiKey) {
-      throw new Error("Live mode needs an Anthropic API key (Settings)");
-    }
-    const analyzer = mode === "live" ? createLiveAnalyzer({ apiKey }) : demoAnalyzer;
-    const analysis: Analysis = await analyzer.analyze(input);
-    return {
-      id,
-      analysis,
-      at: new Date().toISOString(),
-    };
+const feedbackFx = createEffect(
+  ({ brandId, leadId, expectedScore, note }: LeadParams & { expectedScore: number; note: string }) => {
+    return apiRequest<{ id: string }>({
+      path: `/api/brands/${brandId}/leads/${leadId}/feedback`,
+      method: "POST",
+      body: {
+        expectedScore,
+        note,
+      },
+    });
   },
+);
+
+const copyFx = createEffect((text: string) => {
+  return navigator.clipboard.writeText(text);
 });
 
-const moveLeadFx = createEffect(({ id, stage }: { id: string; stage: Stage }) => {
-  return {
-    id,
-    stage,
-    at: new Date().toISOString(),
-  };
+const pipelineMoveFx = createEffect(({ brandId, leadId, stage }: LeadParams & { stage: LeadStage }) => {
+  return apiRequest<LeadDetailDto>({
+    path: `/api/brands/${brandId}/leads/${leadId}/stage`,
+    method: "PATCH",
+    body: { stage },
+  });
 });
 
-const approveFx = createEffect((id: string) => {
-  return {
-    id,
-    at: new Date().toISOString(),
-  };
-});
-
-// #region start
-sample({
-  clock: appStarted,
-  source: $leads,
-  filter: (leads) => Object.keys(leads).length === 0,
-  target: seedFx,
-});
-
-sample({
-  clock: seedFx.doneData,
-  fn: (leads) => Object.fromEntries(leads.map((lead) => [lead.id, lead])),
-  target: $leads,
-});
-// #endregion
-
-// #region filters
+// #region inbox
 sample({
   clock: filtersChanged,
   source: $filters,
@@ -128,193 +163,239 @@ sample({
   },
   target: $filters,
 });
-// #endregion
 
-// #region simulate + analyze
 sample({
-  clock: simulateOpened,
-  fn: () => true,
-  target: $isSimulateOpen,
+  clock: filtersReset,
+  target: $filters.reinit,
 });
 
 sample({
-  clock: [simulateClosed, leadSimulated],
-  fn: () => false,
-  target: $isSimulateOpen,
-});
-
-sample({
-  clock: leadSimulated,
-  target: createLeadFx,
-});
-
-sample({
-  clock: createLeadFx.doneData,
-  source: $leads,
-  fn: (leads, lead) => {
+  clock: [InboxGate.open, InboxGate.state.updates, $filters, testLeadFx.done, waitFx.done],
+  source: {
+    params: InboxGate.state,
+    filters: $filters,
+    isOpen: InboxGate.status,
+  },
+  filter: ({ params, isOpen }) => isOpen && Boolean(params.brandId),
+  fn: ({ params, filters }) => {
     return {
-      ...leads,
-      [lead.id]: lead,
+      brandId: params.brandId,
+      filters,
     };
   },
-  target: $leads,
+  target: inboxRemote.fx,
 });
 
 sample({
-  clock: createLeadFx.doneData,
-  fn: ({ id, name, email, company, subject, message }) => {
+  clock: [InboxGate.open, InboxGate.state.updates],
+  source: InboxGate.state,
+  filter: (params) => Boolean(params.brandId),
+  target: inboxSourcesRemote.fx,
+});
+
+sample({
+  clock: inboxRemote.fx.doneData,
+  filter: (leads) => {
+    return leads.some((lead) => {
+      return PENDING_STATUSES.has(lead.status);
+    });
+  },
+  target: waitFx,
+});
+
+sample({
+  clock: testLeadClicked,
+  source: InboxGate.state,
+  target: testLeadFx,
+});
+
+sample({
+  clock: testLeadFx.done,
+  fn: () => {
     return {
-      id,
-      input: {
-        name,
-        email,
-        company,
-        subject,
-        message,
-      },
+      text: "Test lead sent. It shows up below in a moment.",
+      tone: "success" as const,
     };
   },
-  target: analyzeFx,
-});
-
-sample({
-  clock: reanalyzeClicked,
-  source: $leads,
-  filter: (leads, id) => id in leads,
-  fn: (leads, id) => {
-    const { name, email, company, subject, message } = leads[id];
-    return {
-      id,
-      input: {
-        name,
-        email,
-        company,
-        subject,
-        message,
-      },
-    };
-  },
-  target: analyzeFx,
-});
-
-sample({
-  clock: analyzeFx,
-  source: $analyzingIds,
-  fn: (ids, { id }) => [...ids, id],
-  target: $analyzingIds,
-});
-
-sample({
-  clock: analyzeFx.finally,
-  source: $analyzingIds,
-  fn: (ids, { params }) => ids.filter((id) => id !== params.id),
-  target: $analyzingIds,
-});
-
-sample({
-  clock: analyzeFx.doneData,
-  source: $leads,
-  filter: (leads, { id }) => id in leads,
-  fn: (leads, { id, analysis, at }) => {
-    return {
-      ...leads,
-      [id]: applyAnalysis({
-        lead: leads[id],
-        analysis,
-        at,
-      }),
-    };
-  },
-  target: $leads,
-});
-
-sample({
-  clock: analyzeFx.failData,
-  fn: (error): Omit<Toast, "id"> => {
-    return {
-      text: error.message,
-      tone: "error",
-    };
-  },
-  target: toastShown,
+  target: [toastShown, meRefreshRequested],
 });
 // #endregion
 
-// #region draft + pipeline
+// #region lead detail
 sample({
-  clock: draftChanged,
-  source: $leads,
-  filter: (leads, { id }) => id in leads,
-  fn: (leads, { id, draft }) => {
+  clock: [LeadGate.open, LeadGate.state.updates],
+  source: LeadGate.state,
+  filter: (params) => Boolean(params.brandId && params.leadId),
+  target: leadRemote.fx,
+});
+
+sample({
+  clock: leadRemote.$data,
+  fn: (lead) => lead?.draft ?? "",
+  target: $draft,
+});
+
+sample({
+  clock: draftEdited,
+  target: $draft,
+});
+
+sample({
+  clock: draftSaveClicked,
+  source: {
+    params: LeadGate.state,
+    draft: $draft,
+  },
+  fn: ({ params, draft }) => {
     return {
-      ...leads,
-      [id]: {
-        ...leads[id],
+      ...params,
+      action: {
+        kind: "draft" as const,
         draft,
       },
     };
   },
-  target: $leads,
+  target: leadActionFx,
 });
 
 sample({
-  clock: draftApproved,
-  target: approveFx,
-});
-
-sample({
-  clock: approveFx.doneData,
-  source: $leads,
-  filter: (leads, { id }) => id in leads,
-  fn: (leads, { id, at }) => {
+  clock: repliedClicked,
+  source: LeadGate.state,
+  fn: (params) => {
     return {
-      ...leads,
-      [id]: approveDraft({ lead: leads[id], at }),
+      ...params,
+      action: { kind: "replied" as const },
     };
   },
-  target: $leads,
+  target: leadActionFx,
 });
 
 sample({
-  clock: approveFx.doneData,
-  source: $leads,
-  filter: (leads, { id }) => id in leads,
-  fn: (leads, { id }): Omit<Toast, "id"> => {
+  clock: stageChosen,
+  source: LeadGate.state,
+  fn: (params, stage) => {
     return {
-      text: `Reply sent to ${leads[id].email}`,
-      tone: "success",
+      ...params,
+      action: {
+        kind: "stage" as const,
+        stage,
+      },
+    };
+  },
+  target: leadActionFx,
+});
+
+sample({
+  clock: notSpamClicked,
+  source: LeadGate.state,
+  fn: (params) => {
+    return {
+      ...params,
+      action: { kind: "not_spam" as const },
+    };
+  },
+  target: leadActionFx,
+});
+
+sample({
+  clock: retryClicked,
+  source: LeadGate.state,
+  fn: (params) => {
+    return {
+      ...params,
+      action: { kind: "retry" as const },
+    };
+  },
+  target: leadActionFx,
+});
+
+sample({
+  clock: leadActionFx.doneData,
+  target: leadRemote.$data,
+});
+
+sample({
+  clock: leadActionFx.done,
+  fn: ({ params }) => {
+    return {
+      text: ACTION_TOASTS[params.action.kind],
+      tone: "success" as const,
     };
   },
   target: toastShown,
 });
 
 sample({
-  clock: stageChanged,
-  target: moveLeadFx,
+  clock: wrongScoreSubmitted,
+  source: LeadGate.state,
+  fn: (params, feedback) => {
+    return {
+      ...params,
+      ...feedback,
+    };
+  },
+  target: feedbackFx,
 });
 
 sample({
-  clock: moveLeadFx.doneData,
-  source: $leads,
-  filter: (leads, { id }) => id in leads,
-  fn: (leads, { id, stage, at }) => {
+  clock: feedbackFx.done,
+  fn: () => {
     return {
-      ...leads,
-      [id]: moveLead({
-        lead: leads[id],
-        stage,
-        at,
-      }),
+      text: "Thanks. Future scores for this brand will use it.",
+      tone: "success" as const,
     };
   },
-  target: $leads,
+  target: toastShown,
+});
+
+sample({
+  clock: draftCopied,
+  source: $draft,
+  target: copyFx,
+});
+
+sample({
+  clock: copyFx.done,
+  fn: () => {
+    return {
+      text: "Draft copied",
+      tone: "success" as const,
+    };
+  },
+  target: toastShown,
 });
 // #endregion
 
-// #region persist
-persist({
-  store: $leads,
-  key: "ai-lead-agent:leads",
-  contract: obj(str, LeadContract),
+// #region pipeline
+sample({
+  clock: [PipelineGate.open, PipelineGate.state.updates, pipelineMoveFx.done],
+  source: PipelineGate.state,
+  filter: (params) => Boolean(params.brandId),
+  target: pipelineRemote.fx,
+});
+
+sample({
+  clock: pipelineMoveChosen,
+  source: PipelineGate.state,
+  fn: ({ brandId }, move) => {
+    return {
+      brandId,
+      ...move,
+    };
+  },
+  target: pipelineMoveFx,
+});
+// #endregion
+
+// #region errors
+sample({
+  clock: [testLeadFx.failData, leadActionFx.failData, feedbackFx.failData, copyFx.failData, pipelineMoveFx.failData],
+  fn: (error) => {
+    return {
+      text: error.message,
+      tone: "error" as const,
+    };
+  },
+  target: toastShown,
 });
 // #endregion

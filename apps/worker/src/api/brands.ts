@@ -2,20 +2,30 @@ import { PLAN_LIMITS, type BusinessProfile, type Me, type UsageDto } from "@inbo
 
 import { HttpError, json, readJson, readString, route, type Route } from "../http";
 import { RESCORE_LIMIT, runDueJobs } from "../leads/jobs";
-import { getMonthStart } from "../leads/pipeline";
+import { admitLead, getMonthStart } from "../leads/pipeline";
 import {
   countBrands,
   countMonthlyLeads,
   createBrand,
   getBrandProfile,
   listBrands,
+  listSources,
   queueRescore,
+  renameBrand,
   saveBrandProfile,
 } from "../repo";
 import { requireBrand, type ApiContext } from "./context";
 
 const NAME_MAX_LENGTH = 80;
 const PROFILE_FIELD_MAX_LENGTH = 2000;
+const TEST_LEAD = {
+  name: "Sam Rivera",
+  email: "sam@harborlight.example",
+  company: "Harborlight Dental",
+  subject: "Test lead: new website for our clinic",
+  message:
+    "Hi, I run a 3-location dental clinic and we need a new website with online booking. Budget is around $15k and we'd like to launch in 8 weeks. Could we book a call this week?",
+};
 
 export const brandRoutes: Route<ApiContext>[] = [
   route("GET", "/api/me", async ({ deps, account }) => {
@@ -52,6 +62,46 @@ export const brandRoutes: Route<ApiContext>[] = [
       throw new HttpError(403, "plan_limit", "Your plan has no room for another brand");
     }
     return json(await createBrand({ db: deps.db, accountId: account.accountId, name, now: deps.now() }), 201);
+  }),
+
+  route("PATCH", "/api/brands/:brandId", async ({ deps, account, params, request }) => {
+    const brand = await requireBrand({ deps, account, brandId: params.brandId });
+    const name = readString({ data: await readJson(request), key: "name", maxLength: NAME_MAX_LENGTH }).trim();
+
+    if (!name) {
+      throw new HttpError(400, "invalid_field", '"name" is required');
+    }
+    return json(await renameBrand({ db: deps.db, accountId: account.accountId, brandId: brand.id, name }));
+  }),
+
+  route("POST", "/api/brands/:brandId/test-lead", async ({ deps, account, params }) => {
+    const brand = await requireBrand({ deps, account, brandId: params.brandId });
+    const [source] = await listSources({ db: deps.db, brandId: brand.id });
+
+    if (!source) {
+      throw new HttpError(409, "no_source", "Connect a source first");
+    }
+    const result = await admitLead({
+      db: deps.db,
+      brandId: brand.id,
+      sourceId: source.id,
+      dedupeKey: null,
+      parsed: {
+        ok: true,
+        lead: TEST_LEAD,
+      },
+      raw: TEST_LEAD.message,
+      authResults: null,
+      now: deps.now(),
+    });
+    deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+    return json(
+      {
+        id: result.leadId,
+        status: result.status,
+      },
+      201,
+    );
   }),
 
   route("GET", "/api/brands/:brandId/profile", async ({ deps, account, params }) => {

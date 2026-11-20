@@ -1,0 +1,27 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "inboxsieve"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The SPA (apps/web build) is served from the same origin; API, ingest and dev routes hit the Worker first.
+[assets]
+directory = "../web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "inboxsieve"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+APP_URL = "http://localhost:8787"
+INBOUND_DOMAIN = "in.inboxsieve.example"
+MAIL_FROM = "InboxSieve <login@inboxsieve.example>"
+DEV_ROUTES = "0"

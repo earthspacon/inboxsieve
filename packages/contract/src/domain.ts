@@ -86,6 +86,8 @@ export type BrandDto = {
   createdAt: string;
 };
 
+export type MeDto = Me & { brands: BrandDto[] };
+
 export type ProfileDto = {
   state: ProfileState;
   profile: BusinessProfile;

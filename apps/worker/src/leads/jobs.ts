@@ -4,6 +4,7 @@ import { DEFAULT_PROFILE, type LeadAnalyzer } from "../analysis/analyzer";
 import {
   claimLead,
   getBrandProfile,
+  hasNotSpamFeedback,
   listDueLeads,
   listFeedbackExamples,
   requeueStaleLeads,
@@ -52,7 +53,11 @@ export async function processLead({
         draft: analysis.draftReply,
         analyzed_at: now.toISOString(),
         last_error: null,
-        ...getSpamStage({ analysis, lead }),
+        ...getSpamStage({
+          analysis,
+          lead,
+          isMarkedNotSpam: await hasNotSpamFeedback({ db, brandId, leadId }),
+        }),
       },
     });
   } catch (error) {
@@ -126,8 +131,17 @@ async function analyzeClaimedLead({ db, analyzer, lead }: { db: D1Database; anal
   return valid;
 }
 
-function getSpamStage({ analysis, lead }: { analysis: Analysis; lead: LeadRow }) {
-  if (analysis.category === "spam" && lead.stage === "new") {
+// A person's "Not spam" beats the model: the lead stays in its stage.
+function getSpamStage({
+  analysis,
+  lead,
+  isMarkedNotSpam,
+}: {
+  analysis: Analysis;
+  lead: LeadRow;
+  isMarkedNotSpam: boolean;
+}) {
+  if (analysis.category === "spam" && lead.stage === "new" && !isMarkedNotSpam) {
     return { stage: "spam" as const };
   }
   return {};

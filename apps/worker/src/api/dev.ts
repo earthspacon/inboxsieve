@@ -8,6 +8,8 @@ import type { PublicContext } from "./context";
 
 const EMAIL_MAX_LENGTH = 254;
 const OUTBOX_LIMIT = 20;
+const ID_MAX_LENGTH = 64;
+const USAGE_MAX = 5000;
 
 // Dev-only: billing lands in S5, so local runs and tests start a trial here.
 export const devRoutes: Route<PublicContext>[] = [
@@ -64,6 +66,31 @@ export const devRoutes: Route<PublicContext>[] = [
       .bind(to.toLowerCase(), OUTBOX_LIMIT)
       .all();
     return json(results);
+  }),
+
+  route("POST", "/dev/usage", async ({ deps, request }) => {
+    const data = await readJson(request);
+    const brandId = readString({ data, key: "brandId", maxLength: ID_MAX_LENGTH });
+    const count = typeof data.count === "number" ? Math.min(data.count, USAGE_MAX) : 0;
+    const source = await deps.db
+      .prepare("SELECT id FROM sources WHERE brand_id = ? ORDER BY created_at LIMIT 1")
+      .bind(brandId)
+      .first<{ id: string }>();
+
+    if (!source) {
+      throw new HttpError(409, "no_source", "The brand needs a source first");
+    }
+    const at = deps.now().toISOString();
+    const insert = deps.db.prepare(
+      `INSERT INTO leads (id, brand_id, source_id, status, stage, subject, counts_to_quota, received_at)
+       VALUES (?, ?, ?, 'analyzed', 'won', 'Usage filler', 1, ?)`,
+    );
+    await deps.db.batch(
+      Array.from({ length: count }, () => {
+        return insert.bind(newId(), brandId, source.id, at);
+      }),
+    );
+    return json({ inserted: count }, 201);
   }),
 
   route("POST", "/dev/run-jobs", async ({ deps }) => {

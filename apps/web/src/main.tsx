@@ -4,7 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./app/App";
-import { appStarted } from "./leads/model";
+import { appStarted } from "./session/model";
 
 const root = document.getElementById("root");
 

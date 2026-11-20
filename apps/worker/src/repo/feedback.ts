@@ -30,6 +30,15 @@ export async function addFeedback({
     )
     .bind(newId(), kind, expectedScore, note, now.toISOString(), leadId, brandId)
     .first<{ id: string }>();
+
+  if (row) {
+    await db
+      .prepare(
+        `INSERT INTO lead_events (lead_id, brand_id, type, from_value, to_value, at) VALUES (?, ?, 'feedback', NULL, ?, ?)`,
+      )
+      .bind(leadId, brandId, kind, now.toISOString())
+      .run();
+  }
   return row?.id ?? null;
 }
 
@@ -53,4 +62,12 @@ export async function listFeedbackExamples({ db, brandId }: { db: D1Database; br
       note: row.note,
     };
   });
+}
+
+export async function hasNotSpamFeedback({ db, brandId, leadId }: { db: D1Database; brandId: string; leadId: string }) {
+  const row = await db
+    .prepare("SELECT 1 AS found FROM feedback WHERE lead_id = ? AND brand_id = ? AND kind = 'not_spam' LIMIT 1")
+    .bind(leadId, brandId)
+    .first<{ found: number }>();
+  return row !== null;
 }

@@ -319,6 +319,34 @@ describe("API: account, brands, usage and access", () => {
     expect(agencyBrand.status).toBe(201);
   });
 
+  it("renames a brand during onboarding and rejects an empty name", async () => {
+    const context = await setUp();
+
+    const renamed = await context.api(`/api/brands/${context.brandId}`, { method: "PATCH", body: { name: "Acme" } });
+    const empty = await context.api(`/api/brands/${context.brandId}`, { method: "PATCH", body: { name: " " } });
+
+    expect(await renamed.json()).toMatchObject({ id: context.brandId, name: "Acme" });
+    expect(empty.status).toBe(400);
+  });
+
+  it('"Send a test lead" needs a source, then injects one lead that goes to analysis', async () => {
+    const context = await setUp();
+
+    const withoutSource = await context.api(`/api/brands/${context.brandId}/test-lead`, { method: "POST" });
+    await createSource({ api: context.api, brandId: context.brandId, kind: "email" });
+    const created = await context.api(`/api/brands/${context.brandId}/test-lead`, { method: "POST" });
+    await Promise.all(context.scheduled);
+
+    expect(withoutSource.status).toBe(409);
+    expect(created.status).toBe(201);
+    expect(
+      await countRows({
+        sql: "SELECT COUNT(*) AS n FROM leads WHERE brand_id = ? AND status = 'analyzed'",
+        binds: [context.brandId],
+      }),
+    ).toBe(1);
+  });
+
   it("usage counts analyzed-path leads against the plan limit", async () => {
     const context = await setUp();
     await seedLeads(context);
