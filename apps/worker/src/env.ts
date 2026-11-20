@@ -17,6 +17,8 @@ export type Env = {
   PADDLE_API_KEY?: string;
   PADDLE_WEBHOOK_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
   AUTH_LIMITER: RateLimit;
   WEBHOOK_LIMITER: RateLimit;
   LLM_DAILY_USD_CAP?: string;

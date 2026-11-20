@@ -4,11 +4,11 @@ InboxSieve scores every inquiry, filters out spam, drafts a reply and pings you 
 
 ## Layout
 
-| Path                | What                                                                                                                                                             |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/worker`       | Cloudflare Worker: JSON API, magic-link auth, Email Worker, webhook ingest and lead analysis on D1. The routes are in [`apps/worker/API.md`](apps/worker/API.md) |
-| `apps/web`          | The React SPA on the worker API (app under `/app`) plus the public pages: landing, pricing, terms, privacy, refunds, DPA, "For AI assistants", `/llms.txt`       |
-| `packages/contract` | Types and contracts shared by both apps: `AnalysisContract`, lead/source states, plan limits, DTOs                                                               |
+| Path                | What                                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/worker`       | Cloudflare Worker: JSON API, magic-link and Google auth, Email Worker, webhook ingest and lead analysis on D1. The routes are in [`apps/worker/API.md`](apps/worker/API.md) |
+| `apps/web`          | The React SPA on the worker API (app under `/app`) plus the public pages: landing, pricing, terms, privacy, refunds, DPA, "For AI assistants", `/llms.txt`                  |
+| `packages/contract` | Types and contracts shared by both apps: `AnalysisContract`, lead/source states, plan limits, DTOs                                                                          |
 
 ## Run it locally
 
@@ -77,11 +77,12 @@ Plain variables live in `wrangler.jsonc`:
 
 Secrets are set with `wrangler secret put`, or in `.dev.vars` locally:
 
-| Secret               | Purpose                                                      |
-| -------------------- | ------------------------------------------------------------ |
-| `BETTER_AUTH_SECRET` | Signs session cookies (32+ characters)                       |
-| `ANTHROPIC_API_KEY`  | Claude Haiku 5.5 for lead analysis                           |
-| `RESEND_API_KEY`     | Sends sign-in emails. Without it, production refuses to send |
+| Secret                                     | Purpose                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`                       | Signs session cookies (32+ characters)                                           |
+| `ANTHROPIC_API_KEY`                        | Claude Haiku 5.5 for lead analysis                                               |
+| `RESEND_API_KEY`                           | Sends sign-in emails. Without it, production refuses to send                     |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Both set: "Continue with Google" on the sign-in page (`DEPLOY.md` §5b) |
 
 ## Privacy
 

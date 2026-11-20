@@ -54,7 +54,7 @@
           },
           "tax_mode": "account_setting",
           "unit_price": {
-            "amount": "7900",
+            "amount": "2900",
             "currency_code": "USD"
           },
           "quantity": {

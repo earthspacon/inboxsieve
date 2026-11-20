@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { AlertsPage } from "../pages/AlertsPage";
 import { BillingPage } from "../pages/BillingPage";
@@ -17,6 +17,7 @@ import { AiPage } from "../site/AiPage";
 import { ChiliPiperAlternativePage } from "../site/ChiliPiperAlternativePage";
 import { LandingPage } from "../site/LandingPage";
 import { LegalPage } from "../site/LegalPage";
+import { NotFoundPage } from "../site/NotFoundPage";
 import { PricingPage } from "../site/PricingPage";
 import { SpamFilterPage } from "../site/SpamFilterPage";
 import { AppShell, RequireSession } from "./AppShell";
@@ -61,7 +62,7 @@ export const AppRoutes = () => {
             <Route path="more" element={<MorePage />} />
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <ToastView />
     </>

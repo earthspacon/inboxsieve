@@ -1,13 +1,13 @@
 import { useGate, useUnit } from "effector-react";
 import { Check } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 import { Logo } from "../app/AppShell";
 import { $step, OnboardingGate, stepChosen, type OnboardingStep } from "../onboarding/model";
 import { ProfileForm } from "../profile/ProfileForm";
 import { brandRenameSubmitted, ProfileGate, renameBrandFx } from "../profile/model";
-import { $brand, $brandId } from "../session/model";
+import { $brand, $brandId, $isOwner } from "../session/model";
 import { SourceCard } from "../sources/SourceCard";
 import { SourcesGate, sourcesRemote } from "../sources/model";
 import { BUTTON_PRIMARY, Card, INPUT } from "../shared/ui";
@@ -28,7 +28,17 @@ const STEPS: { key: OnboardingStep; label: string }[] = [
   },
 ];
 
+// Setup is the owner's job. An invited teammate is a new user too, so Better Auth sends them here; they go to the inbox.
 export const OnboardingPage = () => {
+  const { isOwner } = useUnit({ isOwner: $isOwner });
+
+  if (!isOwner) {
+    return <Navigate to="/app" replace />;
+  }
+  return <OwnerOnboarding />;
+};
+
+const OwnerOnboarding = () => {
   const { brandId, step } = useUnit({
     brandId: $brandId,
     step: $step,

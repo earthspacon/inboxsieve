@@ -1,3 +1,5 @@
+import { formatPrice, PLAN_PRICES } from "@inboxsieve/contract";
+
 // The owner fills these two before the Paddle domain review. Every public page reads them from here.
 export const SELLER_LEGAL_NAME = "SELLER_LEGAL_NAME";
 export const CONTACT_EMAIL = "CONTACT_EMAIL";
@@ -118,7 +120,7 @@ export const NEVER_DO = ["Send email as you", "Train on your data", "Lock you in
 export const COMPARE_ROWS = [
   {
     name: "InboxSieve",
-    price: "$29/mo, no sales call",
+    price: `${formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo, no sales call`,
   },
   {
     name: "Chili Piper",

@@ -4,6 +4,7 @@ import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom";
 
 import { AppRoutes } from "../app/App";
+import { NOT_FOUND_TITLE } from "../site/NotFoundPage";
 import { buildJsonLd, OG_IMAGE_PATH, SEO_PAGES, SITE_URL, type SeoPage } from "../site/seo";
 
 const ROOT_TAG = '<div id="root"></div>';
@@ -33,6 +34,10 @@ export function buildPrerenderedFiles(template: string): PrerenderedFile[] {
         html: template,
         head: '<title>InboxSieve</title>\n    <meta name="robots" content="noindex" />',
       }),
+    },
+    {
+      file: "404.html",
+      content: buildNotFoundHtml(template),
     },
     {
       file: "robots.txt",
@@ -85,6 +90,21 @@ export function buildPageHtml({ template, page }: { template: string; page: SeoP
     ROOT_TAG,
     `<div id="root" data-prerendered="${page.path}">${body}</div>`,
   );
+}
+
+// The Worker returns this with status 404. No canonical, noindex; the client renders the same page for any URL.
+function buildNotFoundHtml(template: string) {
+  const body = renderToString(
+    <StrictMode>
+      <StaticRouter location="/404">
+        <AppRoutes />
+      </StaticRouter>
+    </StrictMode>,
+  );
+  return replaceHead({
+    html: template,
+    head: `<title>${escapeHtml(NOT_FOUND_TITLE)}</title>\n    <meta name="robots" content="noindex" />`,
+  }).replace(ROOT_TAG, `<div id="root" data-prerendered="/404">${body}</div>`);
 }
 
 function replaceHead({ html, head }: { html: string; head: string }) {

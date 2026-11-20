@@ -36,7 +36,7 @@ Names used below:
 ## 4. Paddle (live account, after the domain review passes)
 
 1. Checkout → Website approval: submit `https://inboxsieve.com`. The landing, pricing, terms, privacy and refund pages must be live (do steps 6–7 first with the sandbox values if the review needs a live site).
-2. Catalog → Products: create **InboxSieve Solo** and **InboxSieve Agency**, each with a monthly and a yearly price: $29/mo, $290/yr, $79/mo, $790/yr, with **no** Paddle trial period (the 14-day Solo trial is local and needs no card; a Paddle trial would add a second one). Copy the 4 `pri_…` ids into `PADDLE_PRICE_SOLO_MONTHLY`, `PADDLE_PRICE_SOLO_YEARLY`, `PADDLE_PRICE_AGENCY_MONTHLY`, `PADDLE_PRICE_AGENCY_YEARLY` in `[env.production.vars]`.
+2. Catalog → Products: create **InboxSieve Solo** and **InboxSieve Agency**, each with a monthly and a yearly price (USD): Solo **$9/mo** and **$90/yr**, Agency **$29/mo** and **$290/yr**, with **no** Paddle trial period (the 14-day Solo trial is local and needs no card; a Paddle trial would add a second one). Copy the 4 `pri_…` ids into `PADDLE_PRICE_SOLO_MONTHLY`, `PADDLE_PRICE_SOLO_YEARLY`, `PADDLE_PRICE_AGENCY_MONTHLY`, `PADDLE_PRICE_AGENCY_YEARLY` in `[env.production.vars]`.
 3. Developer tools → Authentication → client-side token: copy it into `PADDLE_CLIENT_TOKEN`.
 4. Developer tools → Authentication → API key with write access to customer portal sessions and subscriptions. Keep it for step 6.
 5. Developer tools → Notifications → New destination:
@@ -60,6 +60,23 @@ For a sandbox dry run first, use sandbox values and set `PADDLE_ENV = "sandbox"`
 3. Copy the **secret key** for step 6 (`TURNSTILE_SECRET_KEY`).
 4. Rate limits need nothing in the dashboard: the `AUTH_LIMITER` (30 auth writes per IP per minute) and `WEBHOOK_LIMITER` (120 submissions per webhook per minute) bindings come from `wrangler.toml`. Their `namespace_id`s (`1001`, `1002`) must be unique in the Cloudflare account. Magic-link sends (3 per email per 15 min, 10 per IP per hour) are counted in D1.
 
+## 5b. Google sign-in ("Continue with Google")
+
+Optional, but recommended: most people sign in with Google now. Without these two secrets the button is hidden and email links work as before.
+
+1. Google Cloud Console (console.cloud.google.com) → create a project `InboxSieve`.
+2. APIs & Services → OAuth consent screen (Google Auth Platform → Branding/Audience):
+   - User type **External**, app name `InboxSieve`, support email and developer contact = your address, app domain `https://inboxsieve.com`, privacy policy `https://inboxsieve.com/privacy`, terms `https://inboxsieve.com/terms`.
+   - Data access / scopes: only `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile`. These are non-sensitive, so no Google verification review is needed.
+   - Publishing status: **In production** (in "Testing" only listed test users can sign in).
+3. APIs & Services → Credentials → Create credentials → OAuth client ID:
+   - Application type **Web application**, name `InboxSieve web`.
+   - Authorized JavaScript origins: `https://inboxsieve.com`.
+   - Authorized redirect URIs: `https://inboxsieve.com/api/auth/callback/google` (exactly this).
+4. Copy the client ID and client secret into the two secrets in step 6 (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`). Both must be set, or Google stays off.
+
+Someone who signed in by email link and later uses Google with the same address gets the same account (Google is a trusted provider for account linking). Apple sign-in is not offered: it needs the $99/yr Apple Developer Program, and agency users sign in with Google or their work email.
+
 ## 6. Secrets
 
 Each command prompts for the value; never put them in `wrangler.toml`.
@@ -71,6 +88,8 @@ pnpm exec wrangler secret put RESEND_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_WEBHOOK_SECRET --env production
 pnpm exec wrangler secret put TURNSTILE_SECRET_KEY --env production
+pnpm exec wrangler secret put GOOGLE_CLIENT_ID --env production       # optional, step 5b
+pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET --env production   # optional, step 5b
 ```
 
 ## 7. Build and deploy
@@ -93,8 +112,8 @@ The custom-domain route in `wrangler.toml` attaches `inboxsieve.com` to the Work
 
 ## 9. Smoke test (about 10 minutes)
 
-1. Open `https://inboxsieve.com`, then `/pricing`, `/terms`, `/privacy`, `/refunds`, `/dpa`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`. `curl -sI https://inboxsieve.com` shows `content-security-policy` and `strict-transport-security`. Submit the sitemap in Google Search Console.
-2. Sign in with your own email: the Turnstile box turns green and the magic link arrives from `login@mail.inboxsieve.com`.
+1. Open `https://inboxsieve.com`, then `/pricing`, `/terms`, `/privacy`, `/refunds`, `/dpa`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`. `curl -sI https://inboxsieve.com` shows `content-security-policy` and `strict-transport-security`. `curl -sI https://inboxsieve.com/foo` answers `404` with `x-robots-tag: noindex`. Submit the sitemap in Google Search Console.
+2. Sign in with your own email: the Turnstile box turns green and the magic link arrives from `login@mail.inboxsieve.com`. If step 5b is done, sign out and use **Continue with Google** with the same address: you land in the same workspace.
 3. The new account lands on Free with no card. Billing → Try Solo free for 14 days switches it to Solo. Then Upgrade to Solo with a real card (refund it afterwards in Paddle). Billing should show Active within seconds; Paddle → Notifications → the destination's log should show `200` responses.
 4. Onboarding → Forward email: send a message to the shown address from another mailbox. A lead appears and gets a score.
 5. Billing → Manage billing opens the Paddle portal.

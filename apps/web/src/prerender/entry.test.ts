@@ -34,15 +34,15 @@ describe("prerender", () => {
     expect(html).toContain("87 Hot");
   });
 
-  it("the landing page has SoftwareApplication with Free $0, Solo $29, Agency $79 and an FAQPage", () => {
+  it("the landing page has SoftwareApplication with Free $0, Solo $9, Agency $29 and an FAQPage", () => {
     const graph: Array<Record<string, unknown>> = readJsonLd(readFile("index.html"))["@graph"];
     const app = graph.find((node) => node["@type"] === "SoftwareApplication");
     const faq = graph.find((node) => node["@type"] === "FAQPage");
 
     expect(app?.offers).toEqual([
       expect.objectContaining({ name: "Free", price: "0", priceCurrency: "USD" }),
-      expect.objectContaining({ name: "Solo", price: "29", priceCurrency: "USD" }),
-      expect.objectContaining({ name: "Agency", price: "79", priceCurrency: "USD" }),
+      expect.objectContaining({ name: "Solo", price: "9", priceCurrency: "USD" }),
+      expect.objectContaining({ name: "Agency", price: "29", priceCurrency: "USD" }),
     ]);
     expect(faq?.mainEntity).toEqual(expect.arrayContaining([expect.objectContaining({ "@type": "Question" })]));
   });
@@ -75,6 +75,27 @@ describe("prerender", () => {
 
     expect(shell).toContain('<div id="root"></div>');
     expect(shell).toContain('<meta name="robots" content="noindex" />');
+  });
+
+  it("the pricing page and its meta show Solo $9/mo and Agency $29/mo with the recomputed fee lines", () => {
+    const html = readFile("pricing.html");
+
+    expect(html).toContain("<title>Pricing: Free, Solo $9/mo, Agency $29/mo | InboxSieve</title>");
+    expect(html).toContain("$9/mo");
+    expect(html).toContain("$29/mo");
+    expect(html).toContain("$0.95");
+    expect(html).toContain("$7.55");
+    expect(html).toContain("$24.85");
+    expect(html).not.toMatch(/\$79|\$790|\$26\.55|\$72\.35/);
+  });
+
+  it("the 404 page is noindex, has no canonical and links back home", () => {
+    const html = readFile("404.html");
+
+    expect(html).toContain('<meta name="robots" content="noindex" />');
+    expect(html).not.toContain('rel="canonical"');
+    expect(html).toContain("Page not found");
+    expect(html).toContain('href="/"');
   });
 
   it("robots.txt blocks /app/ and points at the sitemap, which lists every public page", () => {

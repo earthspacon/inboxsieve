@@ -1,4 +1,9 @@
+import { formatPrice, PLAN_PRICES } from "@inboxsieve/contract";
+
 import { FAQ } from "./config";
+
+const SOLO_MONTHLY = formatPrice(PLAN_PRICES.solo.monthlyCents);
+const AGENCY_MONTHLY = formatPrice(PLAN_PRICES.agency.monthlyCents);
 
 export const SITE_URL = "https://inboxsieve.com";
 export const OG_IMAGE_PATH = "/og.png";
@@ -19,9 +24,8 @@ export const SEO_PAGES: SeoPage[] = [
   },
   {
     path: "/pricing",
-    title: "Pricing: Free, Solo $29/mo, Agency $79/mo | InboxSieve",
-    description:
-      "Free forever for 50 leads a month. Solo $29/mo, Agency $79/mo. Every dollar inside the price is listed: payment fees, AI cost, hosting and our margin.",
+    title: `Pricing: Free, Solo ${SOLO_MONTHLY}/mo, Agency ${AGENCY_MONTHLY}/mo | InboxSieve`,
+    description: `Free forever for 50 leads a month. Solo ${SOLO_MONTHLY}/mo, Agency ${AGENCY_MONTHLY}/mo. Every dollar inside the price is listed: payment fees, AI cost, hosting and our margin.`,
   },
   {
     path: "/contact-form-spam-filter",
@@ -32,8 +36,7 @@ export const SEO_PAGES: SeoPage[] = [
   {
     path: "/chili-piper-alternative",
     title: "Chili Piper alternative for small agencies | InboxSieve",
-    description:
-      "An honest comparison: Chili Piper starts at $15k a year and books meetings for sales teams. InboxSieve costs $0–$79 a month and filters and scores form inquiries for small teams.",
+    description: `An honest comparison: Chili Piper starts at $15k a year and books meetings for sales teams. InboxSieve costs $0–${AGENCY_MONTHLY} a month and filters and scores form inquiries for small teams.`,
   },
   {
     path: "/terms",
@@ -78,8 +81,8 @@ export function buildJsonLd(page: SeoPage) {
       operatingSystem: "Web",
       offers: [
         buildOffer({ name: "Free", price: "0" }),
-        buildOffer({ name: "Solo", price: "29" }),
-        buildOffer({ name: "Agency", price: "79" }),
+        buildOffer({ name: "Solo", price: String(PLAN_PRICES.solo.monthlyCents / 100) }),
+        buildOffer({ name: "Agency", price: String(PLAN_PRICES.agency.monthlyCents / 100) }),
       ],
     },
   ];

@@ -29,12 +29,20 @@ export async function launchBrowser() {
   return chromium.launch({ executablePath: CHROME_PATH });
 }
 
-export async function openSession({ browser, viewport = DESKTOP }: { browser: Browser; viewport?: typeof DESKTOP }) {
+export async function openSession({
+  browser,
+  viewport = DESKTOP,
+  baseURL = E2E_URL,
+}: {
+  browser: Browser;
+  viewport?: typeof DESKTOP;
+  baseURL?: string;
+}) {
   const context = await browser.newContext({
-    baseURL: E2E_URL,
+    baseURL,
     viewport,
   });
-  await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: E2E_URL });
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseURL });
   const page = await context.newPage();
   const consoleErrors: string[] = [];
   page.on("console", (message) => {

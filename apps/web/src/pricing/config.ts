@@ -1,4 +1,12 @@
-import { PLAN_LIMITS, TRIAL_DAYS, type Plan } from "@inboxsieve/contract";
+import {
+  buildPriceBreakdown,
+  formatPrice,
+  formatUsd,
+  PLAN_LIMITS,
+  PLAN_PRICES,
+  TRIAL_DAYS,
+  type Plan,
+} from "@inboxsieve/contract";
 
 type PriceLine = { label: string; amount: string };
 
@@ -16,7 +24,11 @@ export type PlanCard = {
 export const FREE_TAGLINE = "Free forever. No card needed.";
 export const TRIAL_CTA = `Try Solo free for ${TRIAL_DAYS} days`;
 
-// Spec §3.2, copied line by line: every dollar shown.
+const FREE = buildPriceBreakdown("free");
+const SOLO = buildPriceBreakdown("solo");
+const AGENCY = buildPriceBreakdown("agency");
+
+// Spec §3.2, line by line: every dollar shown. The amounts come from the contract's price math.
 export const PLAN_CARDS: PlanCard[] = [
   {
     plan: "free",
@@ -35,84 +47,84 @@ export const PLAN_CARDS: PlanCard[] = [
     lines: [
       {
         label: "Payment processing",
-        amount: "$0.00",
+        amount: formatUsd(FREE.paymentCents),
       },
       {
         label: `Claude Haiku AI, ${PLAN_LIMITS.free.leadsPerMonth} leads at ~$0.0004 (we pay it)`,
-        amount: "≈ $0.02",
+        amount: `≈ ${formatUsd(FREE.aiCents)}`,
       },
       {
         label: "Hosting + email delivery (we pay it)",
-        amount: "≈ $0.03",
+        amount: `≈ ${formatUsd(FREE.hostingCents)}`,
       },
       {
         label: "Our fee",
-        amount: "$0.00",
+        amount: formatUsd(FREE.ourFeeCents),
       },
     ],
     total: {
       label: "You pay. No card needed",
-      amount: "$0.00",
+      amount: formatUsd(FREE.priceCents),
     },
   },
   {
     plan: "solo",
     name: "Solo",
-    monthly: "$29/mo",
-    yearly: "$290/yr",
+    monthly: `${formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo`,
+    yearly: `${formatPrice(PLAN_PRICES.solo.yearlyCents)}/yr`,
     yearlyNote: "2 months free",
     limits: ["1 brand", "2 sources", "500 leads/mo", "1 seat"],
     lines: [
       {
         label: "Payment processing (Paddle 5% + 50¢)",
-        amount: "$1.95",
+        amount: formatUsd(SOLO.paymentCents),
       },
       {
         label: "Claude Haiku AI, 500 leads at ~$0.0004 (shown at cost)",
-        amount: "≈ $0.20",
+        amount: `≈ ${formatUsd(SOLO.aiCents)}`,
       },
       {
         label: "Hosting + email delivery (Cloudflare + Resend, pro-rata)",
-        amount: "≈ $0.30",
+        amount: `≈ ${formatUsd(SOLO.hostingCents)}`,
       },
       {
         label: "Our fee",
-        amount: "$26.55",
+        amount: formatUsd(SOLO.ourFeeCents),
       },
     ],
     total: {
       label: "You pay (sales tax/VAT added by Paddle at checkout where due)",
-      amount: "$29.00",
+      amount: formatUsd(SOLO.priceCents),
     },
   },
   {
     plan: "agency",
     name: "Agency",
-    monthly: "$79/mo",
-    yearly: "$790/yr",
+    monthly: `${formatPrice(PLAN_PRICES.agency.monthlyCents)}/mo`,
+    yearly: `${formatPrice(PLAN_PRICES.agency.yearlyCents)}/yr`,
     yearlyNote: "2 months free",
     limits: ["10 brands (one per client)", "20 sources", "3,000 leads/mo", "3 seats"],
     lines: [
       {
         label: "Payment processing (5% + 50¢)",
-        amount: "$4.45",
+        amount: formatUsd(AGENCY.paymentCents),
       },
       {
         label: "Claude Haiku AI, 3,000 leads",
-        amount: "≈ $1.20",
+        amount: `≈ ${formatUsd(AGENCY.aiCents)}`,
       },
       {
         label: "Hosting + email",
-        amount: "≈ $1.00",
+        amount: `≈ ${formatUsd(AGENCY.hostingCents)}`,
       },
       {
         label: "Our fee",
-        amount: "$72.35",
+        amount: formatUsd(AGENCY.ourFeeCents),
       },
     ],
     total: {
       label: "You pay",
-      amount: "$79.00",
+      amount: formatUsd(AGENCY.priceCents),
     },
   },
 ];

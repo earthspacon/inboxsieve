@@ -261,3 +261,10 @@ export const LEAD_CSV_COLUMNS = [
 export type LeadCsvColumn = (typeof LEAD_CSV_COLUMNS)[number];
 
 export const DELETE_ACCOUNT_CONFIRMATION = "DELETE";
+
+// Public, no session: the sign-in methods this deployment has configured. Google needs its OAuth client env vars.
+export const SIGN_IN_OPTIONS_PATH = "/api/sign-in-options";
+
+export type SignInOptionsDto = {
+  google: boolean;
+};

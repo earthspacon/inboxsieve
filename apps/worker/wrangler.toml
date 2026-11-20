@@ -5,10 +5,11 @@ compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 # The SPA (apps/web build) is served from the same origin; API, ingest and dev routes hit the Worker first.
+# Unknown paths fall through to the Worker, which answers with the prerendered 404 page and status 404.
 [assets]
 directory = "../web/dist"
 binding = "ASSETS"
-not_found_handling = "single-page-application"
+not_found_handling = "none"
 run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*", "/app", "/app/*", "/sign-in"]
 
 # Per-minute limits (the binding only supports 10 s or 60 s windows). Longer windows live in D1 (rate_limit_hits).
@@ -34,6 +35,7 @@ crons = ["* * * * *", "0 * * * *"]
 
 # Secrets, set with `wrangler secret put <NAME> --env production` (locally in .dev.vars):
 #   BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY, PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, TURNSTILE_SECRET_KEY
+#   Optional: GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET turn on "Continue with Google" (both, or it stays off)
 # Local defaults below; `--env production` uses the block at the end (see DEPLOY.md).
 [vars]
 APP_URL = "http://localhost:8787"
@@ -58,7 +60,7 @@ routes = [{ pattern = "inboxsieve.com", custom_domain = true }]
 [env.production.assets]
 directory = "../web/dist"
 binding = "ASSETS"
-not_found_handling = "single-page-application"
+not_found_handling = "none"
 run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*", "/app", "/app/*", "/sign-in"]
 
 [[env.production.ratelimits]]

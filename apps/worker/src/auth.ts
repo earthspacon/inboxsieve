@@ -12,6 +12,28 @@ const TIMESTAMPS = {
   updatedAt: "updated_at",
 };
 
+// Better Auth's Google code exchange endpoint (tests fake it).
+export const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+
+// "Continue with Google" exists only when the OAuth client is configured; otherwise email links alone.
+export function isGoogleSignInEnabled(env: Pick<Env, "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET">) {
+  return Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+}
+
+function buildSocialProviders(env: Env) {
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+    return {};
+  }
+  return {
+    // Default scopes only (openid email profile): no Google verification review needed.
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      prompt: "select_account" as const,
+    },
+  };
+}
+
 export function createAuth({ env, mailer }: { env: Env; mailer: Mailer }) {
   return betterAuth({
     database: env.DB,
@@ -41,7 +63,13 @@ export function createAuth({ env, mailer }: { env: Env; mailer: Mailer }) {
         ...TIMESTAMPS,
       },
     },
+    socialProviders: buildSocialProviders(env),
     account: {
+      // Google verifies the email, so a Google sign-in with the same address joins the existing user.
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google"],
+      },
       modelName: "auth_identities",
       fields: {
         accountId: "provider_account_id",

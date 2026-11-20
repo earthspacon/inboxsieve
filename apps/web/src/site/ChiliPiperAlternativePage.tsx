@@ -1,3 +1,4 @@
+import { formatPrice, PLAN_PRICES } from "@inboxsieve/contract";
 import { Link } from "react-router-dom";
 
 import { BUTTON_PRIMARY, Card } from "../shared/ui";
@@ -10,7 +11,7 @@ const PRICES_CHECKED = "November 20, 2026";
 const PRICE_ROWS = [
   {
     tool: "InboxSieve",
-    price: "Free; Solo $29/mo; Agency $79/mo",
+    price: `Free; Solo ${formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo; Agency ${formatPrice(PLAN_PRICES.agency.monthlyCents)}/mo`,
     bestFor: "Filtering and scoring form inquiries for a 1–30 person team",
     source: "inboxsieve.com/pricing",
   },
@@ -160,8 +161,8 @@ export const ChiliPiperAlternativePage = () => {
           <h2 className="text-2xl font-semibold tracking-tight">When InboxSieve fits better</h2>
           <p className="text-sm leading-6 text-slate-700">
             If one to three people answer the contact form, half the messages are pitches and spam, and the job is “find
-            the good ones and reply fast”, InboxSieve does exactly that for $0–$79 a month, without a CRM or a sales
-            call.
+            the good ones and reply fast”, InboxSieve does exactly that for $0–
+            {formatPrice(PLAN_PRICES.agency.monthlyCents)} a month, without a CRM or a sales call.
           </p>
         </section>
 
