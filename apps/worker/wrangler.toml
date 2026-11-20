@@ -21,8 +21,9 @@ migrations_dir = "migrations"
 [triggers]
 crons = ["* * * * *", "0 * * * *"]
 
-# Public values. Secrets (wrangler secret put): BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY,
-# PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET.
+# Secrets, set with `wrangler secret put <NAME> --env production` (locally in .dev.vars):
+#   BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY, PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET
+# Local defaults below; `--env production` uses the block at the end (see DEPLOY.md).
 [vars]
 APP_URL = "http://localhost:8787"
 INBOUND_DOMAIN = "in.inboxsieve.example"
@@ -34,3 +35,35 @@ PADDLE_PRICE_SOLO_MONTHLY = "pri_solo_monthly_example"
 PADDLE_PRICE_SOLO_YEARLY = "pri_solo_yearly_example"
 PADDLE_PRICE_AGENCY_MONTHLY = "pri_agency_monthly_example"
 PADDLE_PRICE_AGENCY_YEARLY = "pri_agency_yearly_example"
+
+# Production: `wrangler deploy --env production`. Bindings aren't inherited, so they are repeated here.
+[env.production]
+name = "inboxsieve"
+routes = [{ pattern = "inboxsieve.com", custom_domain = true }]
+
+[env.production.assets]
+directory = "../web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*"]
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "inboxsieve"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[env.production.triggers]
+crons = ["* * * * *", "0 * * * *"]
+
+[env.production.vars]
+APP_URL = "https://inboxsieve.com"
+INBOUND_DOMAIN = "in.inboxsieve.com"
+MAIL_FROM = "InboxSieve <login@mail.inboxsieve.com>"
+DEV_ROUTES = "0"
+PADDLE_ENV = "production"
+PADDLE_CLIENT_TOKEN = "REPLACE_WITH_PADDLE_CLIENT_TOKEN"
+PADDLE_PRICE_SOLO_MONTHLY = "REPLACE_WITH_PRICE_ID"
+PADDLE_PRICE_SOLO_YEARLY = "REPLACE_WITH_PRICE_ID"
+PADDLE_PRICE_AGENCY_MONTHLY = "REPLACE_WITH_PRICE_ID"
+PADDLE_PRICE_AGENCY_YEARLY = "REPLACE_WITH_PRICE_ID"

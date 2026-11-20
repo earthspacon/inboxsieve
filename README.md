@@ -7,7 +7,7 @@ InboxSieve scores every inquiry, filters out spam, drafts a reply and pings you 
 | Path                | What                                                                                                                                                             |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/worker`       | Cloudflare Worker: JSON API, magic-link auth, Email Worker, webhook ingest and lead analysis on D1. The routes are in [`apps/worker/API.md`](apps/worker/API.md) |
-| `apps/web`          | The React SPA from the demo. It isn't wired to the API yet                                                                                                       |
+| `apps/web`          | The React SPA on the worker API (app under `/app`) plus the public pages: landing, pricing, terms, privacy, refunds, DPA, "For AI assistants", `/llms.txt`       |
 | `packages/contract` | Types and contracts shared by both apps: `AnalysisContract`, lead/source states, plan limits, DTOs                                                               |
 
 ## Run it locally
@@ -25,7 +25,7 @@ pnpm dev                         # wrangler dev on http://localhost:8787
 With `DEV_ROUTES=1`:
 
 - Sign-in links go to the `dev_outbox` table. Read them with `GET /dev/outbox?to=<email>`.
-- `POST /dev/accounts {"email": "..."}` creates an account in `trialing`. Billing comes later.
+- `POST /dev/accounts {"email": "..."}` creates an account in `trialing` without Paddle.
 - Leads are scored by the rule analyzer when `ANTHROPIC_API_KEY` is not set, so local runs make no paid calls.
 
 To test inbound mail, post a raw `.eml` to the local email handler:
@@ -46,7 +46,11 @@ curl -X POST http://localhost:8787/h/<token> -H 'content-type: application/json'
 ```sh
 pnpm -r test        # vitest; the worker suites run inside workerd with a real local D1
 pnpm -r typecheck
+pnpm --filter @inboxsieve/web test:e2e   # Playwright against wrangler dev: F1 sign-in, F5, F7, F8, F9
+pnpm --filter @inboxsieve/web shots      # screenshots + console-error check
 ```
+
+Deploying once the accounts exist: [`DEPLOY.md`](DEPLOY.md).
 
 Every test mocks the LLM. The Anthropic client is tested against a stubbed `fetch`.
 
