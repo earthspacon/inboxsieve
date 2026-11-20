@@ -1,7 +1,7 @@
-import type { FeedbackKind } from '@inboxsieve/contract';
+import type { FeedbackKind } from "@inboxsieve/contract";
 
-import type { FeedbackExample } from '../analysis/analyzer';
-import { newId } from '../ids';
+import type { FeedbackExample } from "../analysis/analyzer";
+import { newId } from "../ids";
 
 const MAX_EXAMPLES = 5;
 

@@ -1,8 +1,8 @@
-import type { LeadAnalyzer } from './analysis/analyzer';
-import { createAnthropicAnalyzer } from './analysis/anthropic';
-import { ruleAnalyzer } from './analysis/rules';
-import { isDev, type Env } from './env';
-import { createMailer, type Mailer } from './mailer';
+import type { LeadAnalyzer } from "./analysis/analyzer";
+import { createAnthropicAnalyzer } from "./analysis/anthropic";
+import { ruleAnalyzer } from "./analysis/rules";
+import { isDev, type Env } from "./env";
+import { createMailer, type Mailer } from "./mailer";
 
 export type Deps = {
   env: Env;
@@ -33,5 +33,5 @@ function createAnalyzer(env: Env): LeadAnalyzer {
   if (isDev(env)) {
     return ruleAnalyzer;
   }
-  throw new Error('ANTHROPIC_API_KEY is not set');
+  throw new Error("ANTHROPIC_API_KEY is not set");
 }

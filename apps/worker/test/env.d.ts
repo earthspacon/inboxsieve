@@ -6,11 +6,11 @@ declare namespace Cloudflare {
     MAIL_FROM: string;
     DEV_ROUTES: string;
     BETTER_AUTH_SECRET: string;
-    TEST_MIGRATIONS: import('cloudflare:test').D1Migration[];
+    TEST_MIGRATIONS: import("cloudflare:test").D1Migration[];
   }
 }
 
-declare module '*?raw' {
+declare module "*?raw" {
   const content: string;
   export default content;
 }

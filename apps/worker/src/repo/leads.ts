@@ -7,9 +7,9 @@ import type {
   LeadStage,
   LeadStatus,
   LeadSummaryDto,
-} from '@inboxsieve/contract';
+} from "@inboxsieve/contract";
 
-import { newId } from '../ids';
+import { newId } from "../ids";
 
 export type LeadRow = {
   id: string;
@@ -52,21 +52,21 @@ export type LeadFilters = {
 type LeadUpdate = Partial<
   Pick<
     LeadRow,
-    | 'stage'
-    | 'analysis'
-    | 'score'
-    | 'category'
-    | 'draft'
-    | 'attempts'
-    | 'next_attempt_at'
-    | 'last_error'
-    | 'counts_to_quota'
-    | 'analyzed_at'
+    | "stage"
+    | "analysis"
+    | "score"
+    | "category"
+    | "draft"
+    | "attempts"
+    | "next_attempt_at"
+    | "last_error"
+    | "counts_to_quota"
+    | "analyzed_at"
   >
 >;
 
 type EventRow = {
-  type: LeadEventDto['type'];
+  type: LeadEventDto["type"];
   from_value: string | null;
   to_value: string | null;
   at: string;
@@ -100,7 +100,20 @@ export async function insertLead({
        ON CONFLICT (brand_id, dedupe_key) DO NOTHING
        RETURNING id`,
     )
-    .bind(id, brandId, sourceId, dedupeKey, lead.name, lead.email, lead.company, lead.subject, lead.message, raw, authResults, at)
+    .bind(
+      id,
+      brandId,
+      sourceId,
+      dedupeKey,
+      lead.name,
+      lead.email,
+      lead.company,
+      lead.subject,
+      lead.message,
+      raw,
+      authResults,
+      at,
+    )
     .first<{ id: string }>();
 
   if (!row) {
@@ -110,17 +123,25 @@ export async function insertLead({
     db,
     brandId,
     leadId: id,
-    type: 'status',
+    type: "status",
     from: null,
-    to: 'received',
+    to: "received",
     at,
   });
   return id;
 }
 
-export async function findLeadByDedupeKey({ db, brandId, dedupeKey }: { db: D1Database; brandId: string; dedupeKey: string }) {
+export async function findLeadByDedupeKey({
+  db,
+  brandId,
+  dedupeKey,
+}: {
+  db: D1Database;
+  brandId: string;
+  dedupeKey: string;
+}) {
   return db
-    .prepare('SELECT id, status FROM leads WHERE brand_id = ? AND dedupe_key = ?')
+    .prepare("SELECT id, status FROM leads WHERE brand_id = ? AND dedupe_key = ?")
     .bind(brandId, dedupeKey)
     .first<{ id: string; status: LeadStatus }>();
 }
@@ -143,7 +164,7 @@ export async function transitionLead({
   now: Date;
 }) {
   const entries = Object.entries(set);
-  const assignments = entries.map(([column]) => `, ${column} = ?`).join('');
+  const assignments = entries.map(([column]) => `, ${column} = ?`).join("");
   const values = entries.map(([, value]) => value);
   const row = await db
     .prepare(`UPDATE leads SET status = ?${assignments} WHERE id = ? AND brand_id = ? AND status = ? RETURNING *`)
@@ -157,7 +178,7 @@ export async function transitionLead({
     db,
     brandId,
     leadId,
-    type: 'status',
+    type: "status",
     from,
     to,
     at: now.toISOString(),
@@ -167,7 +188,7 @@ export async function transitionLead({
       db,
       brandId,
       leadId,
-      type: 'stage',
+      type: "stage",
       from: null,
       to: set.stage,
       at: now.toISOString(),
@@ -176,7 +197,17 @@ export async function transitionLead({
   return row;
 }
 
-export async function claimLead({ db, brandId, leadId, now }: { db: D1Database; brandId: string; leadId: string; now: Date }) {
+export async function claimLead({
+  db,
+  brandId,
+  leadId,
+  now,
+}: {
+  db: D1Database;
+  brandId: string;
+  leadId: string;
+  now: Date;
+}) {
   const at = now.toISOString();
   const row = await db
     .prepare(
@@ -193,9 +224,9 @@ export async function claimLead({ db, brandId, leadId, now }: { db: D1Database; 
     db,
     brandId,
     leadId,
-    type: 'status',
-    from: 'queued',
-    to: 'analyzing',
+    type: "status",
+    from: "queued",
+    to: "analyzing",
     at,
   });
   return row;
@@ -221,7 +252,17 @@ export async function requeueStaleLeads({ db, staleBefore }: { db: D1Database; s
   return result.meta.changes;
 }
 
-export async function queueRescore({ db, brandId, limit, now }: { db: D1Database; brandId: string; limit: number; now: Date }) {
+export async function queueRescore({
+  db,
+  brandId,
+  limit,
+  now,
+}: {
+  db: D1Database;
+  brandId: string;
+  limit: number;
+  now: Date;
+}) {
   const at = now.toISOString();
   const { results } = await db
     .prepare(
@@ -239,7 +280,9 @@ export async function queueRescore({ db, brandId, limit, now }: { db: D1Database
     await db.batch(
       results.map(({ id }) => {
         return db
-          .prepare(`INSERT INTO lead_events (lead_id, brand_id, type, from_value, to_value, at) VALUES (?, ?, 'status', NULL, 'queued', ?)`)
+          .prepare(
+            `INSERT INTO lead_events (lead_id, brand_id, type, from_value, to_value, at) VALUES (?, ?, 'status', NULL, 'queued', ?)`,
+          )
           .bind(id, brandId, at);
       }),
     );
@@ -247,7 +290,15 @@ export async function queueRescore({ db, brandId, limit, now }: { db: D1Database
   return results.length;
 }
 
-export async function countMonthlyLeads({ db, accountId, monthStart }: { db: D1Database; accountId: string; monthStart: Date }) {
+export async function countMonthlyLeads({
+  db,
+  accountId,
+  monthStart,
+}: {
+  db: D1Database;
+  accountId: string;
+  monthStart: Date;
+}) {
   const row = await db
     .prepare(
       `SELECT COUNT(*) AS n FROM leads l JOIN brands b ON b.id = l.brand_id
@@ -259,53 +310,55 @@ export async function countMonthlyLeads({ db, accountId, monthStart }: { db: D1D
 }
 
 export async function listLeads({ db, brandId, filters }: { db: D1Database; brandId: string; filters: LeadFilters }) {
-  const conditions = ['brand_id = ?'];
+  const conditions = ["brand_id = ?"];
   const values: Array<string | number> = [brandId];
 
   if (filters.scoreMin !== null) {
-    conditions.push('score >= ?');
+    conditions.push("score >= ?");
     values.push(filters.scoreMin);
   }
   if (filters.scoreMax !== null) {
-    conditions.push('score <= ?');
+    conditions.push("score <= ?");
     values.push(filters.scoreMax);
   }
   if (filters.category) {
-    conditions.push('category = ?');
+    conditions.push("category = ?");
     values.push(filters.category);
   }
   if (filters.stage) {
-    conditions.push('stage = ?');
+    conditions.push("stage = ?");
     values.push(filters.stage);
   }
   if (filters.status) {
-    conditions.push('status = ?');
+    conditions.push("status = ?");
     values.push(filters.status);
   }
   if (filters.query) {
-    conditions.push(`(name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\' OR company LIKE ? ESCAPE '\\' OR subject LIKE ? ESCAPE '\\')`);
+    conditions.push(
+      `(name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\' OR company LIKE ? ESCAPE '\\' OR subject LIKE ? ESCAPE '\\')`,
+    );
     const pattern = `%${filters.query.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
     values.push(pattern, pattern, pattern, pattern);
   }
   if (filters.before) {
-    conditions.push('received_at < ?');
+    conditions.push("received_at < ?");
     values.push(filters.before);
   }
 
   const { results } = await db
-    .prepare(`SELECT * FROM leads WHERE ${conditions.join(' AND ')} ORDER BY received_at DESC, id LIMIT ?`)
+    .prepare(`SELECT * FROM leads WHERE ${conditions.join(" AND ")} ORDER BY received_at DESC, id LIMIT ?`)
     .bind(...values, filters.limit)
     .all<LeadRow>();
   return results.map(mapLeadRowToSummary);
 }
 
 export async function getLead({ db, brandId, leadId }: { db: D1Database; brandId: string; leadId: string }) {
-  return db.prepare('SELECT * FROM leads WHERE id = ? AND brand_id = ?').bind(leadId, brandId).first<LeadRow>();
+  return db.prepare("SELECT * FROM leads WHERE id = ? AND brand_id = ?").bind(leadId, brandId).first<LeadRow>();
 }
 
 export async function listLeadEvents({ db, brandId, leadId }: { db: D1Database; brandId: string; leadId: string }) {
   const { results } = await db
-    .prepare('SELECT type, from_value, to_value, at FROM lead_events WHERE lead_id = ? AND brand_id = ? ORDER BY id')
+    .prepare("SELECT type, from_value, to_value, at FROM lead_events WHERE lead_id = ? AND brand_id = ? ORDER BY id")
     .bind(leadId, brandId)
     .all<EventRow>();
   return results.map(mapEventRowToDto);
@@ -327,7 +380,7 @@ export async function updateLeadStage({
   now: Date;
 }) {
   const row = await db
-    .prepare('UPDATE leads SET stage = ? WHERE id = ? AND brand_id = ? AND stage = ? RETURNING *')
+    .prepare("UPDATE leads SET stage = ? WHERE id = ? AND brand_id = ? AND stage = ? RETURNING *")
     .bind(to, leadId, brandId, from)
     .first<LeadRow>();
 
@@ -338,7 +391,7 @@ export async function updateLeadStage({
     db,
     brandId,
     leadId,
-    type: 'stage',
+    type: "stage",
     from,
     to,
     at: now.toISOString(),
@@ -360,7 +413,7 @@ export async function updateLeadDraft({
   now: Date;
 }) {
   const row = await db
-    .prepare('UPDATE leads SET draft = ? WHERE id = ? AND brand_id = ? RETURNING *')
+    .prepare("UPDATE leads SET draft = ? WHERE id = ? AND brand_id = ? RETURNING *")
     .bind(draft, leadId, brandId)
     .first<LeadRow>();
 
@@ -371,7 +424,7 @@ export async function updateLeadDraft({
     db,
     brandId,
     leadId,
-    type: 'draft',
+    type: "draft",
     from: null,
     to: null,
     at: now.toISOString(),
@@ -379,7 +432,17 @@ export async function updateLeadDraft({
   return row;
 }
 
-export async function markLeadReplied({ db, brandId, leadId, now }: { db: D1Database; brandId: string; leadId: string; now: Date }) {
+export async function markLeadReplied({
+  db,
+  brandId,
+  leadId,
+  now,
+}: {
+  db: D1Database;
+  brandId: string;
+  leadId: string;
+  now: Date;
+}) {
   const at = now.toISOString();
   const row = await db
     .prepare(
@@ -396,7 +459,7 @@ export async function markLeadReplied({ db, brandId, leadId, now }: { db: D1Data
     db,
     brandId,
     leadId,
-    type: 'replied',
+    type: "replied",
     from: null,
     to: row.stage,
     at,
@@ -416,13 +479,13 @@ export async function insertEvent({
   db: D1Database;
   brandId: string;
   leadId: string;
-  type: LeadEventDto['type'];
+  type: LeadEventDto["type"];
   from: string | null;
   to: string | null;
   at: string;
 }) {
   await db
-    .prepare('INSERT INTO lead_events (lead_id, brand_id, type, from_value, to_value, at) VALUES (?, ?, ?, ?, ?, ?)')
+    .prepare("INSERT INTO lead_events (lead_id, brand_id, type, from_value, to_value, at) VALUES (?, ?, ?, ?, ?, ?)")
     .bind(leadId, brandId, type, from, to, at)
     .run();
 }
@@ -468,9 +531,17 @@ function mapEventRowToDto(row: EventRow): LeadEventDto {
   };
 }
 
-export async function countSourceLeads({ db, brandId, sourceId }: { db: D1Database; brandId: string; sourceId: string }) {
+export async function countSourceLeads({
+  db,
+  brandId,
+  sourceId,
+}: {
+  db: D1Database;
+  brandId: string;
+  sourceId: string;
+}) {
   const row = await db
-    .prepare('SELECT COUNT(*) AS n FROM leads WHERE brand_id = ? AND source_id = ?')
+    .prepare("SELECT COUNT(*) AS n FROM leads WHERE brand_id = ? AND source_id = ?")
     .bind(brandId, sourceId)
     .first<{ n: number }>();
   return row?.n ?? 0;

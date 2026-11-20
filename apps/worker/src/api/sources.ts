@@ -1,6 +1,6 @@
-import { PLAN_LIMITS, type SourceKind } from '@inboxsieve/contract';
+import { PLAN_LIMITS, type SourceKind } from "@inboxsieve/contract";
 
-import { HttpError, json, readJson, readString, route, type Route } from '../http';
+import { HttpError, json, readJson, readString, route, type Route } from "../http";
 import {
   countAccountSources,
   countSourceLeads,
@@ -13,8 +13,8 @@ import {
   rotateSourceToken,
   updateSourceState,
   type SourceRow,
-} from '../repo';
-import { createEnumGuard, readParam, requireBrand, type ApiContext } from './context';
+} from "../repo";
+import { createEnumGuard, readParam, requireBrand, type ApiContext } from "./context";
 
 const NAME_MAX_LENGTH = 80;
 const SOURCE_KINDS: Record<SourceKind, true> = {
@@ -25,7 +25,7 @@ const SOURCE_KINDS: Record<SourceKind, true> = {
 const isSourceKind = createEnumGuard(SOURCE_KINDS);
 
 export const sourceRoutes: Route<ApiContext>[] = [
-  route('GET', '/api/brands/:brandId/sources', async ({ deps, account, params }) => {
+  route("GET", "/api/brands/:brandId/sources", async ({ deps, account, params }) => {
     const brand = await requireBrand({ deps, account, brandId: params.brandId });
     const rows = await listSources({ db: deps.db, brandId: brand.id });
     return json(
@@ -35,18 +35,20 @@ export const sourceRoutes: Route<ApiContext>[] = [
     );
   }),
 
-  route('POST', '/api/brands/:brandId/sources', async ({ deps, account, params, request }) => {
+  route("POST", "/api/brands/:brandId/sources", async ({ deps, account, params, request }) => {
     const brand = await requireBrand({ deps, account, brandId: params.brandId });
     const data = await readJson(request);
-    const name = readString({ data, key: 'name', maxLength: NAME_MAX_LENGTH }).trim();
+    const name = readString({ data, key: "name", maxLength: NAME_MAX_LENGTH }).trim();
 
     const kind = data.kind;
 
     if (!isSourceKind(kind)) {
-      throw new HttpError(400, 'invalid_field', '"kind" must be "email" or "webhook"');
+      throw new HttpError(400, "invalid_field", '"kind" must be "email" or "webhook"');
     }
-    if ((await countAccountSources({ db: deps.db, accountId: account.accountId })) >= PLAN_LIMITS[account.plan].sources) {
-      throw new HttpError(403, 'plan_limit', 'Your plan has no room for another source');
+    if (
+      (await countAccountSources({ db: deps.db, accountId: account.accountId })) >= PLAN_LIMITS[account.plan].sources
+    ) {
+      throw new HttpError(403, "plan_limit", "Your plan has no room for another source");
     }
 
     const row = await createSource({
@@ -61,42 +63,46 @@ export const sourceRoutes: Route<ApiContext>[] = [
     return sourceResponse({ row, appUrl: deps.env.APP_URL, status: 201 });
   }),
 
-  route('PATCH', '/api/brands/:brandId/sources/:sourceId', async ({ deps, account, params, request }) => {
+  route("PATCH", "/api/brands/:brandId/sources/:sourceId", async ({ deps, account, params, request }) => {
     const brand = await requireBrand({ deps, account, brandId: params.brandId });
-    const sourceId = readParam({ params, key: 'sourceId' });
+    const sourceId = readParam({ params, key: "sourceId" });
     const data = await readJson(request);
     let row = await getSource({ db: deps.db, brandId: brand.id, sourceId });
 
     if (row && data.name !== undefined) {
-      const name = readString({ data, key: 'name', maxLength: NAME_MAX_LENGTH }).trim();
+      const name = readString({ data, key: "name", maxLength: NAME_MAX_LENGTH }).trim();
       row = await renameSource({ db: deps.db, brandId: brand.id, sourceId, name, now: deps.now() });
     }
     if (row && data.enabled !== undefined) {
-      if (typeof data.enabled !== 'boolean') {
-        throw new HttpError(400, 'invalid_field', '"enabled" must be a boolean');
+      if (typeof data.enabled !== "boolean") {
+        throw new HttpError(400, "invalid_field", '"enabled" must be a boolean');
       }
       row = await setSourceEnabled({ deps, row, enabled: data.enabled });
     }
     return sourceResponse({ row, appUrl: deps.env.APP_URL });
   }),
 
-  route('POST', '/api/brands/:brandId/sources/:sourceId/rotate-token', async ({ deps, account, params }) => {
+  route("POST", "/api/brands/:brandId/sources/:sourceId/rotate-token", async ({ deps, account, params }) => {
     const brand = await requireBrand({ deps, account, brandId: params.brandId });
     const row = await rotateSourceToken({
       db: deps.db,
       brandId: brand.id,
-      sourceId: readParam({ params, key: 'sourceId' }),
+      sourceId: readParam({ params, key: "sourceId" }),
       now: deps.now(),
     });
     return sourceResponse({ row, appUrl: deps.env.APP_URL });
   }),
 
-  route('DELETE', '/api/brands/:brandId/sources/:sourceId', async ({ deps, account, params }) => {
+  route("DELETE", "/api/brands/:brandId/sources/:sourceId", async ({ deps, account, params }) => {
     const brand = await requireBrand({ deps, account, brandId: params.brandId });
-    const deleted = await deleteSource({ db: deps.db, brandId: brand.id, sourceId: readParam({ params, key: 'sourceId' }) });
+    const deleted = await deleteSource({
+      db: deps.db,
+      brandId: brand.id,
+      sourceId: readParam({ params, key: "sourceId" }),
+    });
 
     if (!deleted) {
-      throw new HttpError(404, 'not_found', 'Source not found');
+      throw new HttpError(404, "not_found", "Source not found");
     }
     return new Response(null, { status: 204 });
   }),
@@ -104,12 +110,20 @@ export const sourceRoutes: Route<ApiContext>[] = [
 
 function sourceResponse({ row, appUrl, status = 200 }: { row: SourceRow | null; appUrl: string; status?: number }) {
   if (!row) {
-    throw new HttpError(404, 'not_found', 'Source not found');
+    throw new HttpError(404, "not_found", "Source not found");
   }
   return json(mapSourceRowToDto({ row, appUrl }), status);
 }
 
-async function setSourceEnabled({ deps, row, enabled }: { deps: ApiContext['deps']; row: SourceRow; enabled: boolean }) {
+async function setSourceEnabled({
+  deps,
+  row,
+  enabled,
+}: {
+  deps: ApiContext["deps"];
+  row: SourceRow;
+  enabled: boolean;
+}) {
   const ref = {
     db: deps.db,
     brandId: row.brand_id,
@@ -118,20 +132,19 @@ async function setSourceEnabled({ deps, row, enabled }: { deps: ApiContext['deps
   };
 
   if (!enabled) {
-    return updateSourceState({ ...ref, state: 'disabled' });
+    return updateSourceState({ ...ref, state: "disabled" });
   }
-  if (row.state !== 'disabled') {
+  if (row.state !== "disabled") {
     return row;
   }
   const hasLeads = (await countSourceLeads(ref)) > 0;
-  return updateSourceState({ ...ref, state: hasLeads ? 'connected' : 'awaiting_first_message' });
+  return updateSourceState({ ...ref, state: hasLeads ? "connected" : "awaiting_first_message" });
 }
 
 function defaultSourceName(kind: SourceKind) {
   const names: Record<SourceKind, string> = {
-    email: 'Forwarded email',
-    webhook: 'Website form',
+    email: "Forwarded email",
+    webhook: "Website form",
   };
   return names[kind];
 }
-

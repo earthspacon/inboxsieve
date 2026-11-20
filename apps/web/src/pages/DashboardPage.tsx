@@ -1,11 +1,11 @@
-import { useUnit } from 'effector-react';
-import { Clock, Gauge, Inbox, ShieldX } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { useUnit } from "effector-react";
+import { Clock, Gauge, Inbox, ShieldX } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-import { MINUTES_SAVED_PER_LEAD, STAGE_CONFIG } from '../leads/config';
-import { getDashboardStats } from '../leads/lib';
-import { $leadList } from '../leads/model';
-import { Card } from './ui';
+import { MINUTES_SAVED_PER_LEAD, STAGE_CONFIG } from "../leads/config";
+import { getDashboardStats } from "../leads/lib";
+import { $leadList } from "../leads/model";
+import { Card } from "./ui";
 
 export const DashboardPage = () => {
   const { leads } = useUnit({ leads: $leadList });
@@ -22,7 +22,12 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi icon={Inbox} label="Leads this week" value={String(stats.thisWeek)} hint={`${stats.total} total`} />
         <Kpi icon={Gauge} label="Avg fit score" value={String(stats.averageScore)} hint="spam excluded" />
-        <Kpi icon={Clock} label="Time saved" value={`${stats.hoursSaved} h`} hint={`${MINUTES_SAVED_PER_LEAD} min per lead triaged`} />
+        <Kpi
+          icon={Clock}
+          label="Time saved"
+          value={`${stats.hoursSaved} h`}
+          hint={`${MINUTES_SAVED_PER_LEAD} min per lead triaged`}
+        />
         <Kpi icon={ShieldX} label="Spam filtered" value={String(stats.spam)} hint="archived, no reply" />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
@@ -33,7 +38,10 @@ export const DashboardPage = () => {
               return (
                 <div key={week.label} className="flex flex-1 flex-col items-center gap-1">
                   <span className="text-xs font-medium tabular-nums">{week.count}</span>
-                  <div className="w-full rounded-t-md bg-brand-500" style={{ height: `${(week.count / maxWeekly) * 120}px` }} />
+                  <div
+                    className="w-full rounded-t-md bg-brand-500"
+                    style={{ height: `${(week.count / maxWeekly) * 120}px` }}
+                  />
                   <span className="text-[11px] text-slate-500">{week.label}</span>
                 </div>
               );
@@ -54,7 +62,10 @@ export const DashboardPage = () => {
                     </span>
                   </div>
                   <div className="h-2.5 rounded-full bg-slate-100">
-                    <div className="h-2.5 rounded-full bg-gradient-to-r from-brand-500 to-sky-500" style={{ width: `${percent}%` }} />
+                    <div
+                      className="h-2.5 rounded-full bg-gradient-to-r from-brand-500 to-sky-500"
+                      style={{ width: `${percent}%` }}
+                    />
                   </div>
                 </div>
               );

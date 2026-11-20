@@ -1,14 +1,14 @@
-import { useUnit } from 'effector-react';
-import { ChevronRight } from 'lucide-react';
-import type { DragEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useUnit } from "effector-react";
+import { ChevronRight } from "lucide-react";
+import type { DragEvent } from "react";
+import { Link } from "react-router-dom";
 
-import { STAGE_CONFIG, STAGES } from '../leads/config';
-import type { Lead, Stage } from '../leads/config';
-import { $analyzingIds, $leadList, stageChanged } from '../leads/model';
-import { ScoreBadge } from './ui';
+import { STAGE_CONFIG, STAGES } from "../leads/config";
+import type { Lead, Stage } from "../leads/config";
+import { $analyzingIds, $leadList, stageChanged } from "../leads/model";
+import { ScoreBadge } from "./ui";
 
-const DRAG_TYPE = 'text/lead-id';
+const DRAG_TYPE = "text/lead-id";
 
 export const PipelinePage = () => {
   return (

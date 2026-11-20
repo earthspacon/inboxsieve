@@ -1,41 +1,41 @@
-import type { LeadInput } from '@inboxsieve/contract';
+import type { LeadInput } from "@inboxsieve/contract";
 
-import type { ParsedLead } from '../leads/pipeline';
+import type { ParsedLead } from "../leads/pipeline";
 
 export type FieldPair = {
   label: string;
   value: string;
 };
 
-type FieldKey = keyof LeadInput | 'firstName' | 'lastName';
+type FieldKey = keyof LeadInput | "firstName" | "lastName";
 
 const FIELD_PATTERNS: Array<{ key: FieldKey; pattern: RegExp }> = [
   {
-    key: 'email',
+    key: "email",
     pattern: /e-?mail/i,
   },
   {
-    key: 'company',
+    key: "company",
     pattern: /company|organi[sz]ation|business|agency/i,
   },
   {
-    key: 'firstName',
+    key: "firstName",
     pattern: /^first[\s_-]?name$/i,
   },
   {
-    key: 'lastName',
+    key: "lastName",
     pattern: /^(last|sur)[\s_-]?name$/i,
   },
   {
-    key: 'name',
+    key: "name",
     pattern: /name/i,
   },
   {
-    key: 'subject',
+    key: "subject",
     pattern: /subject|topic/i,
   },
   {
-    key: 'message',
+    key: "message",
     pattern: /message|details|project|comment|notes?\b|inquiry|enquiry|description|question|how can we help|tell us/i,
   },
 ];
@@ -43,7 +43,13 @@ const FIELD_PATTERNS: Array<{ key: FieldKey; pattern: RegExp }> = [
 const EMAIL_PATTERN = /[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+/;
 const MAX_FIELD_CHARS = 20_000;
 
-export function pickLeadFields({ pairs, fallbackSubject }: { pairs: FieldPair[]; fallbackSubject: string }): ParsedLead {
+export function pickLeadFields({
+  pairs,
+  fallbackSubject,
+}: {
+  pairs: FieldPair[];
+  fallbackSubject: string;
+}): ParsedLead {
   const picked: Partial<Record<FieldKey, string>> = {};
   const extras: string[] = [];
 
@@ -61,14 +67,14 @@ export function pickLeadFields({ pairs, fallbackSubject }: { pairs: FieldPair[];
     extras.push(`${label}: ${trimmed}`);
   }
 
-  const email = picked.email?.match(EMAIL_PATTERN)?.[0] ?? '';
-  const name = picked.name ?? [picked.firstName, picked.lastName].filter(Boolean).join(' ');
-  const message = [picked.message, ...extras].filter(Boolean).join('\n\n');
+  const email = picked.email?.match(EMAIL_PATTERN)?.[0] ?? "";
+  const name = picked.name ?? [picked.firstName, picked.lastName].filter(Boolean).join(" ");
+  const message = [picked.message, ...extras].filter(Boolean).join("\n\n");
 
   if (!email && !picked.message) {
     return {
       ok: false,
-      error: 'No email or message field found',
+      error: "No email or message field found",
     };
   }
 
@@ -77,7 +83,7 @@ export function pickLeadFields({ pairs, fallbackSubject }: { pairs: FieldPair[];
     lead: {
       name,
       email,
-      company: picked.company ?? '',
+      company: picked.company ?? "",
       subject: picked.subject ?? fallbackSubject,
       message,
     },

@@ -1,26 +1,26 @@
-import { obj, str } from '@withease/contracts';
-import { attach, combine, createEffect, createEvent, createStore, sample } from 'effector';
-import { persist } from 'effector-storage/local';
+import { obj, str } from "@withease/contracts";
+import { attach, combine, createEffect, createEvent, createStore, sample } from "effector";
+import { persist } from "effector-storage/local";
 
-import { $analyzerSettings } from '../settings/model';
-import { toastShown, type Toast } from '../shared/toast-model';
-import { demoAnalyzer } from './analyzer';
-import type { Analysis, Category, Lead, LeadInput, Stage } from './config';
-import { LeadContract } from './contract';
-import { createLiveAnalyzer } from './live-analyzer';
-import { applyAnalysis, approveDraft, moveLead } from './lib';
-import { buildMockLeads } from './mock-leads';
+import { $analyzerSettings } from "../settings/model";
+import { toastShown, type Toast } from "../shared/toast-model";
+import { demoAnalyzer } from "./analyzer";
+import type { Analysis, Category, Lead, LeadInput, Stage } from "./config";
+import { LeadContract } from "./contract";
+import { createLiveAnalyzer } from "./live-analyzer";
+import { applyAnalysis, approveDraft, moveLead } from "./lib";
+import { buildMockLeads } from "./mock-leads";
 
 export type Filters = {
-  stage: Stage | 'all';
-  category: Category | 'all';
+  stage: Stage | "all";
+  category: Category | "all";
   search: string;
 };
 
 const DEFAULT_FILTERS: Filters = {
-  stage: 'all',
-  category: 'all',
-  search: '',
+  stage: "all",
+  category: "all",
+  search: "",
 };
 
 export const appStarted = createEvent();
@@ -45,8 +45,8 @@ export const $leadList = $leads.map((leads) => {
 export const $visibleLeads = combine($leadList, $filters, (leads, { stage, category, search }) => {
   const query = search.trim().toLowerCase();
   return leads.filter((lead) => {
-    const matchesStage = stage === 'all' || lead.stage === stage;
-    const matchesCategory = category === 'all' || lead.analysis?.category === category;
+    const matchesStage = stage === "all" || lead.stage === stage;
+    const matchesCategory = category === "all" || lead.analysis?.category === category;
     const matchesSearch = !query || `${lead.name} ${lead.company} ${lead.subject}`.toLowerCase().includes(query);
     return matchesStage && matchesCategory && matchesSearch;
   });
@@ -61,22 +61,22 @@ const createLeadFx = createEffect((input: LeadInput): Lead => {
   return {
     ...input,
     id: `lead-${Date.now()}`,
-    source: 'form',
+    source: "form",
     receivedAt,
-    stage: 'new',
-    history: [{ stage: 'new', at: receivedAt }],
+    stage: "new",
+    history: [{ stage: "new", at: receivedAt }],
     analysis: null,
-    draft: '',
+    draft: "",
   };
 });
 
 const analyzeFx = attach({
   source: $analyzerSettings,
   effect: async ({ mode, apiKey }, { id, input }: { id: string; input: LeadInput }) => {
-    if (mode === 'live' && !apiKey) {
-      throw new Error('Live mode needs an Anthropic API key (Settings)');
+    if (mode === "live" && !apiKey) {
+      throw new Error("Live mode needs an Anthropic API key (Settings)");
     }
-    const analyzer = mode === 'live' ? createLiveAnalyzer({ apiKey }) : demoAnalyzer;
+    const analyzer = mode === "live" ? createLiveAnalyzer({ apiKey }) : demoAnalyzer;
     const analysis: Analysis = await analyzer.analyze(input);
     return {
       id,
@@ -230,10 +230,10 @@ sample({
 
 sample({
   clock: analyzeFx.failData,
-  fn: (error): Omit<Toast, 'id'> => {
+  fn: (error): Omit<Toast, "id"> => {
     return {
       text: error.message,
-      tone: 'error',
+      tone: "error",
     };
   },
   target: toastShown,
@@ -279,10 +279,10 @@ sample({
   clock: approveFx.doneData,
   source: $leads,
   filter: (leads, { id }) => id in leads,
-  fn: (leads, { id }): Omit<Toast, 'id'> => {
+  fn: (leads, { id }): Omit<Toast, "id"> => {
     return {
       text: `Reply sent to ${leads[id].email}`,
-      tone: 'success',
+      tone: "success",
     };
   },
   target: toastShown,
@@ -314,7 +314,7 @@ sample({
 // #region persist
 persist({
   store: $leads,
-  key: 'ai-lead-agent:leads',
+  key: "ai-lead-agent:leads",
   contract: obj(str, LeadContract),
 });
 // #endregion

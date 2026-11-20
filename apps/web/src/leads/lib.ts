@@ -1,5 +1,5 @@
-import { MINUTES_SAVED_PER_LEAD, STAGE_CONFIG, STAGES } from './config';
-import type { Analysis, Lead, Stage } from './config';
+import { MINUTES_SAVED_PER_LEAD, STAGE_CONFIG, STAGES } from "./config";
+import type { Analysis, Lead, Stage } from "./config";
 
 export const WEEKS_ON_CHART = 6;
 
@@ -25,7 +25,7 @@ export function moveLead({ lead, stage, at }: { lead: Lead; stage: Stage; at: st
 export function approveDraft({ lead, at }: { lead: Lead; at: string }): Lead {
   return moveLead({
     lead,
-    stage: 'replied',
+    stage: "replied",
     at,
   });
 }
@@ -37,20 +37,20 @@ export function applyAnalysis({ lead, analysis, at }: { lead: Lead; analysis: An
     draft: analysis.draftReply,
   };
 
-  if (lead.stage !== 'new') {
+  if (lead.stage !== "new") {
     return analyzed;
   }
-  if (analysis.category === 'spam') {
+  if (analysis.category === "spam") {
     return moveLead({
       lead: analyzed,
-      stage: 'lost',
+      stage: "lost",
       at,
     });
   }
-  if (analysis.category === 'hot' || analysis.category === 'warm') {
+  if (analysis.category === "hot" || analysis.category === "warm") {
     return moveLead({
       lead: analyzed,
-      stage: 'qualified',
+      stage: "qualified",
       at,
     });
   }
@@ -59,7 +59,7 @@ export function applyAnalysis({ lead, analysis, at }: { lead: Lead; analysis: An
 
 export function getDashboardStats({ leads, now }: { leads: Lead[]; now: number }) {
   const analyzed = leads.filter((lead) => lead.analysis !== null);
-  const scored = analyzed.filter((lead) => lead.analysis?.category !== 'spam');
+  const scored = analyzed.filter((lead) => lead.analysis?.category !== "spam");
   const scoreSum = scored.reduce((sum, lead) => sum + (lead.analysis?.score ?? 0), 0);
   const reached = (stage: Stage) => {
     return leads.filter((lead) => lead.history.some((change) => change.stage === stage)).length;
@@ -72,7 +72,7 @@ export function getDashboardStats({ leads, now }: { leads: Lead[]; now: number }
     hoursSaved: Math.round((analyzed.length * MINUTES_SAVED_PER_LEAD) / MINUTES_IN_HOUR),
     spam: analyzed.length - scored.length,
     weekly: getWeeklyCounts({ leads, now }),
-    funnel: STAGES.filter((stage) => stage !== 'lost').map((stage) => {
+    funnel: STAGES.filter((stage) => stage !== "lost").map((stage) => {
       return {
         stage,
         count: reached(stage),
@@ -92,7 +92,7 @@ function getWeeklyCounts({ leads, now }: { leads: Lead[]; now: number }) {
     }).length;
 
     return {
-      label: weeksAgo === 0 ? 'This wk' : `${weeksAgo}w ago`,
+      label: weeksAgo === 0 ? "This wk" : `${weeksAgo}w ago`,
       count,
     };
   });

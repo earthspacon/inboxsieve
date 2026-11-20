@@ -1,16 +1,16 @@
-import { useStoreMap, useUnit } from 'effector-react';
-import { ArrowLeft, Check, RefreshCw, Send, Sparkles } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useStoreMap, useUnit } from "effector-react";
+import { ArrowLeft, Check, RefreshCw, Send, Sparkles } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 
-import { INTENT_LABELS, STAGE_CONFIG } from '../leads/config';
-import type { Analysis, Lead, Stage } from '../leads/config';
-import { $analyzingIds, $leads, draftApproved, draftChanged, reanalyzeClicked, stageChanged } from '../leads/model';
-import { Avatar, Card, formatDate, ScoreBadge, StagePill } from './ui';
+import { INTENT_LABELS, STAGE_CONFIG } from "../leads/config";
+import type { Analysis, Lead, Stage } from "../leads/config";
+import { $analyzingIds, $leads, draftApproved, draftChanged, reanalyzeClicked, stageChanged } from "../leads/model";
+import { Avatar, Card, formatDate, ScoreBadge, StagePill } from "./ui";
 
-const APPROVABLE_STAGES: Stage[] = ['new', 'qualified'];
+const APPROVABLE_STAGES: Stage[] = ["new", "qualified"];
 
 export const LeadPage = () => {
-  const { id = '' } = useParams();
+  const { id = "" } = useParams();
   const lead = useStoreMap({
     store: $leads,
     keys: [id],
@@ -20,7 +20,10 @@ export const LeadPage = () => {
   if (!lead) {
     return (
       <Card className="p-10 text-center text-sm text-slate-500">
-        Lead not found. <Link to="/" className="text-brand-600 underline">Back to inbox</Link>
+        Lead not found.{" "}
+        <Link to="/" className="text-brand-600 underline">
+          Back to inbox
+        </Link>
       </Card>
     );
   }
@@ -54,7 +57,7 @@ const LeadHeader = ({ lead }: { lead: Lead }) => {
         <h1 className="text-xl font-semibold tracking-tight lg:truncate">{lead.subject}</h1>
         <p className="truncate text-sm text-slate-500">
           {lead.name}
-          {lead.company ? ` · ${lead.company}` : ''} · {lead.email}
+          {lead.company ? ` · ${lead.company}` : ""} · {lead.email}
         </p>
       </div>
       <ScoreBadge analysis={lead.analysis} isAnalyzing={analyzingIds.includes(lead.id)} />
@@ -67,7 +70,9 @@ const OriginalMessage = ({ lead }: { lead: Lead }) => {
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
-        <span className="font-medium tracking-wide uppercase">Original {lead.source === 'email' ? 'email' : 'form submission'}</span>
+        <span className="font-medium tracking-wide uppercase">
+          Original {lead.source === "email" ? "email" : "form submission"}
+        </span>
         <span>{formatDate(lead.receivedAt)}</span>
       </div>
       <p className="text-sm leading-relaxed whitespace-pre-line text-slate-800">{lead.message}</p>
@@ -76,7 +81,7 @@ const OriginalMessage = ({ lead }: { lead: Lead }) => {
 };
 
 const DraftEditor = ({ lead }: { lead: Lead }) => {
-  const isSpam = lead.analysis?.category === 'spam';
+  const isSpam = lead.analysis?.category === "spam";
   const canApprove = APPROVABLE_STAGES.includes(lead.stage) && lead.draft.trim().length > 0;
 
   if (isSpam) {
@@ -153,10 +158,16 @@ const ScoreMeter = ({ score }: { score: number }) => {
     <div>
       <div className="flex items-baseline justify-between">
         <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">Fit score</span>
-        <span className="text-2xl font-semibold tabular-nums">{score}<span className="text-sm text-slate-400">/100</span></span>
+        <span className="text-2xl font-semibold tabular-nums">
+          {score}
+          <span className="text-sm text-slate-400">/100</span>
+        </span>
       </div>
       <div className="mt-2 h-2 rounded-full bg-slate-100">
-        <div className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-emerald-500" style={{ width: `${score}%` }} />
+        <div
+          className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-emerald-500"
+          style={{ width: `${score}%` }}
+        />
       </div>
     </div>
   );
@@ -165,20 +176,20 @@ const ScoreMeter = ({ score }: { score: number }) => {
 const ExtractedFields = ({ analysis }: { analysis: Analysis }) => {
   const rows = [
     {
-      label: 'Intent',
+      label: "Intent",
       value: INTENT_LABELS[analysis.intent],
     },
     {
-      label: 'Budget',
-      value: analysis.budget ?? '—',
+      label: "Budget",
+      value: analysis.budget ?? "—",
     },
     {
-      label: 'Timeline',
-      value: analysis.timeline ?? '—',
+      label: "Timeline",
+      value: analysis.timeline ?? "—",
     },
     {
-      label: 'Decision maker',
-      value: analysis.decisionMaker ? 'Yes' : 'Unknown',
+      label: "Decision maker",
+      value: analysis.decisionMaker ? "Yes" : "Unknown",
     },
   ];
   return (
@@ -203,7 +214,10 @@ const StageCard = ({ lead }: { lead: Lead }) => {
       <ol className="mb-4 space-y-1">
         {lead.history.map((change) => {
           return (
-            <li key={`${change.stage}-${change.at}`} className="flex items-center justify-between text-xs text-slate-500">
+            <li
+              key={`${change.stage}-${change.at}`}
+              className="flex items-center justify-between text-xs text-slate-500"
+            >
               <StagePill stage={change.stage} />
               {formatDate(change.at)}
             </li>

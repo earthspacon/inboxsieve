@@ -1,4 +1,4 @@
-import type { ApiError } from '@inboxsieve/contract';
+import type { ApiError } from "@inboxsieve/contract";
 
 export class HttpError extends Error {
   constructor(
@@ -28,13 +28,13 @@ export async function readJson(request: Request): Promise<Record<string, unknown
   });
 
   if (!isRecord(data)) {
-    throw new HttpError(400, 'invalid_json', 'Request body must be a JSON object');
+    throw new HttpError(400, "invalid_json", "Request body must be a JSON object");
   }
   return data;
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function readString({
@@ -48,11 +48,11 @@ export function readString({
 }) {
   const value = data[key];
 
-  if (typeof value !== 'string') {
-    throw new HttpError(400, 'invalid_field', `"${key}" must be a string`);
+  if (typeof value !== "string") {
+    throw new HttpError(400, "invalid_field", `"${key}" must be a string`);
   }
   if (value.length > maxLength) {
-    throw new HttpError(400, 'invalid_field', `"${key}" is longer than ${maxLength} characters`);
+    throw new HttpError(400, "invalid_field", `"${key}" is longer than ${maxLength} characters`);
   }
   return value;
 }
@@ -63,7 +63,7 @@ export type Route<C> = {
   handler: (context: C & { request: Request; params: Record<string, string> }) => Promise<Response>;
 };
 
-export function route<C>(method: string, pathname: string, handler: Route<C>['handler']): Route<C> {
+export function route<C>(method: string, pathname: string, handler: Route<C>["handler"]): Route<C> {
   return {
     method,
     pattern: new URLPattern({ pathname }),

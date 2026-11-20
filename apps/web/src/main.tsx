@@ -1,12 +1,12 @@
-import './index.css';
+import "./index.css";
 
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 
-import { App } from './app/App';
-import { appStarted } from './leads/model';
+import { App } from "./app/App";
+import { appStarted } from "./leads/model";
 
-const root = document.getElementById('root');
+const root = document.getElementById("root");
 
 appStarted();
 

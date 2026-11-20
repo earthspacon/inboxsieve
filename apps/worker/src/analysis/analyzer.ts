@@ -1,7 +1,7 @@
-import type { Analysis, BusinessProfile, LeadInput } from '@inboxsieve/contract';
+import type { Analysis, BusinessProfile, LeadInput } from "@inboxsieve/contract";
 
 export type FeedbackExample = {
-  kind: 'not_spam' | 'wrong_score';
+  kind: "not_spam" | "wrong_score";
   subject: string;
   message: string;
   expectedScore: number | null;
@@ -19,10 +19,10 @@ export type LeadAnalyzer = {
 };
 
 export const DEFAULT_PROFILE: BusinessProfile = {
-  services: 'Professional services for small and mid-size businesses',
-  idealClient: 'A company with a clear project, a budget and a decision maker',
-  minBudget: '',
-  tone: 'Friendly and concise',
-  signature: 'Best regards',
-  bookingLink: '',
+  services: "Professional services for small and mid-size businesses",
+  idealClient: "A company with a clear project, a budget and a decision maker",
+  minBudget: "",
+  tone: "Friendly and concise",
+  signature: "Best regards",
+  bookingLink: "",
 };

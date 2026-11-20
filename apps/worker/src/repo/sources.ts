@@ -1,6 +1,6 @@
-import type { SourceDto, SourceKind, SourceState } from '@inboxsieve/contract';
+import type { SourceDto, SourceKind, SourceState } from "@inboxsieve/contract";
 
-import { newForwardingAddress, newId, newWebhookToken } from '../ids';
+import { newForwardingAddress, newId, newWebhookToken } from "../ids";
 
 export type SourceRow = {
   id: string;
@@ -34,8 +34,8 @@ export async function createSource({
   inboundDomain: string;
   now: Date;
 }) {
-  const address = kind === 'email' ? newForwardingAddress({ brandName, domain: inboundDomain }) : null;
-  const token = kind === 'webhook' ? newWebhookToken() : null;
+  const address = kind === "email" ? newForwardingAddress({ brandName, domain: inboundDomain }) : null;
+  const token = kind === "webhook" ? newWebhookToken() : null;
   const at = now.toISOString();
 
   return db
@@ -49,19 +49,19 @@ export async function createSource({
 
 export async function listSources({ db, brandId }: { db: D1Database; brandId: string }) {
   const { results } = await db
-    .prepare('SELECT * FROM sources WHERE brand_id = ? ORDER BY created_at, id')
+    .prepare("SELECT * FROM sources WHERE brand_id = ? ORDER BY created_at, id")
     .bind(brandId)
     .all<SourceRow>();
   return results;
 }
 
 export async function getSource({ db, brandId, sourceId }: { db: D1Database; brandId: string; sourceId: string }) {
-  return db.prepare('SELECT * FROM sources WHERE id = ? AND brand_id = ?').bind(sourceId, brandId).first<SourceRow>();
+  return db.prepare("SELECT * FROM sources WHERE id = ? AND brand_id = ?").bind(sourceId, brandId).first<SourceRow>();
 }
 
 export async function countAccountSources({ db, accountId }: { db: D1Database; accountId: string }) {
   const row = await db
-    .prepare('SELECT COUNT(*) AS n FROM sources s JOIN brands b ON b.id = s.brand_id WHERE b.account_id = ?')
+    .prepare("SELECT COUNT(*) AS n FROM sources s JOIN brands b ON b.id = s.brand_id WHERE b.account_id = ?")
     .bind(accountId)
     .first<{ n: number }>();
   return row?.n ?? 0;
@@ -69,11 +69,11 @@ export async function countAccountSources({ db, accountId }: { db: D1Database; a
 
 // Ingress entry points: the secret address/token is what identifies the brand.
 export async function findSourceByAddress({ db, address }: { db: D1Database; address: string }) {
-  return db.prepare('SELECT * FROM sources WHERE address = ?').bind(address.toLowerCase()).first<SourceRow>();
+  return db.prepare("SELECT * FROM sources WHERE address = ?").bind(address.toLowerCase()).first<SourceRow>();
 }
 
 export async function findSourceByToken({ db, token }: { db: D1Database; token: string }) {
-  return db.prepare('SELECT * FROM sources WHERE token = ?').bind(token).first<SourceRow>();
+  return db.prepare("SELECT * FROM sources WHERE token = ?").bind(token).first<SourceRow>();
 }
 
 export async function updateSourceState({
@@ -98,7 +98,15 @@ export async function updateSourceState({
       `UPDATE sources SET state = ?, last_error = ?, verification_link = ?, verification_code = ?, updated_at = ?
        WHERE id = ? AND brand_id = ? RETURNING *`,
     )
-    .bind(state, lastError, verification?.link ?? null, verification?.code ?? null, now.toISOString(), sourceId, brandId)
+    .bind(
+      state,
+      lastError,
+      verification?.link ?? null,
+      verification?.code ?? null,
+      now.toISOString(),
+      sourceId,
+      brandId,
+    )
     .first<SourceRow>();
 }
 
@@ -116,21 +124,33 @@ export async function renameSource({
   now: Date;
 }) {
   return db
-    .prepare('UPDATE sources SET name = ?, updated_at = ? WHERE id = ? AND brand_id = ? RETURNING *')
+    .prepare("UPDATE sources SET name = ?, updated_at = ? WHERE id = ? AND brand_id = ? RETURNING *")
     .bind(name, now.toISOString(), sourceId, brandId)
     .first<SourceRow>();
 }
 
-export async function rotateSourceToken({ db, brandId, sourceId, now }: { db: D1Database; brandId: string; sourceId: string; now: Date }) {
+export async function rotateSourceToken({
+  db,
+  brandId,
+  sourceId,
+  now,
+}: {
+  db: D1Database;
+  brandId: string;
+  sourceId: string;
+  now: Date;
+}) {
   return db
-    .prepare(`UPDATE sources SET token = ?, updated_at = ? WHERE id = ? AND brand_id = ? AND kind = 'webhook' RETURNING *`)
+    .prepare(
+      `UPDATE sources SET token = ?, updated_at = ? WHERE id = ? AND brand_id = ? AND kind = 'webhook' RETURNING *`,
+    )
     .bind(newWebhookToken(), now.toISOString(), sourceId, brandId)
     .first<SourceRow>();
 }
 
 export async function deleteSource({ db, brandId, sourceId }: { db: D1Database; brandId: string; sourceId: string }) {
   const row = await db
-    .prepare('DELETE FROM sources WHERE id = ? AND brand_id = ? RETURNING id')
+    .prepare("DELETE FROM sources WHERE id = ? AND brand_id = ? RETURNING id")
     .bind(sourceId, brandId)
     .first<{ id: string }>();
   return row !== null;
@@ -152,7 +172,7 @@ export function mapSourceRowToDto({ row, appUrl }: { row: SourceRow; appUrl: str
 }
 
 function mapVerification(row: SourceRow) {
-  if (row.state !== 'verification_pending') {
+  if (row.state !== "verification_pending") {
     return null;
   }
   return {

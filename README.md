@@ -4,11 +4,11 @@ InboxSieve scores every inquiry, filters out spam, drafts a reply and pings you 
 
 ## Layout
 
-| Path | What |
-|---|---|
-| `apps/worker` | Cloudflare Worker: JSON API, magic-link auth, Email Worker, webhook ingest and lead analysis on D1. The routes are in [`apps/worker/API.md`](apps/worker/API.md) |
-| `apps/web` | The React SPA from the demo. It isn't wired to the API yet |
-| `packages/contract` | Types and contracts shared by both apps: `AnalysisContract`, lead/source states, plan limits, DTOs |
+| Path                | What                                                                                                                                                             |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/worker`       | Cloudflare Worker: JSON API, magic-link auth, Email Worker, webhook ingest and lead analysis on D1. The routes are in [`apps/worker/API.md`](apps/worker/API.md) |
+| `apps/web`          | The React SPA from the demo. It isn't wired to the API yet                                                                                                       |
+| `packages/contract` | Types and contracts shared by both apps: `AnalysisContract`, lead/source states, plan limits, DTOs                                                               |
 
 ## Run it locally
 
@@ -23,6 +23,7 @@ pnpm dev                         # wrangler dev on http://localhost:8787
 ```
 
 With `DEV_ROUTES=1`:
+
 - Sign-in links go to the `dev_outbox` table. Read them with `GET /dev/outbox?to=<email>`.
 - `POST /dev/accounts {"email": "..."}` creates an account in `trialing`. Billing comes later.
 - Leads are scored by the rule analyzer when `ANTHROPIC_API_KEY` is not set, so local runs make no paid calls.
@@ -52,6 +53,7 @@ Every test mocks the LLM. The Anthropic client is tested against a stubbed `fetc
 ## Async analysis: `waitUntil` + cron, not Queues
 
 A new lead is stored as `queued` in D1. The request that stored it starts the analysis in `waitUntil`. A cron trigger (`* * * * *`) then sweeps whatever is still due:
+
 - retries after 30 s and 2 min;
 - leads stuck in `analyzing` for 5 minutes;
 - re-score jobs.
@@ -62,20 +64,20 @@ The lead row is the job: its status, attempt count and next-attempt time live in
 
 Plain variables live in `wrangler.jsonc`:
 
-| Variable | Purpose |
-|---|---|
-| `APP_URL` | Public base URL. Used in magic links, webhook URLs and the auth origin check |
-| `INBOUND_DOMAIN` | Domain of the forwarding addresses (`<brand>-<random>@<domain>`) |
-| `MAIL_FROM` | Sender of the sign-in emails |
-| `DEV_ROUTES` | `1` turns on `/dev/*`, the dev outbox and the rule analyzer fallback. Keep it `0` in production |
+| Variable         | Purpose                                                                                         |
+| ---------------- | ----------------------------------------------------------------------------------------------- |
+| `APP_URL`        | Public base URL. Used in magic links, webhook URLs and the auth origin check                    |
+| `INBOUND_DOMAIN` | Domain of the forwarding addresses (`<brand>-<random>@<domain>`)                                |
+| `MAIL_FROM`      | Sender of the sign-in emails                                                                    |
+| `DEV_ROUTES`     | `1` turns on `/dev/*`, the dev outbox and the rule analyzer fallback. Keep it `0` in production |
 
 Secrets are set with `wrangler secret put`, or in `.dev.vars` locally:
 
-| Secret | Purpose |
-|---|---|
-| `BETTER_AUTH_SECRET` | Signs session cookies (32+ characters) |
-| `ANTHROPIC_API_KEY` | Claude Haiku 5.5 for lead analysis |
-| `RESEND_API_KEY` | Sends sign-in emails. Without it, production refuses to send |
+| Secret               | Purpose                                                      |
+| -------------------- | ------------------------------------------------------------ |
+| `BETTER_AUTH_SECRET` | Signs session cookies (32+ characters)                       |
+| `ANTHROPIC_API_KEY`  | Claude Haiku 5.5 for lead analysis                           |
+| `RESEND_API_KEY`     | Sends sign-in emails. Without it, production refuses to send |
 
 ## Privacy
 

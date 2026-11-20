@@ -1,15 +1,9 @@
-import type { Analysis, Category } from './analysis';
+import type { Analysis, Category } from "./analysis";
 
-export type Plan = 'solo' | 'agency';
+export type Plan = "solo" | "agency";
 
 export type SubscriptionStatus =
-  | 'no_subscription'
-  | 'trialing'
-  | 'active'
-  | 'past_due'
-  | 'paused'
-  | 'canceled'
-  | 'expired';
+  "no_subscription" | "trialing" | "active" | "past_due" | "paused" | "canceled" | "expired";
 
 export const PLAN_LIMITS: Record<Plan, { brands: number; sources: number; leadsPerMonth: number; seats: number }> = {
   solo: {
@@ -26,51 +20,46 @@ export const PLAN_LIMITS: Record<Plan, { brands: number; sources: number; leadsP
   },
 };
 
-export type AccessLevel = 'locked' | 'read_only' | 'full';
+export type AccessLevel = "locked" | "read_only" | "full";
 
 export const SUBSCRIPTION_ACCESS: Record<SubscriptionStatus, AccessLevel> = {
-  no_subscription: 'locked',
-  trialing: 'full',
-  active: 'full',
-  past_due: 'full',
-  paused: 'read_only',
-  canceled: 'full',
-  expired: 'read_only',
+  no_subscription: "locked",
+  trialing: "full",
+  active: "full",
+  past_due: "full",
+  paused: "read_only",
+  canceled: "full",
+  expired: "read_only",
 };
 
-export type SourceKind = 'email' | 'webhook';
+export type SourceKind = "email" | "webhook";
 
 export type SourceState =
-  | 'not_connected'
-  | 'awaiting_first_message'
-  | 'verification_pending'
-  | 'connected'
-  | 'error'
-  | 'disabled';
+  "not_connected" | "awaiting_first_message" | "verification_pending" | "connected" | "error" | "disabled";
 
 export type LeadStatus =
-  | 'received'
-  | 'parsed'
-  | 'spam_filtered'
-  | 'queued'
-  | 'analyzing'
-  | 'analyzed'
-  | 'analysis_failed'
-  | 'over_quota'
-  | 'parse_failed';
+  | "received"
+  | "parsed"
+  | "spam_filtered"
+  | "queued"
+  | "analyzing"
+  | "analyzed"
+  | "analysis_failed"
+  | "over_quota"
+  | "parse_failed";
 
-export type LeadStage = 'new' | 'contacted' | 'meeting' | 'won' | 'lost' | 'spam';
+export type LeadStage = "new" | "contacted" | "meeting" | "won" | "lost" | "spam";
 
 export const STAGE_TRANSITIONS: Record<LeadStage, LeadStage[]> = {
-  new: ['contacted', 'meeting', 'lost', 'spam'],
-  contacted: ['meeting', 'won', 'lost'],
-  meeting: ['won', 'lost'],
+  new: ["contacted", "meeting", "lost", "spam"],
+  contacted: ["meeting", "won", "lost"],
+  meeting: ["won", "lost"],
   won: [],
-  lost: ['new'],
-  spam: ['new'],
+  lost: ["new"],
+  spam: ["new"],
 };
 
-export type FeedbackKind = 'not_spam' | 'wrong_score';
+export type FeedbackKind = "not_spam" | "wrong_score";
 
 export type BusinessProfile = {
   services: string;
@@ -81,12 +70,12 @@ export type BusinessProfile = {
   bookingLink: string;
 };
 
-export type ProfileState = 'defaults' | 'saved';
+export type ProfileState = "defaults" | "saved";
 
 export type Me = {
   user: { id: string; email: string };
   account: { id: string; plan: Plan; subscription: SubscriptionStatus; access: AccessLevel };
-  role: 'owner' | 'member';
+  role: "owner" | "member";
 };
 
 export type BrandDto = {
@@ -131,7 +120,7 @@ export type LeadSummaryDto = {
 };
 
 export type LeadEventDto = {
-  type: 'status' | 'stage' | 'draft' | 'replied' | 'feedback';
+  type: "status" | "stage" | "draft" | "replied" | "feedback";
   from: string | null;
   to: string | null;
   at: string;

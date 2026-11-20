@@ -1,6 +1,6 @@
-import { SUBSCRIPTION_ACCESS, type AccessLevel, type Plan, type SubscriptionStatus } from '@inboxsieve/contract';
+import { SUBSCRIPTION_ACCESS, type AccessLevel, type Plan, type SubscriptionStatus } from "@inboxsieve/contract";
 
-import { newId } from '../ids';
+import { newId } from "../ids";
 
 export type AccountContext = {
   userId: string;
@@ -9,10 +9,10 @@ export type AccountContext = {
   plan: Plan;
   subscription: SubscriptionStatus;
   access: AccessLevel;
-  role: 'owner' | 'member';
+  role: "owner" | "member";
 };
 
-const DEFAULT_BRAND_NAME = 'My brand';
+const DEFAULT_BRAND_NAME = "My brand";
 
 export async function getAccountContext({ db, userId }: { db: D1Database; userId: string }) {
   const row = await db
@@ -27,7 +27,14 @@ export async function getAccountContext({ db, userId }: { db: D1Database; userId
        LIMIT 1`,
     )
     .bind(userId)
-    .first<{ user_id: string; email: string; account_id: string; plan: Plan; status: SubscriptionStatus; role: 'owner' | 'member' }>();
+    .first<{
+      user_id: string;
+      email: string;
+      account_id: string;
+      plan: Plan;
+      status: SubscriptionStatus;
+      role: "owner" | "member";
+    }>();
 
   if (!row) {
     return null;
@@ -64,13 +71,19 @@ export async function createAccount({
   const at = now.toISOString();
 
   await db.batch([
-    db.prepare('INSERT INTO accounts (id, owner_user_id, plan, created_at) VALUES (?, ?, ?, ?)').bind(accountId, userId, plan, at),
-    db.prepare('INSERT INTO subscriptions (account_id, status, updated_at) VALUES (?, ?, ?)').bind(accountId, status, at),
     db
-      .prepare(`INSERT INTO seats (id, account_id, user_id, email, role, status, created_at) VALUES (?, ?, ?, ?, 'owner', 'active', ?)`)
+      .prepare("INSERT INTO accounts (id, owner_user_id, plan, created_at) VALUES (?, ?, ?, ?)")
+      .bind(accountId, userId, plan, at),
+    db
+      .prepare("INSERT INTO subscriptions (account_id, status, updated_at) VALUES (?, ?, ?)")
+      .bind(accountId, status, at),
+    db
+      .prepare(
+        `INSERT INTO seats (id, account_id, user_id, email, role, status, created_at) VALUES (?, ?, ?, ?, 'owner', 'active', ?)`,
+      )
       .bind(newId(), accountId, userId, email, at),
     db
-      .prepare('INSERT INTO brands (id, account_id, name, created_at) VALUES (?, ?, ?, ?)')
+      .prepare("INSERT INTO brands (id, account_id, name, created_at) VALUES (?, ?, ?, ?)")
       .bind(newId(), accountId, DEFAULT_BRAND_NAME, at),
   ]);
   return accountId;
@@ -90,12 +103,14 @@ export async function setSubscription({
   now: Date;
 }) {
   await db.batch([
-    db.prepare('UPDATE subscriptions SET status = ?, updated_at = ? WHERE account_id = ?').bind(status, now.toISOString(), accountId),
-    db.prepare('UPDATE accounts SET plan = ? WHERE id = ?').bind(plan, accountId),
+    db
+      .prepare("UPDATE subscriptions SET status = ?, updated_at = ? WHERE account_id = ?")
+      .bind(status, now.toISOString(), accountId),
+    db.prepare("UPDATE accounts SET plan = ? WHERE id = ?").bind(plan, accountId),
   ]);
 }
 
 export async function getAccountPlan({ db, accountId }: { db: D1Database; accountId: string }) {
-  const row = await db.prepare('SELECT plan FROM accounts WHERE id = ?').bind(accountId).first<{ plan: Plan }>();
+  const row = await db.prepare("SELECT plan FROM accounts WHERE id = ?").bind(accountId).first<{ plan: Plan }>();
   return row?.plan ?? null;
 }

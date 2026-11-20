@@ -1,7 +1,7 @@
-import { and, arr, bool, num, obj, or, str, val, type Contract } from '@withease/contracts';
+import { and, arr, bool, num, obj, or, str, val, type Contract } from "@withease/contracts";
 
-export type Category = 'hot' | 'warm' | 'cold' | 'spam';
-export type Intent = 'new-project' | 'partnership' | 'rfp' | 'support' | 'job' | 'spam' | 'other';
+export type Category = "hot" | "warm" | "cold" | "spam";
+export type Intent = "new-project" | "partnership" | "rfp" | "support" | "job" | "spam" | "other";
 
 export type LeadInput = {
   name: string;
@@ -38,16 +38,8 @@ const scoreInRange: Contract<number, number> = {
 
 export const AnalysisContract: Contract<unknown, Analysis> = obj({
   score: and(num, scoreInRange),
-  category: or(val('hot'), val('warm'), val('cold'), val('spam')),
-  intent: or(
-    val('new-project'),
-    val('partnership'),
-    val('rfp'),
-    val('support'),
-    val('job'),
-    val('spam'),
-    val('other'),
-  ),
+  category: or(val("hot"), val("warm"), val("cold"), val("spam")),
+  intent: or(val("new-project"), val("partnership"), val("rfp"), val("support"), val("job"), val("spam"), val("other")),
   budget: nullableStr,
   timeline: nullableStr,
   decisionMaker: bool,

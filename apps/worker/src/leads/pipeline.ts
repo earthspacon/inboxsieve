@@ -1,7 +1,7 @@
-import { PLAN_LIMITS, type LeadInput, type LeadStatus } from '@inboxsieve/contract';
+import { PLAN_LIMITS, type LeadInput, type LeadStatus } from "@inboxsieve/contract";
 
-import { buildSpamAnalysis, isRuleSpam } from '../analysis/rules';
-import { countMonthlyLeads, findLeadByDedupeKey, getBrandOwner, insertLead, transitionLead } from '../repo';
+import { buildSpamAnalysis, isRuleSpam } from "../analysis/rules";
+import { countMonthlyLeads, findLeadByDedupeKey, getBrandOwner, insertLead, transitionLead } from "../repo";
 
 export type ParsedLead = { ok: true; lead: LeadInput } | { ok: false; error: string };
 
@@ -46,8 +46,8 @@ export async function admitLead({
   if (!leadId) {
     const existing = dedupeKey ? await findLeadByDedupeKey({ db, brandId, dedupeKey }) : null;
     return {
-      leadId: existing?.id ?? '',
-      status: existing?.status ?? 'received',
+      leadId: existing?.id ?? "",
+      status: existing?.status ?? "received",
       duplicate: true,
     };
   }
@@ -62,21 +62,21 @@ export async function admitLead({
   if (!parsed.ok) {
     await transitionLead({
       ...step,
-      from: 'received',
-      to: 'parse_failed',
+      from: "received",
+      to: "parse_failed",
       set: { last_error: parsed.error },
     });
     return {
       leadId,
-      status: 'parse_failed',
+      status: "parse_failed",
       duplicate: false,
     };
   }
 
   await transitionLead({
     ...step,
-    from: 'received',
-    to: 'parsed',
+    from: "received",
+    to: "parsed",
   });
   const status = await routeParsedLead({
     ...step,
@@ -101,7 +101,7 @@ export async function queueForAnalysis({
   leadId: string;
   from: LeadStatus;
   now: Date;
-}): Promise<'queued' | 'over_quota'> {
+}): Promise<"queued" | "over_quota"> {
   const step = {
     db,
     brandId,
@@ -115,20 +115,20 @@ export async function queueForAnalysis({
   if (!owner || used >= PLAN_LIMITS[owner.plan].leadsPerMonth) {
     await transitionLead({
       ...step,
-      to: 'over_quota',
+      to: "over_quota",
     });
-    return 'over_quota';
+    return "over_quota";
   }
 
   await transitionLead({
     ...step,
-    to: 'queued',
+    to: "queued",
     set: {
       counts_to_quota: 1,
       next_attempt_at: now.toISOString(),
     },
   });
-  return 'queued';
+  return "queued";
 }
 
 export function getMonthStart(now: Date) {
@@ -136,11 +136,11 @@ export function getMonthStart(now: Date) {
 }
 
 const EMPTY_LEAD: LeadInput = {
-  name: '',
-  email: '',
-  company: '',
-  subject: '',
-  message: '',
+  name: "",
+  email: "",
+  company: "",
+  subject: "",
+  message: "",
 };
 
 async function routeParsedLead({
@@ -161,22 +161,22 @@ async function routeParsedLead({
     brandId,
     leadId,
     now,
-    from: 'parsed' as const,
+    from: "parsed" as const,
   };
 
   if (isRuleSpam(lead)) {
     const analysis = buildSpamAnalysis();
     await transitionLead({
       ...step,
-      to: 'spam_filtered',
+      to: "spam_filtered",
       set: {
-        stage: 'spam',
+        stage: "spam",
         analysis: JSON.stringify(analysis),
         score: analysis.score,
         category: analysis.category,
       },
     });
-    return 'spam_filtered';
+    return "spam_filtered";
   }
 
   return queueForAnalysis(step);

@@ -1,6 +1,6 @@
-import { AnalysisContract, type Analysis } from '@inboxsieve/contract';
+import { AnalysisContract, type Analysis } from "@inboxsieve/contract";
 
-import { DEFAULT_PROFILE, type LeadAnalyzer } from '../analysis/analyzer';
+import { DEFAULT_PROFILE, type LeadAnalyzer } from "../analysis/analyzer";
 import {
   claimLead,
   getBrandProfile,
@@ -9,7 +9,7 @@ import {
   requeueStaleLeads,
   transitionLead,
   type LeadRow,
-} from '../repo';
+} from "../repo";
 
 export const MAX_ATTEMPTS = 3;
 export const RETRY_DELAYS_MS = [30_000, 120_000];
@@ -43,8 +43,8 @@ export async function processLead({
       brandId,
       leadId,
       now,
-      from: 'analyzing',
-      to: 'analyzed',
+      from: "analyzing",
+      to: "analyzed",
       set: {
         analysis: JSON.stringify(analysis),
         score: analysis.score,
@@ -56,7 +56,7 @@ export async function processLead({
       },
     });
   } catch (error) {
-    const lastError = error instanceof Error ? error.message : 'Analysis failed';
+    const lastError = error instanceof Error ? error.message : "Analysis failed";
 
     if (lead.attempts >= MAX_ATTEMPTS) {
       return transitionLead({
@@ -64,8 +64,8 @@ export async function processLead({
         brandId,
         leadId,
         now,
-        from: 'analyzing',
-        to: 'analysis_failed',
+        from: "analyzing",
+        to: "analysis_failed",
         set: { last_error: lastError },
       });
     }
@@ -74,8 +74,8 @@ export async function processLead({
       brandId,
       leadId,
       now,
-      from: 'analyzing',
-      to: 'queued',
+      from: "analyzing",
+      to: "queued",
       set: {
         last_error: lastError,
         next_attempt_at: new Date(now.getTime() + RETRY_DELAYS_MS[lead.attempts - 1]).toISOString(),
@@ -104,7 +104,6 @@ export async function runDueJobs({ db, analyzer, now }: { db: D1Database; analyz
   return processed;
 }
 
-
 async function analyzeClaimedLead({ db, analyzer, lead }: { db: D1Database; analyzer: LeadAnalyzer; lead: LeadRow }) {
   const saved = await getBrandProfile({ db, brandId: lead.brand_id });
   const examples = await listFeedbackExamples({ db, brandId: lead.brand_id });
@@ -121,15 +120,15 @@ async function analyzeClaimedLead({ db, analyzer, lead }: { db: D1Database; anal
   });
 
   if (!AnalysisContract.isData(analysis)) {
-    throw new Error(`Analysis does not match the contract: ${AnalysisContract.getErrorMessages(analysis).join('; ')}`);
+    throw new Error(`Analysis does not match the contract: ${AnalysisContract.getErrorMessages(analysis).join("; ")}`);
   }
   const valid: Analysis = analysis;
   return valid;
 }
 
 function getSpamStage({ analysis, lead }: { analysis: Analysis; lead: LeadRow }) {
-  if (analysis.category === 'spam' && lead.stage === 'new') {
-    return { stage: 'spam' as const };
+  if (analysis.category === "spam" && lead.stage === "new") {
+    return { stage: "spam" as const };
   }
   return {};
 }

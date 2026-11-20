@@ -1,36 +1,36 @@
-import { useUnit } from 'effector-react';
-import { Bot, CheckCircle2, Inbox, KanbanSquare, LayoutDashboard, Plus, Settings, XCircle } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
-import { HashRouter, NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { useUnit } from "effector-react";
+import { Bot, CheckCircle2, Inbox, KanbanSquare, LayoutDashboard, Plus, Settings, XCircle } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { HashRouter, NavLink, Route, Routes, useNavigate } from "react-router-dom";
 
-import { $isSimulateOpen, leadSimulated, simulateClosed, simulateOpened } from '../leads/model';
-import { DashboardPage } from '../pages/DashboardPage';
-import { InboxPage } from '../pages/InboxPage';
-import { LeadPage } from '../pages/LeadPage';
-import { PipelinePage } from '../pages/PipelinePage';
-import { SettingsPage } from '../pages/SettingsPage';
-import { $mode } from '../settings/model';
-import { $toast } from '../shared/toast-model';
+import { $isSimulateOpen, leadSimulated, simulateClosed, simulateOpened } from "../leads/model";
+import { DashboardPage } from "../pages/DashboardPage";
+import { InboxPage } from "../pages/InboxPage";
+import { LeadPage } from "../pages/LeadPage";
+import { PipelinePage } from "../pages/PipelinePage";
+import { SettingsPage } from "../pages/SettingsPage";
+import { $mode } from "../settings/model";
+import { $toast } from "../shared/toast-model";
 
 const NAV_ITEMS = [
   {
-    to: '/',
-    label: 'Inbox',
+    to: "/",
+    label: "Inbox",
     icon: Inbox,
   },
   {
-    to: '/pipeline',
-    label: 'Pipeline',
+    to: "/pipeline",
+    label: "Pipeline",
     icon: KanbanSquare,
   },
   {
-    to: '/dashboard',
-    label: 'Dashboard',
+    to: "/dashboard",
+    label: "Dashboard",
     icon: LayoutDashboard,
   },
   {
-    to: '/settings',
-    label: 'Settings',
+    to: "/settings",
+    label: "Settings",
     icon: Settings,
   },
 ];
@@ -87,9 +87,9 @@ const Sidebar = () => {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === "/"}
               className={({ isActive }) => {
-                return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'}`;
+                return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-brand-50 text-brand-700" : "text-slate-600 hover:bg-slate-50"}`;
               }}
             >
               <Icon className="size-4" />
@@ -100,7 +100,9 @@ const Sidebar = () => {
       </nav>
       <div className="mt-auto space-y-3">
         <ModeBadge />
-        <p className="text-[11px] leading-snug text-slate-400">Demo · own product · built in {BUILT_IN_HOURS} h. All leads and companies are made up.</p>
+        <p className="text-[11px] leading-snug text-slate-400">
+          Demo · own product · built in {BUILT_IN_HOURS} h. All leads and companies are made up.
+        </p>
       </div>
     </aside>
   );
@@ -123,9 +125,9 @@ const BottomNav = () => {
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === "/"}
             className={({ isActive }) => {
-              return `flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${isActive ? 'text-brand-600' : 'text-slate-500'}`;
+              return `flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${isActive ? "text-brand-600" : "text-slate-500"}`;
             }}
           >
             <Icon className="size-5" />
@@ -141,13 +143,13 @@ const ModeBadge = () => {
   const { mode } = useUnit({ mode: $mode });
   return (
     <NavLink to="/settings" className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-      <span className={`size-2 rounded-full ${mode === 'live' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-      {mode === 'live' ? 'Live · Claude Haiku' : 'Demo analyzer (offline)'}
+      <span className={`size-2 rounded-full ${mode === "live" ? "bg-emerald-500" : "bg-amber-400"}`} />
+      {mode === "live" ? "Live · Claude Haiku" : "Demo analyzer (offline)"}
     </NavLink>
   );
 };
 
-const SimulateButton = ({ className = '' }: { className?: string }) => {
+const SimulateButton = ({ className = "" }: { className?: string }) => {
   return (
     <button
       type="button"
@@ -167,8 +169,14 @@ const SimulateDialog = () => {
     return null;
   }
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4" onClick={() => simulateClosed()}>
-      <div className="w-full max-w-lg rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-30 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
+      onClick={() => simulateClosed()}
+    >
+      <div
+        className="w-full max-w-lg rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
         <SimulateForm />
       </div>
     </div>
@@ -176,10 +184,10 @@ const SimulateDialog = () => {
 };
 
 const SimulateForm = () => {
-  const [name, setName] = useState('Jordan Ellis');
-  const [email, setEmail] = useState('jordan@ledgerpine.example');
-  const [company, setCompany] = useState('Ledgerpine Accounting');
-  const [subject, setSubject] = useState('AI agent to sort client emails');
+  const [name, setName] = useState("Jordan Ellis");
+  const [email, setEmail] = useState("jordan@ledgerpine.example");
+  const [company, setCompany] = useState("Ledgerpine Accounting");
+  const [subject, setSubject] = useState("AI agent to sort client emails");
   const [message, setMessage] = useState(SAMPLE_LEAD);
   const navigate = useNavigate();
 
@@ -192,7 +200,7 @@ const SimulateForm = () => {
       subject,
       message,
     });
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -220,10 +228,17 @@ const SimulateForm = () => {
         />
       </label>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => simulateClosed()} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <button
+          type="button"
+          onClick={() => simulateClosed()}
+          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+        >
           Cancel
         </button>
-        <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+        <button
+          type="submit"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+        >
           Send to agent
         </button>
       </div>
@@ -258,10 +273,13 @@ const ToastView = () => {
   if (!toast) {
     return null;
   }
-  const Icon = toast.tone === 'success' ? CheckCircle2 : XCircle;
+  const Icon = toast.tone === "success" ? CheckCircle2 : XCircle;
   return (
-    <div role="status" className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-sm items-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg lg:bottom-6">
-      <Icon className={`size-4 shrink-0 ${toast.tone === 'success' ? 'text-emerald-400' : 'text-rose-400'}`} />
+    <div
+      role="status"
+      className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-sm items-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg lg:bottom-6"
+    >
+      <Icon className={`size-4 shrink-0 ${toast.tone === "success" ? "text-emerald-400" : "text-rose-400"}`} />
       {toast.text}
     </div>
   );

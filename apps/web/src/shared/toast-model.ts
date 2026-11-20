@@ -1,14 +1,14 @@
-import { createEffect, createEvent, createStore, sample } from 'effector';
+import { createEffect, createEvent, createStore, sample } from "effector";
 
 export type Toast = {
   id: number;
   text: string;
-  tone: 'success' | 'error';
+  tone: "success" | "error";
 };
 
 const TOAST_MS = 3500;
 
-export const toastShown = createEvent<Omit<Toast, 'id'>>();
+export const toastShown = createEvent<Omit<Toast, "id">>();
 
 export const $toast = createStore<Toast | null>(null);
 

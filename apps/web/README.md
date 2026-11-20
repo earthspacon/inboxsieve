@@ -10,11 +10,11 @@ An inbound lead triage app for small B2B teams. Contact-form submissions and ema
 
 ## Screens
 
-| Inbox | Lead detail |
-|---|---|
-| ![Inbox](docs/inbox-desktop.png) | ![Lead detail](docs/lead-detail-desktop.png) |
-| **Pipeline** | **Dashboard** |
-| ![Pipeline](docs/pipeline-desktop.png) | ![Dashboard](docs/dashboard-desktop.png) |
+| Inbox                                  | Lead detail                                  |
+| -------------------------------------- | -------------------------------------------- |
+| ![Inbox](docs/inbox-desktop.png)       | ![Lead detail](docs/lead-detail-desktop.png) |
+| **Pipeline**                           | **Dashboard**                                |
+| ![Pipeline](docs/pipeline-desktop.png) | ![Dashboard](docs/dashboard-desktop.png)     |
 
 Mobile (390 px):
 

@@ -10,5 +10,5 @@ export type Env = {
 };
 
 export function isDev(env: Env) {
-  return env.DEV_ROUTES === '1';
+  return env.DEV_ROUTES === "1";
 }

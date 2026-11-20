@@ -1,13 +1,13 @@
-import { useUnit } from 'effector-react';
-import { Mail, MessageSquareText, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useUnit } from "effector-react";
+import { Mail, MessageSquareText, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
-import { CATEGORY_CONFIG, STAGE_CONFIG, STAGES } from '../leads/config';
-import type { Category, Lead, Stage } from '../leads/config';
-import { $analyzingIds, $filters, $leadList, $visibleLeads, filtersChanged } from '../leads/model';
-import { Avatar, Card, formatDate, ScoreBadge, StagePill } from './ui';
+import { CATEGORY_CONFIG, STAGE_CONFIG, STAGES } from "../leads/config";
+import type { Category, Lead, Stage } from "../leads/config";
+import { $analyzingIds, $filters, $leadList, $visibleLeads, filtersChanged } from "../leads/model";
+import { Avatar, Card, formatDate, ScoreBadge, StagePill } from "./ui";
 
-const CATEGORIES: Category[] = ['hot', 'warm', 'cold', 'spam'];
+const CATEGORIES: Category[] = ["hot", "warm", "cold", "spam"];
 
 export const InboxPage = () => {
   return (
@@ -21,7 +21,7 @@ export const InboxPage = () => {
 
 const InboxHeader = () => {
   const { leads } = useUnit({ leads: $leadList });
-  const newCount = leads.filter((lead) => lead.stage === 'new' || lead.stage === 'qualified').length;
+  const newCount = leads.filter((lead) => lead.stage === "new" || lead.stage === "qualified").length;
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
@@ -47,15 +47,24 @@ const Filters = () => {
         />
       </label>
       <div className="flex flex-wrap gap-1.5">
-        <Chip isActive={filters.stage === 'all'} label="All stages" onClick={() => filtersChanged({ stage: 'all' })} />
+        <Chip isActive={filters.stage === "all"} label="All stages" onClick={() => filtersChanged({ stage: "all" })} />
         {STAGES.map((stage: Stage) => {
           return (
-            <Chip key={stage} isActive={filters.stage === stage} label={STAGE_CONFIG[stage].label} onClick={() => filtersChanged({ stage })} />
+            <Chip
+              key={stage}
+              isActive={filters.stage === stage}
+              label={STAGE_CONFIG[stage].label}
+              onClick={() => filtersChanged({ stage })}
+            />
           );
         })}
       </div>
       <div className="flex flex-wrap gap-1.5 lg:ml-auto">
-        <Chip isActive={filters.category === 'all'} label="Any score" onClick={() => filtersChanged({ category: 'all' })} />
+        <Chip
+          isActive={filters.category === "all"}
+          label="Any score"
+          onClick={() => filtersChanged({ category: "all" })}
+        />
         {CATEGORIES.map((category) => {
           return (
             <Chip
@@ -76,7 +85,7 @@ const Chip = ({ isActive, label, onClick }: { isActive: boolean; label: string; 
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-xs font-medium ${isActive ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'}`}
+      className={`rounded-full border px-3 py-1 text-xs font-medium ${isActive ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
     >
       {label}
     </button>
@@ -87,11 +96,7 @@ const LeadList = () => {
   const { leads, analyzingIds } = useUnit({ leads: $visibleLeads, analyzingIds: $analyzingIds });
 
   if (leads.length === 0) {
-    return (
-      <Card className="p-10 text-center text-sm text-slate-500">
-        No leads match these filters.
-      </Card>
-    );
+    return <Card className="p-10 text-center text-sm text-slate-500">No leads match these filters.</Card>;
   }
   return (
     <Card className="divide-y divide-slate-100 overflow-hidden">
@@ -103,7 +108,7 @@ const LeadList = () => {
 };
 
 const LeadRow = ({ lead, isAnalyzing }: { lead: Lead; isAnalyzing: boolean }) => {
-  const SourceIcon = lead.source === 'email' ? Mail : MessageSquareText;
+  const SourceIcon = lead.source === "email" ? Mail : MessageSquareText;
   return (
     <Link to={`/leads/${lead.id}`} className="flex gap-3 px-4 py-3 hover:bg-slate-50">
       <Avatar name={lead.name} />

@@ -1,23 +1,23 @@
-import { HOT_SCORE, WARM_SCORE } from '@inboxsieve/contract';
-import type { Analysis, Category, Intent, LeadInput } from '@inboxsieve/contract';
+import { HOT_SCORE, WARM_SCORE } from "@inboxsieve/contract";
+import type { Analysis, Category, Intent, LeadInput } from "@inboxsieve/contract";
 
-import type { LeadAnalyzer } from './analyzer';
+import type { LeadAnalyzer } from "./analyzer";
 
 const CATEGORY_LABELS: Record<Category, string> = {
-  hot: 'Hot',
-  warm: 'Warm',
-  cold: 'Cold',
-  spam: 'Spam',
+  hot: "Hot",
+  warm: "Warm",
+  cold: "Cold",
+  spam: "Spam",
 };
 
 const INTENT_LABELS: Record<Intent, string> = {
-  'new-project': 'New project',
-  partnership: 'Partnership',
-  rfp: 'Enterprise RFP',
-  support: 'Support request',
-  job: 'Job / vendor pitch',
-  spam: 'Spam',
-  other: 'General enquiry',
+  "new-project": "New project",
+  partnership: "Partnership",
+  rfp: "Enterprise RFP",
+  support: "Support request",
+  job: "Job / vendor pitch",
+  spam: "Spam",
+  other: "General enquiry",
 };
 
 const BASE_SCORE = 20;
@@ -38,23 +38,24 @@ const SPAM_PATTERNS = [
 
 const INTENT_PATTERNS: Array<{ intent: Intent; pattern: RegExp }> = [
   {
-    intent: 'rfp',
+    intent: "rfp",
     pattern: /\b(rfp|request for proposal|procurement|vendor selection|tender)\b/i,
   },
   {
-    intent: 'partnership',
+    intent: "partnership",
     pattern: /\b(partner(ship)?|white[- ]label|referral|subcontract|overflow work)\b/i,
   },
   {
-    intent: 'job',
-    pattern: /\b(hire me|my portfolio|looking for (a )?(job|position)|offshore team|our developers? (are|is) available)\b/i,
+    intent: "job",
+    pattern:
+      /\b(hire me|my portfolio|looking for (a )?(job|position)|offshore team|our developers? (are|is) available)\b/i,
   },
   {
-    intent: 'support',
+    intent: "support",
     pattern: /\b(bug|broken|not working|fix (my|our)|plugin|theme)\b/i,
   },
   {
-    intent: 'new-project',
+    intent: "new-project",
     pattern: /\b(build|automate|automation|agent|mvp|integrat\w*|workflow|app|platform|dashboard)\b/i,
   },
 ];
@@ -63,7 +64,14 @@ const FIT_PATTERNS = [/\bai\b/i, /automat/i, /\bagent/i, /\bmvp\b/i, /\bsaas\b/i
 const MAX_FIT_POINTS = 15;
 const FIT_POINTS = 5;
 
-const LOW_FIT_PATTERNS = [/\bcheap(est)?\b/i, /\bfor free\b/i, /\bequity only\b/i, /\bunpaid\b/i, /\blogo\b/i, /\bwordpress\b/i];
+const LOW_FIT_PATTERNS = [
+  /\bcheap(est)?\b/i,
+  /\bfor free\b/i,
+  /\bequity only\b/i,
+  /\bunpaid\b/i,
+  /\blogo\b/i,
+  /\bwordpress\b/i,
+];
 
 const DECISION_MAKER_PATTERN = /\b(founder|co-founder|ceo|cto|coo|owner|head of|vp|director|managing partner)\b/i;
 
@@ -100,14 +108,14 @@ export function isRuleSpam(lead: LeadInput) {
 export function buildSpamAnalysis(): Analysis {
   return {
     score: SPAM_SCORE,
-    category: 'spam',
-    intent: 'spam',
+    category: "spam",
+    intent: "spam",
     budget: null,
     timeline: null,
     decisionMaker: false,
-    summary: 'Unsolicited pitch. No buying intent.',
-    reasons: ['Matches spam patterns (SEO / link selling / generic greeting)', 'Archive without reply'],
-    draftReply: '',
+    summary: "Unsolicited pitch. No buying intent.",
+    reasons: ["Matches spam patterns (SEO / link selling / generic greeting)", "Archive without reply"],
+    draftReply: "",
   };
 }
 
@@ -138,7 +146,7 @@ export function analyzeLead({ lead: input, signature }: { lead: LeadInput; signa
     reasons.push(`Budget ${budget.label} is below our minimum`);
   }
   if (!budget) {
-    reasons.push('No budget mentioned');
+    reasons.push("No budget mentioned");
   }
 
   if (timeline) {
@@ -148,33 +156,30 @@ export function analyzeLead({ lead: input, signature }: { lead: LeadInput; signa
 
   if (decisionMaker) {
     score += 10;
-    reasons.push('Written by a decision maker');
+    reasons.push("Written by a decision maker");
   }
 
-  const fitPoints = Math.min(
-    FIT_PATTERNS.filter((pattern) => pattern.test(text)).length * FIT_POINTS,
-    MAX_FIT_POINTS,
-  );
+  const fitPoints = Math.min(FIT_PATTERNS.filter((pattern) => pattern.test(text)).length * FIT_POINTS, MAX_FIT_POINTS);
   if (fitPoints > 0) {
     score += fitPoints;
-    reasons.push('Asks for AI / automation work we sell');
+    reasons.push("Asks for AI / automation work we sell");
   }
 
-  if (intent === 'rfp') {
+  if (intent === "rfp") {
     score += 10;
-    reasons.push('Formal RFP: larger deal, longer cycle');
+    reasons.push("Formal RFP: larger deal, longer cycle");
   }
-  if (intent === 'partnership') {
+  if (intent === "partnership") {
     score += 15;
-    reasons.push('Agency partner: a channel for repeat projects');
+    reasons.push("Agency partner: a channel for repeat projects");
   }
-  if (intent === 'job' || intent === 'support') {
+  if (intent === "job" || intent === "support") {
     score -= 20;
     reasons.push(`${INTENT_LABELS[intent]}, not a buyer`);
   }
   if (LOW_FIT_PATTERNS.some((pattern) => pattern.test(text))) {
     score -= 25;
-    reasons.push('Low-budget or off-scope request');
+    reasons.push("Low-budget or off-scope request");
   }
 
   const finalScore = Math.max(0, Math.min(100, score));
@@ -207,12 +212,12 @@ export function analyzeLead({ lead: input, signature }: { lead: LeadInput; signa
 
 export function getCategory(score: number): Category {
   if (score >= HOT_SCORE) {
-    return 'hot';
+    return "hot";
   }
   if (score >= WARM_SCORE) {
-    return 'warm';
+    return "warm";
   }
-  return 'cold';
+  return "cold";
 }
 
 export function extractBudget(text: string): { label: string; usd: number } | null {
@@ -225,7 +230,7 @@ export function extractBudget(text: string): { label: string; usd: number } | nu
   const [label, , from, fromK, to, toK] = match;
   const isThousands = Boolean(fromK ?? toK);
   const toAmount = (value: string) => {
-    return Number(value.replace(',', '')) * (isThousands ? THOUSAND : 1);
+    return Number(value.replace(",", "")) * (isThousands ? THOUSAND : 1);
   };
   const usd = to ? toAmount(to) : toAmount(from);
 
@@ -246,9 +251,8 @@ export function extractTimeline(text: string): string | null {
 }
 
 function detectIntent(text: string): Intent {
-  return INTENT_PATTERNS.find(({ pattern }) => pattern.test(text))?.intent ?? 'other';
+  return INTENT_PATTERNS.find(({ pattern }) => pattern.test(text))?.intent ?? "other";
 }
-
 
 function buildSummary({
   input,
@@ -270,7 +274,7 @@ function buildSummary({
     budget && `budget ${budget}`,
     timeline,
   ];
-  return facts.filter(Boolean).join(' · ');
+  return facts.filter(Boolean).join(" · ");
 }
 
 function buildDraftReply({
@@ -286,8 +290,8 @@ function buildDraftReply({
   intent: Intent;
   timeline: string | null;
 }) {
-  const firstName = input.name.split(' ')[0];
-  const company = input.company || 'your team';
+  const firstName = input.name.split(" ")[0];
+  const company = input.company || "your team";
   const body = getReplyBody({
     category,
     intent,
@@ -309,20 +313,20 @@ function getReplyBody({
   company: string;
   timeline: string | null;
 }) {
-  if (intent === 'partnership') {
+  if (intent === "partnership") {
     return `We work with a few agencies on overflow and white-label projects, and ${company} sounds like a good match. Could we do a 20-minute call next week to compare how we scope and hand off work?`;
   }
-  if (intent === 'rfp') {
+  if (intent === "rfp") {
     return `We'd be glad to respond to the RFP. Please send the full document and the evaluation timeline; we'll confirm our intent to bid within two business days and list any clarifying questions.`;
   }
-  if (intent === 'job') {
+  if (intent === "job") {
     return `We're not hiring or adding vendors at the moment, but we'll keep your details on file and reach out if that changes.`;
   }
-  if (category === 'hot') {
-    const when = timeline ? `, and your timeline (${timeline}) works for us` : '';
+  if (category === "hot") {
+    const when = timeline ? `, and your timeline (${timeline}) works for us` : "";
     return `This is exactly the kind of work we do: AI agents and automations for teams like ${company}. The scope you describe is a good fit${when}. Are you free for a 30-minute call this week? I'll bring a rough plan and a fixed-price estimate.`;
   }
-  if (category === 'warm') {
+  if (category === "warm") {
     return `It sounds like something we can help ${company} with. To give you a useful estimate, could you share your rough budget, the tools you use today, and when you'd like this live?`;
   }
   return `At the moment this falls outside what we usually take on, so we may not be the best fit. If the scope grows into automation or an AI agent, we'd be happy to talk again.`;

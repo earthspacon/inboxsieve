@@ -1,4 +1,4 @@
-import { and, arr, bool, num, obj, or, str, val, type Contract } from '@withease/contracts';
+import { and, arr, bool, num, obj, or, str, val, type Contract } from "@withease/contracts";
 
 const MAX_SCORE = 100;
 
@@ -13,16 +13,8 @@ const scoreInRange: Contract<number, number> = {
 
 export const AnalysisContract = obj({
   score: and(num, scoreInRange),
-  category: or(val('hot'), val('warm'), val('cold'), val('spam')),
-  intent: or(
-    val('new-project'),
-    val('partnership'),
-    val('rfp'),
-    val('support'),
-    val('job'),
-    val('spam'),
-    val('other'),
-  ),
+  category: or(val("hot"), val("warm"), val("cold"), val("spam")),
+  intent: or(val("new-project"), val("partnership"), val("rfp"), val("support"), val("job"), val("spam"), val("other")),
   budget: nullableStr,
   timeline: nullableStr,
   decisionMaker: bool,
@@ -31,11 +23,11 @@ export const AnalysisContract = obj({
   draftReply: str,
 });
 
-const StageContract = or(val('new'), val('qualified'), val('replied'), val('won'), val('lost'));
+const StageContract = or(val("new"), val("qualified"), val("replied"), val("won"), val("lost"));
 
 export const LeadContract = obj({
   id: str,
-  source: or(val('form'), val('email')),
+  source: or(val("form"), val("email")),
   name: str,
   email: str,
   company: str,
