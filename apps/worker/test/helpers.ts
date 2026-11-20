@@ -80,7 +80,10 @@ export async function seedSource({ brandId, kind }: { brandId: string; kind: Sou
   return row;
 }
 
-export function createMockAnalyzer(reply: (request: AnalysisRequest) => unknown = () => VALID_ANALYSIS) {
+export function createMockAnalyzer(
+  reply: (request: AnalysisRequest) => unknown = () => VALID_ANALYSIS,
+  { costUsd = 0 }: { costUsd?: number } = {},
+) {
   const calls: AnalysisRequest[] = [];
   const analyzer: LeadAnalyzer = {
     analyze: async (request) => {
@@ -89,7 +92,10 @@ export function createMockAnalyzer(reply: (request: AnalysisRequest) => unknown 
       if (!isAnalysisShaped(result)) {
         return Promise.reject(new Error("mock reply is not an object"));
       }
-      return result;
+      return {
+        analysis: result,
+        costUsd,
+      };
     },
   };
   return {

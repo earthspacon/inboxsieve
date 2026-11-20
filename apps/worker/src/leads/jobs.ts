@@ -3,8 +3,13 @@ import { AnalysisContract, type Analysis } from "@inboxsieve/contract";
 import { queueHotLeadAlerts, runAlertDeliveries } from "../alerts/alerts";
 import { DEFAULT_PROFILE, type LeadAnalyzer } from "../analysis/analyzer";
 import type { Deps } from "../deps";
+import { readLlmBudget, type LlmBudget } from "../analysis/budget";
 import {
+  addLlmSpend,
   claimLead,
+  claimLlmCapAlert,
+  getBrandOwner,
+  getLlmSpend,
   getBrandProfile,
   hasNotSpamFeedback,
   listDueLeads,
@@ -41,7 +46,7 @@ export async function processLead({
 
   let analysis: Analysis;
   try {
-    analysis = await analyzeClaimedLead({ db, analyzer, lead });
+    analysis = await analyzeClaimedLead({ db, analyzer, lead, now });
   } catch (error) {
     const lastError = error instanceof Error ? error.message : "Analysis failed";
 
@@ -100,7 +105,12 @@ export async function processLead({
 
 // One sweep: analysis jobs first, then the hot-lead alerts they queued.
 export async function runQueues(deps: Pick<Deps, "db" | "analyzer" | "mailer" | "slack" | "env" | "now">) {
-  const processed = await runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() });
+  const processed = await runDueJobs({
+    db: deps.db,
+    analyzer: deps.analyzer,
+    now: deps.now(),
+    budget: readLlmBudget({ env: deps.env, mailer: deps.mailer }),
+  });
   await runAlertDeliveries({
     db: deps.db,
     channels: {
@@ -113,12 +123,31 @@ export async function runQueues(deps: Pick<Deps, "db" | "analyzer" | "mailer" | 
   return processed;
 }
 
-export async function runDueJobs({ db, analyzer, now }: { db: D1Database; analyzer: LeadAnalyzer; now: Date }) {
+// Over a daily LLM cap, leads stay `queued` and are picked up again the next UTC day.
+export async function runDueJobs({
+  db,
+  analyzer,
+  now,
+  budget,
+}: {
+  db: D1Database;
+  analyzer: LeadAnalyzer;
+  now: Date;
+  budget?: LlmBudget;
+}) {
   await requeueStaleLeads({ db, staleBefore: new Date(now.getTime() - STALE_ANALYZING_MS) });
   const due = await listDueLeads({ db, now, limit: SWEEP_BATCH });
+  const day = getUtcDay(now);
   let processed = 0;
 
   for (const job of due) {
+    if (budget && (await getLlmSpend({ db, day, accountId: null })) >= budget.dailyCapUsd) {
+      await alertCapReached({ db, budget, day, now });
+      break;
+    }
+    if (budget && (await isAccountOverCap({ db, budget, day, brandId: job.brand_id }))) {
+      continue;
+    }
     const result = await processLead({
       db,
       analyzer,
@@ -133,10 +162,20 @@ export async function runDueJobs({ db, analyzer, now }: { db: D1Database; analyz
   return processed;
 }
 
-async function analyzeClaimedLead({ db, analyzer, lead }: { db: D1Database; analyzer: LeadAnalyzer; lead: LeadRow }) {
+async function analyzeClaimedLead({
+  db,
+  analyzer,
+  lead,
+  now,
+}: {
+  db: D1Database;
+  analyzer: LeadAnalyzer;
+  lead: LeadRow;
+  now: Date;
+}) {
   const saved = await getBrandProfile({ db, brandId: lead.brand_id });
   const examples = await listFeedbackExamples({ db, brandId: lead.brand_id });
-  const analysis: unknown = await analyzer.analyze({
+  const { analysis, costUsd } = await analyzer.analyze({
     lead: {
       name: lead.name,
       email: lead.email,
@@ -147,7 +186,16 @@ async function analyzeClaimedLead({ db, analyzer, lead }: { db: D1Database; anal
     profile: saved?.profile ?? DEFAULT_PROFILE,
     examples,
   });
+  const owner = await getBrandOwner({ db, brandId: lead.brand_id });
 
+  if (owner && costUsd > 0) {
+    await addLlmSpend({
+      db,
+      day: getUtcDay(now),
+      accountId: owner.accountId,
+      usd: costUsd,
+    });
+  }
   if (!AnalysisContract.isData(analysis)) {
     throw new Error(`Analysis does not match the contract: ${AnalysisContract.getErrorMessages(analysis).join("; ")}`);
   }
@@ -169,4 +217,47 @@ function getSpamStage({
     return { stage: "spam" as const };
   }
   return {};
+}
+
+async function isAccountOverCap({
+  db,
+  budget,
+  day,
+  brandId,
+}: {
+  db: D1Database;
+  budget: LlmBudget;
+  day: string;
+  brandId: string;
+}) {
+  const owner = await getBrandOwner({ db, brandId });
+
+  if (!owner) {
+    return false;
+  }
+  return (await getLlmSpend({ db, day, accountId: owner.accountId })) >= budget.accountDailyCapUsd;
+}
+
+async function alertCapReached({
+  db,
+  budget,
+  day,
+  now,
+}: {
+  db: D1Database;
+  budget: LlmBudget;
+  day: string;
+  now: Date;
+}) {
+  if (!(await claimLlmCapAlert({ db, day, now }))) {
+    return;
+  }
+  await budget.alertOwner({
+    subject: `InboxSieve: the daily AI budget of $${budget.dailyCapUsd} is used up`,
+    text: "Lead analysis is paused until 00:00 UTC. New leads are kept as queued and get analyzed tomorrow.\nRaise LLM_DAILY_USD_CAP if this is real growth; otherwise look for abuse.",
+  });
+}
+
+function getUtcDay(now: Date) {
+  return now.toISOString().slice(0, 10);
 }

@@ -1,15 +1,25 @@
 import { SELF } from "cloudflare:test";
 
 export const BASE = "http://localhost:8787";
+// The token Turnstile's test sitekeys produce; the test secret key accepts only this one.
+export const TURNSTILE_TEST_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
 const LINK_PATTERN = /https?:\/\/\S+\/api\/auth\/magic-link\/verify\S+/;
 
-export async function requestMagicLink(email: string) {
+export async function requestMagicLink(
+  email: string,
+  { turnstileToken = TURNSTILE_TEST_TOKEN, ip }: { turnstileToken?: string; ip?: string } = {},
+) {
+  const headers = new Headers({
+    "content-type": "application/json",
+    origin: BASE,
+    "x-turnstile-token": turnstileToken,
+  });
+  if (ip) {
+    headers.set("cf-connecting-ip", ip);
+  }
   return SELF.fetch(`${BASE}/api/auth/sign-in/magic-link`, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      origin: BASE,
-    },
+    headers,
     body: JSON.stringify({
       email,
       callbackURL: "/app",

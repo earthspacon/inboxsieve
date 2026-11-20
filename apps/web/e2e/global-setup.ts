@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { E2E_PORT, E2E_URL, PADDLE_TEST_SECRET } from "./config";
+import { E2E_PORT, E2E_URL, PADDLE_TEST_SECRET, TURNSTILE_TEST_SECRET } from "./config";
 
 const WORKER_DIR = path.resolve(import.meta.dirname, "../../worker");
 const READY_TIMEOUT_MS = 90_000;
@@ -40,6 +40,8 @@ export async function setup() {
       "BETTER_AUTH_SECRET:e2e-only-secret-that-is-at-least-32-chars",
       "--var",
       `PADDLE_WEBHOOK_SECRET:${PADDLE_TEST_SECRET}`,
+      "--var",
+      `TURNSTILE_SECRET_KEY:${TURNSTILE_TEST_SECRET}`,
     ],
     {
       cwd: WORKER_DIR,

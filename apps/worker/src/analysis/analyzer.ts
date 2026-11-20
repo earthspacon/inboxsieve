@@ -14,8 +14,14 @@ export type AnalysisRequest = {
   examples: FeedbackExample[];
 };
 
+// costUsd feeds the daily LLM caps; analyzers that call no paid API report 0.
+export type AnalyzerResult = {
+  analysis: Analysis;
+  costUsd: number;
+};
+
 export type LeadAnalyzer = {
-  analyze: (request: AnalysisRequest) => Promise<Analysis>;
+  analyze: (request: AnalysisRequest) => Promise<AnalyzerResult>;
 };
 
 export const DEFAULT_PROFILE: BusinessProfile = {

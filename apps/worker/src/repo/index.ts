@@ -6,3 +6,4 @@ export * from "./sources";
 export * from "./billing";
 export * from "./seats";
 export * from "./data";
+export * from "./shield";

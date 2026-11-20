@@ -16,6 +16,12 @@ export type Env = {
   RESEND_API_KEY?: string;
   PADDLE_API_KEY?: string;
   PADDLE_WEBHOOK_SECRET?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  AUTH_LIMITER: RateLimit;
+  WEBHOOK_LIMITER: RateLimit;
+  LLM_DAILY_USD_CAP?: string;
+  LLM_ACCOUNT_DAILY_USD_CAP?: string;
+  OWNER_ALERT_EMAIL?: string;
 };
 
 export function isDev(env: Env) {

@@ -1,6 +1,6 @@
 import { useUnit } from "effector-react";
 import { MailCheck } from "lucide-react";
-import type { FormEvent } from "react";
+import { useEffect, useRef, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { Logo } from "../app/AppShell";
@@ -8,11 +8,16 @@ import {
   $email,
   $sendError,
   $sentTo,
+  $turnstileRound,
+  $turnstileToken,
   anotherEmailClicked,
   emailChanged,
   sendLinkFx,
   signInSubmitted,
+  turnstileExpired,
+  turnstileSolved,
 } from "../session/sign-in-model";
+import { loadTurnstile, TURNSTILE_SITE_KEY } from "../session/turnstile";
 import { Banner, BUTTON_PRIMARY, Card, INPUT } from "../shared/ui";
 
 export const SignInPage = () => {
@@ -26,10 +31,12 @@ export const SignInPage = () => {
 };
 
 const SignInForm = () => {
-  const { email, error, isSending } = useUnit({
+  const { email, error, isSending, round, token } = useUnit({
     email: $email,
     error: $sendError,
     isSending: sendLinkFx.pending,
+    round: $turnstileRound,
+    token: $turnstileToken,
   });
   const [searchParams] = useSearchParams();
   const linkError = searchParams.get("error");
@@ -61,12 +68,49 @@ const SignInForm = () => {
             className={INPUT}
           />
         </label>
-        <button type="submit" disabled={isSending} className={`${BUTTON_PRIMARY} w-full`}>
+        <TurnstileWidget key={round} />
+        <button type="submit" disabled={isSending || !token} className={`${BUTTON_PRIMARY} w-full`}>
           {linkError ? "Send a new link" : "Email me a sign-in link"}
         </button>
       </form>
     </Card>
   );
+};
+
+// Cloudflare's bot check; the token it returns goes with the request so the server can verify it.
+const TurnstileWidget = () => {
+  const container = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let widgetId = "";
+    let isMounted = true;
+
+    loadTurnstile()
+      .then((turnstile) => {
+        if (!isMounted || !container.current) {
+          return;
+        }
+        widgetId = turnstile.render(container.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          size: "flexible",
+          callback: turnstileSolved,
+          "expired-callback": turnstileExpired,
+          "error-callback": turnstileExpired,
+        });
+      })
+      .catch(() => {
+        turnstileExpired();
+      });
+
+    return () => {
+      isMounted = false;
+      if (widgetId) {
+        window.turnstile?.remove(widgetId);
+      }
+    };
+  }, []);
+
+  return <div ref={container} className="min-h-[65px]" />;
 };
 
 const LinkSent = ({ email }: { email: string }) => {

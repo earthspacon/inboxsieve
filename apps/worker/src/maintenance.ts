@@ -9,6 +9,7 @@ import {
   listDuePlanChanges,
   listEndedCancellations,
   listEndedLocalTrials,
+  purgeOldRateLimitHits,
   saveSubscription,
   type BillingRow,
 } from "./repo";
@@ -55,6 +56,7 @@ export async function runMaintenance({ deps, now }: { deps: Pick<Deps, "db" | "m
 
   summary.rawPurged = await purgeOldRawBodies({ db, now });
   summary.accountsDeleted = await purgeDeletedAccounts({ db, mailer: deps.mailer, now });
+  await purgeOldRateLimitHits({ db, now });
   return summary;
 }
 

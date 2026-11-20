@@ -1,6 +1,8 @@
 export const E2E_PORT = 8790;
 export const E2E_URL = `http://localhost:${E2E_PORT}`;
 export const PADDLE_TEST_SECRET = "pdl_ntfset_e2e_test_secret";
+// Cloudflare's "always passes" Turnstile secret; the SPA build uses the matching test sitekey.
+export const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
 export const CHROME_PATH =
   process.env.CHROME_PATH ??
   "/opt/ms-playwright/chromium_headless_shell-1254/chrome-headless-shell-linux64/chrome-headless-shell";

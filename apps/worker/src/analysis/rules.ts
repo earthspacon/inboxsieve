@@ -90,10 +90,13 @@ const THOUSAND = 1000;
 
 export const ruleAnalyzer: LeadAnalyzer = {
   analyze: async ({ lead, profile }) => {
-    return analyzeLead({
-      lead,
-      signature: profile.signature,
-    });
+    return {
+      analysis: analyzeLead({
+        lead,
+        signature: profile.signature,
+      }),
+      costUsd: 0,
+    };
   },
 };
 

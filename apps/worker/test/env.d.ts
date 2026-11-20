@@ -13,6 +13,12 @@ declare namespace Cloudflare {
     PADDLE_PRICE_AGENCY_MONTHLY: string;
     PADDLE_PRICE_AGENCY_YEARLY: string;
     PADDLE_WEBHOOK_SECRET: string;
+    TURNSTILE_SECRET_KEY: string;
+    AUTH_LIMITER: RateLimit;
+    WEBHOOK_LIMITER: RateLimit;
+    LLM_DAILY_USD_CAP: string;
+    LLM_ACCOUNT_DAILY_USD_CAP: string;
+    OWNER_ALERT_EMAIL: string;
     TEST_MIGRATIONS: import("cloudflare:test").D1Migration[];
   }
 }

@@ -25,7 +25,7 @@ describe("Anthropic analyzer (fetch stubbed, no network)", () => {
       Response.json({ content: [{ type: "text", text: JSON.stringify(VALID_ANALYSIS) }] }),
     );
 
-    const analysis = await createAnthropicAnalyzer({ apiKey: "test-key" }).analyze(REQUEST);
+    const { analysis } = await createAnthropicAnalyzer({ apiKey: "test-key" }).analyze(REQUEST);
 
     const [url, init] = fetchSpy.mock.calls[0];
     const headers = new Headers(init?.headers);

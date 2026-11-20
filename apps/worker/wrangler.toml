@@ -9,7 +9,18 @@ compatibility_flags = ["nodejs_compat"]
 directory = "../web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*"]
+run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*", "/app", "/app/*", "/sign-in"]
+
+# Per-minute limits (the binding only supports 10 s or 60 s windows). Longer windows live in D1 (rate_limit_hits).
+[[ratelimits]]
+name = "AUTH_LIMITER"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+
+[[ratelimits]]
+name = "WEBHOOK_LIMITER"
+namespace_id = "1002"
+simple = { limit = 120, period = 60 }
 
 [[d1_databases]]
 binding = "DB"
@@ -22,7 +33,7 @@ migrations_dir = "migrations"
 crons = ["* * * * *", "0 * * * *"]
 
 # Secrets, set with `wrangler secret put <NAME> --env production` (locally in .dev.vars):
-#   BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY, PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET
+#   BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY, PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, TURNSTILE_SECRET_KEY
 # Local defaults below; `--env production` uses the block at the end (see DEPLOY.md).
 [vars]
 APP_URL = "http://localhost:8787"
@@ -35,6 +46,9 @@ PADDLE_PRICE_SOLO_MONTHLY = "pri_solo_monthly_example"
 PADDLE_PRICE_SOLO_YEARLY = "pri_solo_yearly_example"
 PADDLE_PRICE_AGENCY_MONTHLY = "pri_agency_monthly_example"
 PADDLE_PRICE_AGENCY_YEARLY = "pri_agency_yearly_example"
+LLM_DAILY_USD_CAP = "3"
+LLM_ACCOUNT_DAILY_USD_CAP = "0.25"
+OWNER_ALERT_EMAIL = "owner@inboxsieve.example"
 
 # Production: `wrangler deploy --env production`. Bindings aren't inherited, so they are repeated here.
 [env.production]
@@ -45,7 +59,17 @@ routes = [{ pattern = "inboxsieve.com", custom_domain = true }]
 directory = "../web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*"]
+run_worker_first = ["/api/*", "/h/*", "/dev/*", "/paddle/*", "/app", "/app/*", "/sign-in"]
+
+[[env.production.ratelimits]]
+name = "AUTH_LIMITER"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+
+[[env.production.ratelimits]]
+name = "WEBHOOK_LIMITER"
+namespace_id = "1002"
+simple = { limit = 120, period = 60 }
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -67,3 +91,6 @@ PADDLE_PRICE_SOLO_MONTHLY = "REPLACE_WITH_PRICE_ID"
 PADDLE_PRICE_SOLO_YEARLY = "REPLACE_WITH_PRICE_ID"
 PADDLE_PRICE_AGENCY_MONTHLY = "REPLACE_WITH_PRICE_ID"
 PADDLE_PRICE_AGENCY_YEARLY = "REPLACE_WITH_PRICE_ID"
+LLM_DAILY_USD_CAP = "3"
+LLM_ACCOUNT_DAILY_USD_CAP = "0.25"
+OWNER_ALERT_EMAIL = "REPLACE_WITH_OWNER_EMAIL"

@@ -1,3 +1,5 @@
+import { SECURITY_HEADERS } from "@inboxsieve/contract";
+
 import { billingRoutes } from "./api/billing";
 import { brandRoutes } from "./api/brands";
 import { dataRoutes } from "./api/data";
@@ -14,8 +16,10 @@ import { HttpError, errorResponse, matchRoute, type Route } from "./http";
 import { handleWebhook } from "./ingest/webhook";
 import { runQueues } from "./leads/jobs";
 import { getAccountContext, getBrand, type AccountContext } from "./repo";
+import { guardAuthRequest } from "./shield/auth-guard";
+import { sha256Hex } from "./shield/client";
 
-const API_ROUTES: Route<ApiContext>[] = [
+export const API_ROUTES: Route<ApiContext>[] = [
   ...brandRoutes,
   ...sourceRoutes,
   ...leadRoutes,
@@ -28,8 +32,15 @@ const BRAND_PATH = "/api/brands/:brandId";
 const READ_METHODS = new Set(["GET", "HEAD"]);
 const AUTH_PREFIX = "/api/auth/";
 const WEBHOOK_PATH = /^\/h\/([a-f0-9]{32})$/;
+// SPA routes that must get the empty app shell, not the prerendered landing page in index.html.
+const APP_SHELL_PATH = /^\/(app|app\/.*|sign-in)$/;
+const APP_SHELL_ASSET = "/app-shell";
 
 export async function handleRequest({ deps, request }: { deps: Deps; request: Request }) {
+  return withSecurityHeaders(await routeRequestSafely({ deps, request }));
+}
+
+async function routeRequestSafely({ deps, request }: { deps: Deps; request: Request }) {
   try {
     return await routeRequest({ deps, request });
   } catch (error) {
@@ -46,6 +57,10 @@ async function routeRequest({ deps, request }: { deps: Deps; request: Request })
   const webhook = WEBHOOK_PATH.exec(pathname);
 
   if (webhook && request.method === "POST") {
+    const { success } = await deps.env.WEBHOOK_LIMITER.limit({ key: `hook:${await sha256Hex(webhook[1])}` });
+    if (!success) {
+      throw new HttpError(429, "rate_limited", "Too many submissions for this webhook. Retry in a minute");
+    }
     const response = await handleWebhook({ db: deps.db, request, token: webhook[1], now: deps.now() });
     deps.schedule(runQueues(deps));
     return response;
@@ -57,6 +72,7 @@ async function routeRequest({ deps, request }: { deps: Deps; request: Request })
     throw new HttpError(404, "not_found", "Unknown webhook");
   }
   if (pathname.startsWith(AUTH_PREFIX)) {
+    await guardAuthRequest({ deps, request });
     return createAuth({ env: deps.env, mailer: deps.mailer }).handler(request);
   }
   if (pathname.startsWith("/dev/")) {
@@ -64,6 +80,9 @@ async function routeRequest({ deps, request }: { deps: Deps; request: Request })
   }
   if (pathname.startsWith("/api/")) {
     return routeApiRequest({ deps, request });
+  }
+  if (APP_SHELL_PATH.test(pathname) && READ_METHODS.has(request.method) && deps.env.ASSETS) {
+    return deps.env.ASSETS.fetch(new URL(APP_SHELL_ASSET, request.url));
   }
   throw new HttpError(404, "not_found", "Not found");
 }
@@ -129,4 +148,12 @@ async function requireWritableBrand({
   if (brand?.readOnly) {
     throw new HttpError(403, "read_only", "This brand is read-only on your current plan. Upgrade to edit it");
   }
+}
+
+function withSecurityHeaders(response: Response) {
+  const secured = new Response(response.body, response);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    secured.headers.set(name, value);
+  }
+  return secured;
 }

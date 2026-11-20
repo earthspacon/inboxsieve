@@ -17,6 +17,7 @@ export default defineConfig(async () => {
             DEV_ROUTES: "1",
             BETTER_AUTH_SECRET: "test-only-secret-that-is-at-least-32-chars",
             PADDLE_WEBHOOK_SECRET: "pdl_ntfset_test_secret",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
           },
         },
       }),

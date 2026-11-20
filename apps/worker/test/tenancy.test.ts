@@ -34,6 +34,12 @@ const TENANT_RESOLVERS = new Set([
   // Invites are matched by the invited email at sign-in.
   "hasPendingInvite",
   "acceptPendingInvites",
+  // Abuse-shield counters: keyed by a hashed email/IP or by day, filled by the job runner; no route reads them.
+  "consumeRateLimit",
+  "purgeOldRateLimitHits",
+  "getLlmSpend",
+  "addLlmSpend",
+  "claimLlmCapAlert",
 ]);
 
 const NOW = new Date("2026-11-20T10:00:00.000Z");

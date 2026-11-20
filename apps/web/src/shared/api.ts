@@ -14,6 +14,7 @@ type RequestOptions = {
   path: string;
   method?: string;
   body?: unknown;
+  headers?: Record<string, string>;
 };
 
 const NETWORK_ERROR = "Can't reach InboxSieve. Check your connection and try again.";
@@ -27,11 +28,11 @@ export async function apiCommand(options: RequestOptions) {
   await sendRequest(options);
 }
 
-async function sendRequest({ path, method = "GET", body }: RequestOptions) {
+async function sendRequest({ path, method = "GET", body, headers }: RequestOptions) {
   const response = await fetch(path, {
     method,
     credentials: "same-origin",
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    headers: body === undefined ? headers : { "content-type": "application/json", ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
   }).catch(() => {
     throw new ApiRequestError(0, "network", NETWORK_ERROR);
