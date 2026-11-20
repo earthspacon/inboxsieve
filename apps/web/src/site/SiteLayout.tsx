@@ -1,11 +1,22 @@
-import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, type ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 import { Logo } from "../app/AppShell";
 import { BUTTON_PRIMARY } from "../shared/ui";
 import { CONTACT_EMAIL, FOOTER_LINKS, SELLER_LEGAL_NAME, START_CTA } from "./config";
+import { findSeoPage } from "./seo";
 
 export const SiteLayout = ({ children }: { children: ReactNode }) => {
+  const { pathname } = useLocation();
+
+  // The prerendered HTML has the right <title>; this keeps it right after in-app navigation.
+  useEffect(() => {
+    const page = findSeoPage(pathname);
+    if (page) {
+      document.title = page.title;
+    }
+  }, [pathname]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-slate-200 bg-white">

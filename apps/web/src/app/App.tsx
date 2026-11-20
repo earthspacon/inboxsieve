@@ -14,15 +14,26 @@ import { SignInPage } from "../pages/SignInPage";
 import { SourcesPage } from "../pages/SourcesPage";
 import { TeamPage } from "../pages/TeamPage";
 import { AiPage } from "../site/AiPage";
+import { ChiliPiperAlternativePage } from "../site/ChiliPiperAlternativePage";
 import { LandingPage } from "../site/LandingPage";
 import { LegalPage } from "../site/LegalPage";
 import { PricingPage } from "../site/PricingPage";
+import { SpamFilterPage } from "../site/SpamFilterPage";
 import { AppShell, RequireSession } from "./AppShell";
 import { ToastView } from "./ToastView";
 
 export const App = () => {
   return (
     <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
+};
+
+// Shared by the browser and by the build-time prerender (StaticRouter), so hydration sees the same tree.
+export const AppRoutes = () => {
+  return (
+    <>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/pricing" element={<PricingPage />} />
@@ -31,6 +42,8 @@ export const App = () => {
         <Route path="/refunds" element={<LegalPage slug="refunds" />} />
         <Route path="/dpa" element={<LegalPage slug="dpa" />} />
         <Route path="/ai" element={<AiPage />} />
+        <Route path="/contact-form-spam-filter" element={<SpamFilterPage />} />
+        <Route path="/chili-piper-alternative" element={<ChiliPiperAlternativePage />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/app" element={<RequireSession />}>
           <Route path="onboarding" element={<OnboardingPage />} />
@@ -51,6 +64,6 @@ export const App = () => {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ToastView />
-    </BrowserRouter>
+    </>
   );
 };

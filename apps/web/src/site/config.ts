@@ -31,6 +31,14 @@ export const FOOTER_LINKS = [
     to: "/ai",
     label: "For AI assistants",
   },
+  {
+    to: "/contact-form-spam-filter",
+    label: "Contact form spam filter",
+  },
+  {
+    to: "/chili-piper-alternative",
+    label: "Chili Piper alternative",
+  },
 ];
 
 export const SUB_PROCESSORS = [
@@ -52,20 +60,58 @@ export const SUB_PROCESSORS = [
   },
 ];
 
+export const HERO = {
+  audience: "For small agencies and service businesses",
+  title: "Spam out, real clients first: an AI filter for the messages from your website's contact form.",
+  subtitle:
+    "InboxSieve reads every form message, removes spam and sales pitches, scores the real client requests 0–100 and drafts a reply, so you answer the best ones first.",
+};
+
 export const HOW_IT_WORKS = [
   {
-    title: "Connect your form",
-    text: "Forward your form email to your InboxSieve address, or paste our webhook URL into Webflow, Tally, Typeform, WPForms, Zapier or Make.",
+    title: "Forward your form email",
+    text: "Send your contact-form emails to your private InboxSieve address, or paste our webhook URL into Webflow, Tally, Typeform, WPForms, Zapier or Make. Your website doesn't change.",
   },
   {
-    title: "AI scores against your ideal client",
-    text: "Spam rules run first. Then Claude Haiku scores each inquiry 0–100 against your services, budget and ideal client, and drafts a reply in your tone.",
+    title: "AI scores and filters",
+    text: "Spam rules run first, for free. Then the AI scores each real message 0–100 against the clients you want, explains why, and writes a reply in your tone.",
   },
   {
-    title: "You answer the hot ones first",
-    text: "Hot leads ping you by email and Slack. You copy the draft or open it in Gmail or Outlook and send it from your own mail.",
+    title: "You reply to the hot ones first",
+    text: "A score of 80+ pings you by email or Slack. Open the draft in Gmail or Outlook, edit it if you like, and send it from your own mailbox.",
   },
 ];
+
+// The before → after example on the landing page. Made-up messages, `.example` domains.
+export const EXAMPLE_INBOX = [
+  {
+    from: "growth@rankfast.example",
+    subject: "Rank #1 on Google in 30 days, guaranteed!!",
+    verdict: "spam",
+  },
+  {
+    from: "billing@invoice-alerts.example",
+    subject: "Your invoice #8812 is overdue, click to view",
+    verdict: "spam",
+  },
+  {
+    from: "sam@offshoredevs.example",
+    subject: "Partnership: we build white-label dev teams for agencies",
+    verdict: "pitch",
+  },
+  {
+    from: "maya@brightsmile.example",
+    subject: "New website for our 3 dental clinics, budget $15k, start in March",
+    verdict: "lead",
+  },
+] as const;
+
+export const EXAMPLE_HOT_LEAD = {
+  score: 87,
+  reasons: ["Budget $15k fits your minimum", "Clear start date", "Owner of the business is writing"],
+  draft:
+    "Hi Maya, thanks for reaching out about the clinic websites. A three-location rebuild with a March start fits us well. Could we do a 20-minute call on Tuesday or Wednesday to go over the pages you need?",
+};
 
 export const NEVER_DO = ["Send email as you", "Train on your data", "Lock you in: export CSV any time"];
 
@@ -107,9 +153,9 @@ export const FAQ = [
       "Anything that emails you (Gmail and Outlook forwarding, WPForms, contact plugins) or can post a webhook (Webflow, Tally, Typeform, Zapier, Make).",
   },
   {
-    question: "What counts as a lead?",
+    question: "What is a lead, and what counts toward my limit?",
     answer:
-      "Every message that reaches a source. Messages our spam rules catch are stored but not analyzed. Analyzed leads count toward your monthly limit.",
+      "A lead (or inquiry) is any message that comes in through your form, like “We need a new website for our 3 clinics, budget $15k”. Messages our spam rules catch are stored but not analyzed and don't count. Every analyzed message counts toward your monthly limit.",
   },
   {
     question: "Can I cancel any time?",

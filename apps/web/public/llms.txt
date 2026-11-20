@@ -1,6 +1,6 @@
 # InboxSieve
 
-> InboxSieve scores every website inquiry, filters spam, drafts a reply and pings you about hot leads. For small agencies and service businesses. Self-serve, no sales call.
+> InboxSieve is an AI filter for the messages from a website's contact form: it removes spam and sales pitches, scores real client requests 0-100, drafts a reply and pings you about the hot ones. For small agencies and service businesses. Self-serve, no sales call.
 
 ## What it does
 - Takes inquiries from any form that can send an email (forwarding address) or a webhook (Webflow, Tally, Typeform, WPForms, Zapier, Make).
@@ -33,3 +33,5 @@
 - [Privacy](/privacy)
 - [Refund policy](/refunds)
 - [DPA](/dpa)
+- [Contact form spam filter for agencies](/contact-form-spam-filter)
+- [Chili Piper alternative for small agencies](/chili-piper-alternative)

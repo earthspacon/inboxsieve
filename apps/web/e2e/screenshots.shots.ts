@@ -36,6 +36,7 @@ const VIEWPORTS = [
     size: MOBILE,
   },
 ];
+const TURNSTILE_SETTLE_MS = 1000;
 const consoleReport: Array<{ shot: string; errors: number }> = [];
 
 describe("screenshots", () => {
@@ -95,6 +96,8 @@ describe("screenshots", () => {
 
     await capture({ session: visitor, label, shot: LANDING });
     await capture({ session: visitor, label, shot: PRICING });
+    await capture({ session: visitor, label, shot: SPAM_FILTER });
+    await capture({ session: visitor, label, shot: CHILI_PIPER_ALTERNATIVE });
     await capture({ session: agency.session, label, shot: TEAM });
     await capture({ session: agency.session, label, shot: BILLING });
     await capture({ session: free, label, shot: BILLING_FREE });
@@ -118,7 +121,7 @@ const LANDING: Shot = {
   name: "landing",
   open: async (page) => {
     await page.goto("/");
-    await page.getByRole("heading", { name: /Stop digging through form spam/ }).waitFor();
+    await page.getByRole("heading", { name: /Spam out, real clients first/ }).waitFor();
   },
 };
 
@@ -127,6 +130,22 @@ const PRICING: Shot = {
   open: async (page) => {
     await page.goto("/pricing");
     await page.getByText("$26.55").waitFor();
+  },
+};
+
+const SPAM_FILTER: Shot = {
+  name: "seo-contact-form-spam-filter",
+  open: async (page) => {
+    await page.goto("/contact-form-spam-filter");
+    await page.getByRole("heading", { name: "Contact form spam filter for agencies" }).waitFor();
+  },
+};
+
+const CHILI_PIPER_ALTERNATIVE: Shot = {
+  name: "seo-chili-piper-alternative",
+  open: async (page) => {
+    await page.goto("/chili-piper-alternative");
+    await page.getByRole("heading", { name: "Chili Piper alternative for small agencies" }).waitFor();
   },
 };
 
@@ -167,6 +186,9 @@ const SIGN_IN: Shot = {
   open: async (page) => {
     await page.goto("/sign-in");
     await page.getByText("Sign in or start free").waitFor();
+    // The Turnstile test sitekey passes on its own; the button unlocks once the token is in.
+    await page.locator("button[type=submit]:not([disabled])").waitFor();
+    await page.waitForTimeout(TURNSTILE_SETTLE_MS);
   },
 };
 

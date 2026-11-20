@@ -2,29 +2,26 @@ import { Link } from "react-router-dom";
 
 import { FREE_TAGLINE } from "../pricing/config";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, Card } from "../shared/ui";
-import { COMPARE_ROWS, FAQ, HOW_IT_WORKS, START_CTA } from "./config";
+import { COMPARE_ROWS, EXAMPLE_HOT_LEAD, EXAMPLE_INBOX, FAQ, HERO, HOW_IT_WORKS, START_CTA } from "./config";
 import { PricingSection } from "./PricingSection";
 import { SiteLayout } from "./SiteLayout";
 
-const BEFORE_SUBJECTS = [
-  "Rank #1 on Google in 30 days",
-  "AI agent for support triage",
-  "Guest post opportunity",
-  "Question",
-  "Partnership?? Crypto",
-  "Website redesign for a 3-clinic group",
-];
+type Verdict = (typeof EXAMPLE_INBOX)[number]["verdict"];
 
-const AFTER_LEADS = [
-  {
-    score: 92,
-    subject: "AI agent for support triage",
+const VERDICTS: Record<Verdict, { label: string; className: string }> = {
+  spam: {
+    label: "Spam: removed",
+    className: "bg-slate-100 text-slate-700",
   },
-  {
-    score: 84,
-    subject: "Website redesign for a 3-clinic group",
+  pitch: {
+    label: "Sales pitch: set aside",
+    className: "bg-amber-100 text-amber-900",
   },
-];
+  lead: {
+    label: `Real client: ${EXAMPLE_HOT_LEAD.score} Hot`,
+    className: "bg-emerald-100 text-emerald-900",
+  },
+};
 
 export const LandingPage = () => {
   return (
@@ -44,10 +41,9 @@ export const LandingPage = () => {
 const Hero = () => {
   return (
     <section className="space-y-4 text-center">
-      <h1 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-        Stop digging through form spam. Every inquiry scored, the good ones answered first.
-      </h1>
-      <p className="text-lg text-slate-600">Free for 50 leads a month. Solo is $29/mo. Every dollar shown below.</p>
+      <p className="text-sm font-semibold text-brand-700">{HERO.audience}</p>
+      <h1 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">{HERO.title}</h1>
+      <p className="mx-auto max-w-2xl text-lg text-slate-600">{HERO.subtitle}</p>
       <div className="flex flex-wrap justify-center gap-2">
         <Link to="/sign-in" className={BUTTON_PRIMARY}>
           {START_CTA}
@@ -56,43 +52,69 @@ const Hero = () => {
           See pricing
         </Link>
       </div>
-      <p className="text-sm text-slate-500">{FREE_TAGLINE}</p>
+      <p className="text-sm text-slate-600">{FREE_TAGLINE}</p>
     </section>
   );
 };
 
 const BeforeAfter = () => {
   return (
-    <section className="grid gap-4 md:grid-cols-2">
-      <Card className="space-y-2 p-5">
-        <h2 className="text-sm font-semibold text-slate-500">Before: every message looks the same</h2>
-        <ul className="divide-y divide-slate-100 text-sm">
-          {BEFORE_SUBJECTS.map((subject) => {
-            return (
-              <li key={subject} className="py-2 text-slate-700">
-                {subject}
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
-      <Card className="space-y-2 p-5">
-        <h2 className="text-sm font-semibold text-slate-500">After: the hot ones on top, a reply drafted</h2>
-        <ul className="divide-y divide-slate-100 text-sm">
-          {AFTER_LEADS.map((lead) => {
-            return (
-              <li key={lead.subject} className="flex items-center justify-between gap-2 py-2">
-                <span className="font-medium">{lead.subject}</span>
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                  {lead.score} Hot · draft ready
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="text-xs text-slate-500">Spam is filtered by rules before any AI call.</p>
-      </Card>
+    <section className="space-y-4" aria-labelledby="before-after">
+      <h2 id="before-after" className="text-2xl font-semibold tracking-tight">
+        What it does to your inbox
+      </h2>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="space-y-2 p-5">
+          <h3 className="text-sm font-semibold text-slate-600">Before: 4 form messages, all look the same</h3>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {EXAMPLE_INBOX.map((message) => {
+              return (
+                <li key={message.subject} className="py-2">
+                  <span className="block text-xs text-slate-600">{message.from}</span>
+                  <span className="text-slate-900">{message.subject}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+        <Card className="space-y-3 p-5">
+          <h3 className="text-sm font-semibold text-slate-600">After InboxSieve: one real client, reply ready</h3>
+          <ul className="space-y-2 text-sm">
+            {EXAMPLE_INBOX.map((message) => {
+              return <SortedMessage key={message.subject} subject={message.subject} verdict={message.verdict} />;
+            })}
+          </ul>
+          <HotLeadCard />
+        </Card>
+      </div>
     </section>
+  );
+};
+
+const SortedMessage = ({ subject, verdict }: { subject: string; verdict: Verdict }) => {
+  const isLead = verdict === "lead";
+
+  return (
+    <li className="flex items-center justify-between gap-2">
+      <span className={isLead ? "font-medium text-slate-900" : "text-slate-600 line-through"}>{subject}</span>
+      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${VERDICTS[verdict].className}`}>
+        {VERDICTS[verdict].label}
+      </span>
+    </li>
+  );
+};
+
+const HotLeadCard = () => {
+  return (
+    <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm">
+      <p className="font-medium text-emerald-900">
+        Why {EXAMPLE_HOT_LEAD.score}: {EXAMPLE_HOT_LEAD.reasons.join(" · ")}
+      </p>
+      <p className="text-slate-800">
+        <span className="font-medium">Drafted reply: </span>
+        {EXAMPLE_HOT_LEAD.draft}
+      </p>
+    </div>
   );
 };
 
