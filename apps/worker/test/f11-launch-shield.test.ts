@@ -178,6 +178,13 @@ describe("Abuse shield: webhook ingest", () => {
   it("Shield: one webhook source takes 120 submissions a minute, the 121st gets 429", async () => {
     const owner = await signInTrial({ email: uniqueEmail("hook-flood") });
     const source = await seedSource({ brandId: owner.brandId, kind: "webhook" });
+    // The limiter's 60 s windows are aligned to the wall clock; start early in one so all 121 requests share it.
+    const msIntoWindow = Date.now() % 60_000;
+    if (msIntoWindow > 30_000) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 60_000 - msIntoWindow + 100);
+      });
+    }
 
     const statuses = [];
     for (let attempt = 0; attempt < 121; attempt += 1) {
@@ -191,7 +198,7 @@ describe("Abuse shield: webhook ingest", () => {
 
     expect(statuses.slice(0, 120).every((status) => status === 202)).toBe(true);
     expect(statuses.at(-1)).toBe(429);
-  }, 60_000);
+  }, 120_000);
 });
 
 describe("Abuse shield: daily LLM budget", () => {
