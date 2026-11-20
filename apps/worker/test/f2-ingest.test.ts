@@ -171,7 +171,7 @@ describe('F2 forwarded email', () => {
   });
 
   it('F2: rule spam by email is stored as spam_filtered', async () => {
-    const { brandId, address } = await seedEmailSource();
+    const { address } = await seedEmailSource();
 
     const { outcome } = await receive({ raw: seoSpam, to: address });
 
@@ -197,6 +197,7 @@ describe('F2 forwarded email', () => {
       {
         ...message,
         headers: new Headers(),
+        canBeForwarded: true,
         forward: async () => ({ messageId: '' }),
         reply: async () => ({ messageId: '' }),
       },

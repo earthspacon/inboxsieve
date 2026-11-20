@@ -82,7 +82,7 @@ async function seedTenant() {
 const CASES: Record<string, (a: Tenant, b: Tenant) => Promise<unknown>> = {
   listBrands: async (a, b) => (await repo.listBrands({ db, accountId: b.accountId })).filter((brand) => brand.id === a.brandId),
   getBrand: (a, b) => repo.getBrand({ db, accountId: b.accountId, brandId: a.brandId }),
-  countBrands: async (a, b) => (await repo.countBrands({ db, accountId: b.accountId })) - 1,
+  countBrands: async (_a, b) => (await repo.countBrands({ db, accountId: b.accountId })) - 1,
   createBrand: async (a, b) => {
     const brand = await repo.createBrand({ db, accountId: b.accountId, name: 'B second', now: NOW });
     return (await repo.listBrands({ db, accountId: a.accountId })).filter((item) => item.id === brand?.id);

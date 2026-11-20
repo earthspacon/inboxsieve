@@ -37,7 +37,15 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function readString({ data, key, maxLength }: { data: Record<string, unknown>; key: string; maxLength: number }) {
+export function readString({
+  data,
+  key,
+  maxLength,
+}: {
+  data: Record<string, unknown>;
+  key: string;
+  maxLength: number;
+}) {
   const value = data[key];
 
   if (typeof value !== 'string') {
