@@ -1,4 +1,10 @@
-import { SUBSCRIPTION_ACCESS, type AccessLevel, type Plan, type SubscriptionStatus } from "@inboxsieve/contract";
+import {
+  DEFAULT_ALERT_THRESHOLD,
+  SUBSCRIPTION_ACCESS,
+  type AccessLevel,
+  type Plan,
+  type SubscriptionStatus,
+} from "@inboxsieve/contract";
 
 import { newId } from "../ids";
 
@@ -83,8 +89,8 @@ export async function createAccount({
       )
       .bind(newId(), accountId, userId, email, at),
     db
-      .prepare("INSERT INTO brands (id, account_id, name, created_at) VALUES (?, ?, ?, ?)")
-      .bind(newId(), accountId, DEFAULT_BRAND_NAME, at),
+      .prepare("INSERT INTO brands (id, account_id, name, alert_threshold, created_at) VALUES (?, ?, ?, ?, ?)")
+      .bind(newId(), accountId, DEFAULT_BRAND_NAME, DEFAULT_ALERT_THRESHOLD, at),
   ]);
   return accountId;
 }

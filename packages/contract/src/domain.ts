@@ -78,11 +78,19 @@ export type Me = {
   role: "owner" | "member";
 };
 
+export type AlertState = "enabled" | "disabled" | "delivery_failed";
+
+export const DEFAULT_ALERT_THRESHOLD = 80;
+
 export type BrandDto = {
   id: string;
   name: string;
   profileState: ProfileState;
   alertThreshold: number;
+  alertState: AlertState;
+  alertLastError: string | null;
+  slackConfigured: boolean;
+  readOnly: boolean;
   createdAt: string;
 };
 
@@ -148,3 +156,25 @@ export type ApiError = {
   error: string;
   message: string;
 };
+
+export type BillingInterval = "monthly" | "yearly";
+
+export type ScheduledChange = { action: "cancel" | "pause" | "resume"; effectiveAt: string };
+
+export type BillingDto = {
+  plan: Plan;
+  subscription: SubscriptionStatus;
+  currentPeriodEnd: string | null;
+  pendingPlan: Plan | null;
+  scheduledChange: ScheduledChange | null;
+  pastDueSince: string | null;
+  isAnalysisPaused: boolean;
+  hasCustomer: boolean;
+  checkout: {
+    environment: "sandbox" | "production";
+    clientToken: string | null;
+    prices: Record<Plan, Record<BillingInterval, string | null>>;
+  };
+};
+
+export const PAST_DUE_GRACE_DAYS = 7;

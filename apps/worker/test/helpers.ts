@@ -4,6 +4,7 @@ import { env } from "cloudflare:test";
 import type { AnalysisRequest, LeadAnalyzer } from "../src/analysis/analyzer";
 import type { Deps } from "../src/deps";
 import type { InboundEmail } from "../src/ingest/email";
+import { createSlackPoster } from "../src/alerts/slack";
 import { createLogMailer } from "../src/mailer";
 import { createAccount, createSource } from "../src/repo";
 
@@ -127,6 +128,7 @@ export function buildTestDeps({ analyzer, now = () => new Date() }: { analyzer: 
     db,
     analyzer,
     mailer: createLogMailer({ db }),
+    slack: createSlackPoster(),
     now,
     schedule: (task) => {
       scheduled.push(task);

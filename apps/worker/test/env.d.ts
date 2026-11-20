@@ -6,6 +6,13 @@ declare namespace Cloudflare {
     MAIL_FROM: string;
     DEV_ROUTES: string;
     BETTER_AUTH_SECRET: string;
+    PADDLE_ENV: string;
+    PADDLE_CLIENT_TOKEN: string;
+    PADDLE_PRICE_SOLO_MONTHLY: string;
+    PADDLE_PRICE_SOLO_YEARLY: string;
+    PADDLE_PRICE_AGENCY_MONTHLY: string;
+    PADDLE_PRICE_AGENCY_YEARLY: string;
+    PADDLE_WEBHOOK_SECRET: string;
     TEST_MIGRATIONS: import("cloudflare:test").D1Migration[];
   }
 }

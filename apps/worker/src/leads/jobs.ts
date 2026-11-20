@@ -1,6 +1,8 @@
 import { AnalysisContract, type Analysis } from "@inboxsieve/contract";
 
+import { queueHotLeadAlerts, runAlertDeliveries } from "../alerts/alerts";
 import { DEFAULT_PROFILE, type LeadAnalyzer } from "../analysis/analyzer";
+import type { Deps } from "../deps";
 import {
   claimLead,
   getBrandProfile,
@@ -37,29 +39,9 @@ export async function processLead({
     return null;
   }
 
+  let analysis: Analysis;
   try {
-    const analysis = await analyzeClaimedLead({ db, analyzer, lead });
-    return await transitionLead({
-      db,
-      brandId,
-      leadId,
-      now,
-      from: "analyzing",
-      to: "analyzed",
-      set: {
-        analysis: JSON.stringify(analysis),
-        score: analysis.score,
-        category: analysis.category,
-        draft: analysis.draftReply,
-        analyzed_at: now.toISOString(),
-        last_error: null,
-        ...getSpamStage({
-          analysis,
-          lead,
-          isMarkedNotSpam: await hasNotSpamFeedback({ db, brandId, leadId }),
-        }),
-      },
-    });
+    analysis = await analyzeClaimedLead({ db, analyzer, lead });
   } catch (error) {
     const lastError = error instanceof Error ? error.message : "Analysis failed";
 
@@ -87,6 +69,48 @@ export async function processLead({
       },
     });
   }
+
+  const analyzed = await transitionLead({
+    db,
+    brandId,
+    leadId,
+    now,
+    from: "analyzing",
+    to: "analyzed",
+    set: {
+      analysis: JSON.stringify(analysis),
+      score: analysis.score,
+      category: analysis.category,
+      draft: analysis.draftReply,
+      analyzed_at: now.toISOString(),
+      last_error: null,
+      ...getSpamStage({
+        analysis,
+        lead,
+        isMarkedNotSpam: await hasNotSpamFeedback({ db, brandId, leadId }),
+      }),
+    },
+  });
+
+  if (analyzed) {
+    await queueHotLeadAlerts({ db, brandId, leadId, now });
+  }
+  return analyzed;
+}
+
+// One sweep: analysis jobs first, then the hot-lead alerts they queued.
+export async function runQueues(deps: Pick<Deps, "db" | "analyzer" | "mailer" | "slack" | "env" | "now">) {
+  const processed = await runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() });
+  await runAlertDeliveries({
+    db: deps.db,
+    channels: {
+      mailer: deps.mailer,
+      slack: deps.slack,
+      appUrl: deps.env.APP_URL,
+    },
+    now: deps.now(),
+  });
+  return processed;
 }
 
 export async function runDueJobs({ db, analyzer, now }: { db: D1Database; analyzer: LeadAnalyzer; now: Date }) {

@@ -1,5 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { AlertsPage } from "../pages/AlertsPage";
+import { BillingPage } from "../pages/BillingPage";
+import { BrandsPage } from "../pages/BrandsPage";
 import { CheckoutPage } from "../pages/CheckoutPage";
 import { InboxPage } from "../pages/InboxPage";
 import { LeadPage } from "../pages/LeadPage";
@@ -27,6 +30,9 @@ export const App = () => {
             <Route path="pipeline" element={<PipelinePage />} />
             <Route path="sources" element={<SourcesPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="brands" element={<BrandsPage />} />
+            <Route path="alerts" element={<AlertsPage />} />
+            <Route path="billing" element={<BillingPage />} />
             <Route path="more" element={<MorePage />} />
           </Route>
         </Route>

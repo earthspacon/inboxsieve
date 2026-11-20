@@ -40,3 +40,9 @@ export function createEnumGuard<T extends string>(options: Record<T, unknown>) {
     return typeof value === "string" && Object.hasOwn(options, value);
   };
 }
+
+export function requireOwner(account: AccountContext) {
+  if (account.role !== "owner") {
+    throw new HttpError(403, "owner_only", "Only the workspace owner can do this");
+  }
+}

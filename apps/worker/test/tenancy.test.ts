@@ -22,6 +22,15 @@ const TENANT_RESOLVERS = new Set([
   "mapSourceRowToDto",
   "mapLeadRowToSummary",
   "mapLeadRowToDetail",
+  // Billing is driven by signed Paddle events and the hourly job, which resolve the account themselves.
+  "findAccountIdForPaddle",
+  "saveSubscription",
+  "recordPaddleEvent",
+  "setPaddleEventOutcome",
+  "listDuePlanChanges",
+  "listEndedCancellations",
+  "listCheckoutReminders",
+  "markCheckoutReminded",
 ]);
 
 const NOW = new Date("2026-11-20T10:00:00.000Z");
@@ -83,6 +92,25 @@ const CASES: Record<string, (a: Tenant, b: Tenant) => Promise<unknown>> = {
   listBrands: async (a, b) =>
     (await repo.listBrands({ db, accountId: b.accountId })).filter((brand) => brand.id === a.brandId),
   getBrand: (a, b) => repo.getBrand({ db, accountId: b.accountId, brandId: a.brandId }),
+  saveAlertSettings: (a, b) =>
+    repo.saveAlertSettings({
+      db,
+      accountId: b.accountId,
+      brandId: a.brandId,
+      enabled: false,
+      threshold: 1,
+      slackWebhookUrl: "",
+    }),
+  applyBrandLimit: async (a, b) => {
+    await repo.applyBrandLimit({ db, accountId: b.accountId, limit: 0 });
+    const brand = await repo.getBrand({ db, accountId: a.accountId, brandId: a.brandId });
+    await repo.applyBrandLimit({ db, accountId: b.accountId, limit: 10 });
+    return brand?.readOnly ? brand : null;
+  },
+  getBillingRow: async (a, b) => {
+    const row = await repo.getBillingRow({ db, accountId: b.accountId });
+    return row?.account_id === a.accountId ? row : null;
+  },
   renameBrand: (a, b) => repo.renameBrand({ db, accountId: b.accountId, brandId: a.brandId, name: "hijack" }),
   countBrands: async (_a, b) => (await repo.countBrands({ db, accountId: b.accountId })) - 1,
   createBrand: async (a, b) => {

@@ -2,7 +2,8 @@ import type { Plan } from "@inboxsieve/contract";
 
 import { HttpError, json, readJson, readString, route, type Route } from "../http";
 import { newId } from "../ids";
-import { runDueJobs } from "../leads/jobs";
+import { runQueues } from "../leads/jobs";
+import { runMaintenance } from "../maintenance";
 import { createAccount, getAccountContext, setSubscription } from "../repo";
 import type { PublicContext } from "./context";
 
@@ -93,8 +94,14 @@ export const devRoutes: Route<PublicContext>[] = [
     return json({ inserted: count }, 201);
   }),
 
+  route("POST", "/dev/run-maintenance", async ({ deps, request }) => {
+    const data = await readJson(request);
+    const now = typeof data.now === "string" ? new Date(data.now) : deps.now();
+    return json(await runMaintenance({ deps, now }));
+  }),
+
   route("POST", "/dev/run-jobs", async ({ deps }) => {
-    const processed = await runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() });
+    const processed = await runQueues(deps);
     return json({ processed });
   }),
 ];

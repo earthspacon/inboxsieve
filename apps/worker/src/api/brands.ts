@@ -1,7 +1,8 @@
-import { PLAN_LIMITS, type BusinessProfile, type Me, type UsageDto } from "@inboxsieve/contract";
+import { MAX_SCORE, PLAN_LIMITS, type BusinessProfile, type Me, type UsageDto } from "@inboxsieve/contract";
 
+import { SLACK_WEBHOOK_PREFIX } from "../alerts/slack";
 import { HttpError, json, readJson, readString, route, type Route } from "../http";
-import { RESCORE_LIMIT, runDueJobs } from "../leads/jobs";
+import { RESCORE_LIMIT, runQueues } from "../leads/jobs";
 import { admitLead, getMonthStart } from "../leads/pipeline";
 import {
   countBrands,
@@ -12,6 +13,7 @@ import {
   listSources,
   queueRescore,
   renameBrand,
+  saveAlertSettings,
   saveBrandProfile,
 } from "../repo";
 import { requireBrand, type ApiContext } from "./context";
@@ -94,13 +96,39 @@ export const brandRoutes: Route<ApiContext>[] = [
       authResults: null,
       now: deps.now(),
     });
-    deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+    deps.schedule(runQueues(deps));
     return json(
       {
         id: result.leadId,
         status: result.status,
       },
       201,
+    );
+  }),
+
+  route("PATCH", "/api/brands/:brandId/alerts", async ({ deps, account, params, request }) => {
+    const brand = await requireBrand({ deps, account, brandId: params.brandId });
+    const data = await readJson(request);
+    const { enabled, threshold, slackWebhookUrl } = data;
+
+    if (typeof enabled !== "boolean") {
+      throw new HttpError(400, "invalid_field", '"enabled" must be a boolean');
+    }
+    if (typeof threshold !== "number" || !Number.isInteger(threshold) || threshold < 0 || threshold > MAX_SCORE) {
+      throw new HttpError(400, "invalid_field", '"threshold" must be an integer from 0 to 100');
+    }
+    if (slackWebhookUrl !== undefined && slackWebhookUrl !== null && !isSlackUrlOrEmpty(slackWebhookUrl)) {
+      throw new HttpError(400, "invalid_field", `"slackWebhookUrl" must start with ${SLACK_WEBHOOK_PREFIX}`);
+    }
+    return json(
+      await saveAlertSettings({
+        db: deps.db,
+        accountId: account.accountId,
+        brandId: brand.id,
+        enabled,
+        threshold,
+        slackWebhookUrl: typeof slackWebhookUrl === "string" ? slackWebhookUrl.trim() : null,
+      }),
     );
   }),
 
@@ -140,7 +168,7 @@ export const brandRoutes: Route<ApiContext>[] = [
       limit: RESCORE_LIMIT,
       now: deps.now(),
     });
-    deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+    deps.schedule(runQueues(deps));
     return json({ queued }, 202);
   }),
 
@@ -158,4 +186,8 @@ export const brandRoutes: Route<ApiContext>[] = [
 
 function readProfileField({ data, key }: { data: Record<string, unknown>; key: keyof BusinessProfile }) {
   return readString({ data, key, maxLength: PROFILE_FIELD_MAX_LENGTH }).trim();
+}
+
+function isSlackUrlOrEmpty(value: unknown) {
+  return typeof value === "string" && (value.trim() === "" || value.trim().startsWith(SLACK_WEBHOOK_PREFIX));
 }

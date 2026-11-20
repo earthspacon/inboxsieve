@@ -2,7 +2,8 @@ import { handleRequest } from "./app";
 import { createDeps } from "./deps";
 import type { Env } from "./env";
 import { handleInboundEmail } from "./ingest/email";
-import { runDueJobs } from "./leads/jobs";
+import { runQueues } from "./leads/jobs";
+import { MAINTENANCE_CRON, runMaintenance } from "./maintenance";
 
 export default {
   fetch: async (request, env, ctx) => {
@@ -14,12 +15,17 @@ export default {
     const outcome = await handleInboundEmail({ db: deps.db, message, now: deps.now() });
 
     if (outcome.kind === "lead") {
-      deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+      deps.schedule(runQueues(deps));
     }
   },
 
-  scheduled: async (_controller, env, ctx) => {
+  scheduled: async (controller, env, ctx) => {
     const deps = createDeps({ env, ctx });
-    deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+
+    if (controller.cron === MAINTENANCE_CRON) {
+      deps.schedule(runMaintenance({ deps, now: deps.now() }));
+      return;
+    }
+    deps.schedule(runQueues(deps));
   },
 } satisfies ExportedHandler<Env>;

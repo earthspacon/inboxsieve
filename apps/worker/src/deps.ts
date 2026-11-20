@@ -1,3 +1,4 @@
+import { createSlackPoster, type SlackPoster } from "./alerts/slack";
 import type { LeadAnalyzer } from "./analysis/analyzer";
 import { createAnthropicAnalyzer } from "./analysis/anthropic";
 import { ruleAnalyzer } from "./analysis/rules";
@@ -9,6 +10,7 @@ export type Deps = {
   db: D1Database;
   analyzer: LeadAnalyzer;
   mailer: Mailer;
+  slack: SlackPoster;
   now: () => Date;
   schedule: (task: Promise<unknown>) => void;
 };
@@ -19,6 +21,7 @@ export function createDeps({ env, ctx }: { env: Env; ctx: ExecutionContext }): D
     db: env.DB,
     analyzer: createAnalyzer(env),
     mailer: createMailer(env),
+    slack: createSlackPoster(),
     now: () => new Date(),
     schedule: (task) => {
       ctx.waitUntil(task);

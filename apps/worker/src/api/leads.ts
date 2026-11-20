@@ -1,7 +1,7 @@
 import { MAX_SCORE, STAGE_TRANSITIONS, type Category, type LeadStatus } from "@inboxsieve/contract";
 
 import { HttpError, json, readJson, readString, route, type Route } from "../http";
-import { runDueJobs } from "../leads/jobs";
+import { runQueues } from "../leads/jobs";
 import { queueForAnalysis } from "../leads/pipeline";
 import {
   addFeedback,
@@ -147,7 +147,7 @@ export const leadRoutes: Route<ApiContext>[] = [
         ...ref,
         from: "spam_filtered",
       });
-      deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+      deps.schedule(runQueues(deps));
     }
     return leadResponse({ deps, row: requireUpdated(await getLead(ref)) });
   }),
@@ -197,7 +197,7 @@ export const leadRoutes: Route<ApiContext>[] = [
     if (!updated) {
       throw new HttpError(409, "invalid_transition", "Only a lead whose analysis failed can be retried");
     }
-    deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+    deps.schedule(runQueues(deps));
     return leadResponse({ deps, row: updated, status: 202 });
   }),
 ];

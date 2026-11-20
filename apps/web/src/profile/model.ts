@@ -2,7 +2,7 @@ import type { BrandDto, BusinessProfile, ProfileDto, UsageDto } from "@inboxsiev
 import { createEffect, createEvent, createStore, sample } from "effector";
 import { createGate } from "effector-react";
 
-import { $brandId, meRefreshRequested } from "../session/model";
+import { $brandId, $me, meFx, meRefreshRequested } from "../session/model";
 import { apiRequest } from "../shared/api";
 import { createRemote } from "../shared/remote";
 import { toastShown } from "../shared/toast-model";
@@ -79,10 +79,15 @@ sample({
   target: $profileForm,
 });
 
+// Usage is a locked-account 402, so it loads only once the account has access.
 sample({
-  clock: $brandId,
-  filter: Boolean,
-  fn: (brandId) => {
+  clock: [$brandId, meFx.doneData],
+  source: {
+    brandId: $brandId,
+    me: $me,
+  },
+  filter: ({ brandId, me }) => Boolean(brandId) && me?.account.access !== "locked",
+  fn: ({ brandId }) => {
     return { brandId };
   },
   target: usageRemote.fx,

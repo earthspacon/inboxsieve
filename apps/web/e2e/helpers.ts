@@ -1,13 +1,16 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 import type { LeadDetailDto, SourceDto } from "@inboxsieve/contract";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
-import { CHROME_PATH, E2E_URL } from "./config";
+import { CHROME_PATH, E2E_URL, PADDLE_TEST_SECRET } from "./config";
 
 export const DESKTOP = { width: 1440, height: 900 };
 export const MOBILE = { width: 390, height: 844 };
 
+const PADDLE_FIXTURES_DIR = path.resolve(import.meta.dirname, "../../worker/fixtures/paddle");
 const LINK_PATTERN = /https?:\/\/\S+\/api\/auth\/magic-link\/verify\S+/;
 const POLL_MS = 300;
 const POLL_TIMEOUT_MS = 15_000;
@@ -203,3 +206,49 @@ export const SPAM_LEAD = {
   subject: "Rank #1 on Google in 30 days",
   message: "We sell cheap backlinks and guaranteed first page ranking. Reply now for a discount.",
 };
+
+export async function sendPaddleFixture({
+  fixture,
+  accountId,
+  periodEnd,
+  occurredAt = new Date(),
+  secret = PADDLE_TEST_SECRET,
+}: {
+  fixture: string;
+  accountId: string;
+  periodEnd?: string;
+  occurredAt?: Date;
+  secret?: string;
+}) {
+  const event = JSON.parse(readFileSync(path.join(PADDLE_FIXTURES_DIR, `${fixture}.json`), "utf8"));
+  event.event_id = `evt_${randomUUID().replaceAll("-", "")}`;
+  event.occurred_at = occurredAt.toISOString();
+  event.data.id = `sub_${accountId}`;
+  event.data.custom_data = { account_id: accountId };
+  if (periodEnd && event.data.current_billing_period) {
+    event.data.current_billing_period.ends_at = periodEnd;
+  }
+  const body = JSON.stringify(event);
+  const ts = String(Math.floor(Date.now() / 1000));
+  const h1 = createHmac("sha256", secret).update(`${ts}:${body}`).digest("hex");
+  const response = await fetch(`${E2E_URL}/paddle/webhook`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "paddle-signature": `ts=${ts};h1=${h1}`,
+    },
+    body,
+  });
+  return {
+    status: response.status,
+    body: (await response.json()) as { outcome?: string },
+  };
+}
+
+export async function runMaintenanceAt(now: Date) {
+  await fetch(`${E2E_URL}/dev/run-maintenance`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ now: now.toISOString() }),
+  });
+}

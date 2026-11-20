@@ -17,11 +17,20 @@ database_name = "inboxsieve"
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
 
+# Every minute: analysis queue + alert retries. Hourly: plan changes, expiry, reminders, purges.
 [triggers]
-crons = ["* * * * *"]
+crons = ["* * * * *", "0 * * * *"]
 
+# Public values. Secrets (wrangler secret put): BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY,
+# PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET.
 [vars]
 APP_URL = "http://localhost:8787"
 INBOUND_DOMAIN = "in.inboxsieve.example"
 MAIL_FROM = "InboxSieve <login@inboxsieve.example>"
 DEV_ROUTES = "0"
+PADDLE_ENV = "sandbox"
+PADDLE_CLIENT_TOKEN = ""
+PADDLE_PRICE_SOLO_MONTHLY = "pri_solo_monthly_example"
+PADDLE_PRICE_SOLO_YEARLY = "pri_solo_yearly_example"
+PADDLE_PRICE_AGENCY_MONTHLY = "pri_agency_monthly_example"
+PADDLE_PRICE_AGENCY_YEARLY = "pri_agency_yearly_example"

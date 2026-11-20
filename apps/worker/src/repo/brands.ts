@@ -1,4 +1,11 @@
-import type { BrandDto, BusinessProfile, Plan, ProfileDto } from "@inboxsieve/contract";
+import {
+  DEFAULT_ALERT_THRESHOLD,
+  type AlertState,
+  type BrandDto,
+  type BusinessProfile,
+  type Plan,
+  type ProfileDto,
+} from "@inboxsieve/contract";
 
 import { DEFAULT_PROFILE } from "../analysis/analyzer";
 import { newId } from "../ids";
@@ -9,7 +16,22 @@ type BrandRow = {
   name: string;
   profile: string | null;
   alert_threshold: number;
+  read_only: number;
+  alerts_enabled: number;
+  slack_webhook_url: string | null;
+  alert_failed_at: string | null;
+  alert_last_error: string | null;
   created_at: string;
+};
+
+export type AlertSettings = {
+  db: D1Database;
+  accountId: string;
+  brandId: string;
+  enabled: boolean;
+  threshold: number;
+  // null keeps the saved URL, "" removes it.
+  slackWebhookUrl: string | null;
 };
 
 export async function listBrands({ db, accountId }: { db: D1Database; accountId: string }) {
@@ -48,8 +70,10 @@ export async function createBrand({
   now: Date;
 }) {
   const row = await db
-    .prepare("INSERT INTO brands (id, account_id, name, created_at) VALUES (?, ?, ?, ?) RETURNING *")
-    .bind(newId(), accountId, name, now.toISOString())
+    .prepare(
+      "INSERT INTO brands (id, account_id, name, alert_threshold, created_at) VALUES (?, ?, ?, ?, ?) RETURNING *",
+    )
+    .bind(newId(), accountId, name, DEFAULT_ALERT_THRESHOLD, now.toISOString())
     .first<BrandRow>();
   return row ? mapBrandRowToDto(row) : null;
 }
@@ -70,6 +94,39 @@ export async function renameBrand({
     .bind(name, brandId, accountId)
     .first<BrandRow>();
   return row ? mapBrandRowToDto(row) : null;
+}
+
+export async function saveAlertSettings({
+  db,
+  accountId,
+  brandId,
+  enabled,
+  threshold,
+  slackWebhookUrl,
+}: AlertSettings) {
+  const row = await db
+    .prepare(
+      `UPDATE brands SET alerts_enabled = ?, alert_threshold = ?,
+         slack_webhook_url = CASE WHEN ? = 1 THEN slack_webhook_url ELSE NULLIF(?, '') END,
+         alert_failed_at = NULL, alert_last_error = NULL
+       WHERE id = ? AND account_id = ? RETURNING *`,
+    )
+    .bind(enabled ? 1 : 0, threshold, slackWebhookUrl === null ? 1 : 0, slackWebhookUrl ?? "", brandId, accountId)
+    .first<BrandRow>();
+  return row ? mapBrandRowToDto(row) : null;
+}
+
+// Keeps the oldest brands writable up to the plan limit; the rest turn read-only.
+export async function applyBrandLimit({ db, accountId, limit }: { db: D1Database; accountId: string; limit: number }) {
+  await db
+    .prepare(
+      `UPDATE brands SET read_only = CASE WHEN id IN (
+         SELECT id FROM brands WHERE account_id = ? ORDER BY created_at, id LIMIT ?
+       ) THEN 0 ELSE 1 END
+       WHERE account_id = ?`,
+    )
+    .bind(accountId, limit, accountId)
+    .run();
 }
 
 export async function getBrandProfile({ db, brandId }: { db: D1Database; brandId: string }) {
@@ -108,8 +165,22 @@ function mapBrandRowToDto(row: BrandRow): BrandDto {
     name: row.name,
     profileState: row.profile ? "saved" : "defaults",
     alertThreshold: row.alert_threshold,
+    alertState: getAlertState(row),
+    alertLastError: row.alert_last_error,
+    slackConfigured: Boolean(row.slack_webhook_url),
+    readOnly: row.read_only === 1,
     createdAt: row.created_at,
   };
+}
+
+function getAlertState(row: BrandRow): AlertState {
+  if (!row.alerts_enabled) {
+    return "disabled";
+  }
+  if (row.alert_failed_at) {
+    return "delivery_failed";
+  }
+  return "enabled";
 }
 
 function mapProfileColumnToDto(profile: string | null): ProfileDto {

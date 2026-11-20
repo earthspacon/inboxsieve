@@ -1,17 +1,21 @@
+import { billingRoutes } from "./api/billing";
 import { brandRoutes } from "./api/brands";
 import type { ApiContext, PublicContext } from "./api/context";
 import { devRoutes } from "./api/dev";
 import { leadRoutes } from "./api/leads";
 import { sourceRoutes } from "./api/sources";
 import { createAuth } from "./auth";
+import { handlePaddleWebhook } from "./billing/webhook";
 import type { Deps } from "./deps";
 import { isDev } from "./env";
 import { HttpError, errorResponse, matchRoute, type Route } from "./http";
 import { handleWebhook } from "./ingest/webhook";
-import { runDueJobs } from "./leads/jobs";
-import { getAccountContext } from "./repo";
+import { runQueues } from "./leads/jobs";
+import { getAccountContext, getBrand, type AccountContext } from "./repo";
 
-const API_ROUTES: Route<ApiContext>[] = [...brandRoutes, ...sourceRoutes, ...leadRoutes];
+const API_ROUTES: Route<ApiContext>[] = [...brandRoutes, ...sourceRoutes, ...leadRoutes, ...billingRoutes];
+const LOCKED_PATHS = new Set(["/api/me", "/api/billing"]);
+const PADDLE_WEBHOOK_PATH = "/paddle/webhook";
 const READ_METHODS = new Set(["GET", "HEAD"]);
 const AUTH_PREFIX = "/api/auth/";
 const WEBHOOK_PATH = /^\/h\/([a-f0-9]{32})$/;
@@ -34,8 +38,11 @@ async function routeRequest({ deps, request }: { deps: Deps; request: Request })
 
   if (webhook && request.method === "POST") {
     const response = await handleWebhook({ db: deps.db, request, token: webhook[1], now: deps.now() });
-    deps.schedule(runDueJobs({ db: deps.db, analyzer: deps.analyzer, now: deps.now() }));
+    deps.schedule(runQueues(deps));
     return response;
+  }
+  if (pathname === PADDLE_WEBHOOK_PATH && request.method === "POST") {
+    return handlePaddleWebhook({ deps, request });
   }
   if (pathname.startsWith("/h/")) {
     throw new HttpError(404, "not_found", "Unknown webhook");
@@ -81,11 +88,15 @@ async function routeApiRequest({ deps, request }: { deps: Deps; request: Request
   if (!account) {
     throw new HttpError(403, "no_account", "This user has no active seat");
   }
-  if (account.access === "locked" && pathname(request) !== "/api/me") {
+  if (account.access === "locked" && !LOCKED_PATHS.has(pathname(request))) {
     throw new HttpError(402, "subscription_required", "Finish checkout to use InboxSieve");
   }
   if (account.access === "read_only" && !READ_METHODS.has(request.method)) {
     throw new HttpError(403, "read_only", "The account is read-only");
+  }
+
+  if (match.params.brandId && !READ_METHODS.has(request.method)) {
+    await requireWritableBrand({ deps, account, brandId: match.params.brandId });
   }
 
   return match.route.handler({
@@ -94,6 +105,22 @@ async function routeApiRequest({ deps, request }: { deps: Deps; request: Request
     request,
     params: match.params,
   });
+}
+
+async function requireWritableBrand({
+  deps,
+  account,
+  brandId,
+}: {
+  deps: Deps;
+  account: AccountContext;
+  brandId: string;
+}) {
+  const brand = await getBrand({ db: deps.db, accountId: account.accountId, brandId });
+
+  if (brand?.readOnly) {
+    throw new HttpError(403, "read_only", "This brand is read-only on your current plan. Upgrade to edit it");
+  }
 }
 
 function pathname(request: Request) {

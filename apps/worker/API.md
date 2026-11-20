@@ -123,3 +123,29 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 | `GET /dev/outbox?to=<email>` | –                                          | `200 [{ to, subject, body, createdAt }]`, newest first. Magic links land here                                   |
 | `POST /dev/usage`            | `{ "brandId", "count" }`                   | `201 { inserted }`. Inserts `count` analyzed leads that count to quota, for the usage-banner screenshot         |
 | `POST /dev/run-jobs`         | –                                          | `200 { processed }`. Runs the analysis sweep now instead of waiting for the cron                                |
+
+## Billing (F1, F7)
+
+| Route                      | Request                                     | Response                                                                                                                                                                                                                                                                                                  |
+| -------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/billing`         | –                                           | `200 BillingDto`: plan, status, `currentPeriodEnd`, `pendingPlan` (a downgrade waiting for the period end), `scheduledChange`, `pastDueSince`, `isAnalysisPaused`, `hasCustomer` and the Paddle.js `checkout` config (environment, client token, price ids). Works while the account is `no_subscription` |
+| `POST /api/billing/portal` | –                                           | `200 { url }`, a fresh Paddle customer-portal link (owner only). `409 no_customer` before the first subscription, `503 billing_unavailable` without `PADDLE_API_KEY`, `403 owner_only` for members                                                                                                        |
+| `POST /paddle/webhook`     | Paddle event, `Paddle-Signature: ts=…;h1=…` | `200 { received, outcome }` with `outcome` = `applied`, `duplicate`, `recorded` (non-subscription events), `illegal_transition`, `stale`, `unknown_account` or `other_subscription`. `401` for a missing, wrong or >5 s old signature; nothing is stored then                                             |
+
+- The account is found by `custom_data.account_id` (set by the SPA in `Paddle.Checkout.open`) or by the stored subscription id.
+- Status moves only through `nextSubscriptionStatus` (`src/billing/state.ts`).
+- Upgrades apply at once. A downgrade sets `pendingPlan` and applies at `current_period_end` (hourly job); brands over the new limit get `readOnly: true`, and any write to them answers `403 read_only`.
+- `past_due`: full access; queued analysis stops after 7 days and resumes when the status leaves `past_due`.
+- `canceled` keeps access until `current_period_end`, then the hourly job sets `expired` (read-only).
+
+## Alerts (F6)
+
+| Route                               | Request                                                                                                                                                                                       | Response                                        |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `PATCH /api/brands/:brandId/alerts` | `{ "enabled": boolean, "threshold": 0–100, "slackWebhookUrl"?: string \| null }`. `null`/missing keeps the saved Slack URL, `""` removes it; a URL must start with `https://hooks.slack.com/` | `200 BrandDto`. Saving clears `delivery_failed` |
+
+`BrandDto.alertState` is `enabled`, `disabled` or `delivery_failed` (`alertLastError` has the reason). A lead that reaches `analyzed` with `score ≥ alertThreshold` (default 80) queues one email per active seat and one Slack post; each is tried at once, then after 10 s and 30 s, and after the 3rd failure the brand shows `delivery_failed`.
+
+| Dev route                   | Request                | Response                                                                         |
+| --------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| `POST /dev/run-maintenance` | `{ "now"?: ISO time }` | `200 { planChanges, expired, reminders }`. Runs the hourly job at the given time |

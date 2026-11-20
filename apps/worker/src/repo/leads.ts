@@ -1,15 +1,18 @@
-import type {
-  Analysis,
-  Category,
-  LeadDetailDto,
-  LeadEventDto,
-  LeadInput,
-  LeadStage,
-  LeadStatus,
-  LeadSummaryDto,
+import {
+  PAST_DUE_GRACE_DAYS,
+  type Analysis,
+  type Category,
+  type LeadDetailDto,
+  type LeadEventDto,
+  type LeadInput,
+  type LeadStage,
+  type LeadStatus,
+  type LeadSummaryDto,
 } from "@inboxsieve/contract";
 
 import { newId } from "../ids";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type LeadRow = {
   id: string;
@@ -233,13 +236,20 @@ export async function claimLead({
 }
 
 // The cron sweep is the queue: it runs across brands and hands each job its brand id.
+// Analysis runs only for accounts with access; past_due keeps it for PAST_DUE_GRACE_DAYS, then pauses.
 export async function listDueLeads({ db, now, limit }: { db: D1Database; now: Date; limit: number }) {
+  const graceStart = new Date(now.getTime() - PAST_DUE_GRACE_DAYS * DAY_MS);
   const { results } = await db
     .prepare(
-      `SELECT id, brand_id FROM leads WHERE status = 'queued' AND next_attempt_at <= ?
-       ORDER BY next_attempt_at LIMIT ?`,
+      `SELECT l.id, l.brand_id FROM leads l
+       JOIN brands b ON b.id = l.brand_id
+       JOIN subscriptions s ON s.account_id = b.account_id
+       WHERE l.status = 'queued' AND l.next_attempt_at <= ?
+         AND s.status IN ('trialing', 'active', 'past_due', 'canceled')
+         AND (s.status != 'past_due' OR s.past_due_since IS NULL OR s.past_due_since > ?)
+       ORDER BY l.next_attempt_at LIMIT ?`,
     )
-    .bind(now.toISOString(), limit)
+    .bind(now.toISOString(), graceStart.toISOString(), limit)
     .all<{ id: string; brand_id: string }>();
   return results;
 }

@@ -1,6 +1,18 @@
 import type { BrandDto } from "@inboxsieve/contract";
 import { useUnit } from "effector-react";
-import { Filter, Inbox, KanbanSquare, LogOut, Menu, PlugZap, UserRound, type LucideIcon } from "lucide-react";
+import {
+  Bell,
+  Building2,
+  CreditCard,
+  Filter,
+  Inbox,
+  KanbanSquare,
+  LogOut,
+  Menu,
+  PlugZap,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { usageRemote } from "../profile/model";
@@ -37,6 +49,21 @@ const NAV_ITEMS: NavItem[] = [
     to: "/app/profile",
     label: "Profile",
     icon: UserRound,
+  },
+  {
+    to: "/app/brands",
+    label: "Brands",
+    icon: Building2,
+  },
+  {
+    to: "/app/alerts",
+    label: "Alerts",
+    icon: Bell,
+  },
+  {
+    to: "/app/billing",
+    label: "Billing",
+    icon: CreditCard,
   },
 ];
 
@@ -255,17 +282,69 @@ const BottomNav = () => {
 };
 
 const AccountBanners = () => {
-  const { usage } = useUnit({ usage: usageRemote.$data });
+  return (
+    <>
+      <SubscriptionBanner />
+      <ReadOnlyBrandBanner />
+      <UsageBanner />
+    </>
+  );
+};
 
-  if (usage && usage.used >= usage.limit) {
+const SubscriptionBanner = () => {
+  const { me } = useUnit({ me: $me });
+
+  if (me?.account.subscription === "past_due") {
+    return (
+      <Banner tone="danger">
+        Your last payment failed. Everything keeps working for 7 days, then analysis pauses.{" "}
+        <Link to="/app/billing" className="font-semibold underline">
+          Update your card
+        </Link>
+      </Banner>
+    );
+  }
+  if (me?.account.access === "read_only") {
     return (
       <Banner tone="warning">
-        You've used all {usage.limit} analyzed leads this month. New leads are stored but not scored until the 1st.{" "}
+        Your subscription is {me.account.subscription}. The workspace is read-only; CSV export still works.{" "}
         <Link to="/app/billing" className="font-semibold underline">
-          Upgrade
+          Billing
         </Link>
       </Banner>
     );
   }
   return null;
+};
+
+const ReadOnlyBrandBanner = () => {
+  const { brand } = useUnit({ brand: $brand });
+
+  if (!brand?.readOnly) {
+    return null;
+  }
+  return (
+    <Banner tone="warning">
+      {brand.name} is read-only on your current plan.{" "}
+      <Link to="/app/billing" className="font-semibold underline">
+        Upgrade to edit it
+      </Link>
+    </Banner>
+  );
+};
+
+const UsageBanner = () => {
+  const { usage } = useUnit({ usage: usageRemote.$data });
+
+  if (!usage || usage.used < usage.limit) {
+    return null;
+  }
+  return (
+    <Banner tone="warning">
+      You've used all {usage.limit} analyzed leads this month. New leads are stored but not scored until the 1st.{" "}
+      <Link to="/app/billing" className="font-semibold underline">
+        Upgrade
+      </Link>
+    </Banner>
+  );
 };
