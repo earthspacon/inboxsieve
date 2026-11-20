@@ -39,7 +39,7 @@ export const OnboardingPage = () => {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <Logo />
+      <Logo to="/app" />
       <Stepper current={step} />
       {step === "brand" && <BrandStep key={brandId} />}
       {step === "profile" && <ProfileStep brandId={brandId} />}

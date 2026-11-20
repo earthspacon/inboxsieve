@@ -1,6 +1,7 @@
 import { PLAN_LIMITS } from "@inboxsieve/contract";
 
 import { nextSubscriptionStatus } from "./billing/state";
+import { purgeDeletedAccounts, purgeOldRawBodies, scheduleExpiredDeletions } from "./data/purge";
 import type { Deps } from "./deps";
 import {
   applyBrandLimit,
@@ -16,13 +17,16 @@ import {
 export const MAINTENANCE_CRON = "0 * * * *";
 const CHECKOUT_REMINDER_DELAY_MS = 24 * 60 * 60 * 1000;
 
-// Hourly: plan downgrades due at period end, canceled → expired, and the one-time checkout reminder.
+// Hourly: plan downgrades due at period end, canceled → expired, the one-time checkout reminder,
+// the 90-day raw-body purge and account deletions.
 export async function runMaintenance({ deps, now }: { deps: Pick<Deps, "db" | "mailer" | "env">; now: Date }) {
   const db = deps.db;
   const summary = {
     planChanges: 0,
     expired: 0,
     reminders: 0,
+    rawPurged: 0,
+    accountsDeleted: 0,
   };
 
   for (const accountId of await listDuePlanChanges({ db, now })) {
@@ -56,6 +60,9 @@ export async function runMaintenance({ deps, now }: { deps: Pick<Deps, "db" | "m
     await markCheckoutReminded({ db, accountId: reminder.account_id, now });
     summary.reminders += 1;
   }
+  summary.rawPurged = await purgeOldRawBodies({ db, now });
+  await scheduleExpiredDeletions({ db, now });
+  summary.accountsDeleted = await purgeDeletedAccounts({ db, mailer: deps.mailer, now });
   return summary;
 }
 

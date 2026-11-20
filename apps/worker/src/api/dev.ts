@@ -100,6 +100,11 @@ export const devRoutes: Route<PublicContext>[] = [
     return json(await runMaintenance({ deps, now }));
   }),
 
+  route("GET", "/dev/account-rows", async ({ deps, request }) => {
+    const accountId = new URL(request.url).searchParams.get("accountId") ?? "";
+    return json(await countAccountRows({ db: deps.db, accountId }));
+  }),
+
   route("POST", "/dev/run-jobs", async ({ deps }) => {
     const processed = await runQueues(deps);
     return json({ processed });
@@ -121,4 +126,25 @@ async function ensureUser({ db, email, now }: { db: D1Database; email: string; n
     throw new Error("Could not create the user");
   }
   return row.id;
+}
+
+// Every table that holds rows of one account, for the F9 deletion check.
+async function countAccountRows({ db, accountId }: { db: D1Database; accountId: string }) {
+  const brands = "SELECT id FROM brands WHERE account_id = ?1";
+  const queries: Record<string, string> = {
+    accounts: "SELECT COUNT(*) AS n FROM accounts WHERE id = ?1",
+    subscriptions: "SELECT COUNT(*) AS n FROM subscriptions WHERE account_id = ?1",
+    seats: "SELECT COUNT(*) AS n FROM seats WHERE account_id = ?1",
+    brands: "SELECT COUNT(*) AS n FROM brands WHERE account_id = ?1",
+    sources: `SELECT COUNT(*) AS n FROM sources WHERE brand_id IN (${brands})`,
+    leads: `SELECT COUNT(*) AS n FROM leads WHERE brand_id IN (${brands})`,
+    lead_events: `SELECT COUNT(*) AS n FROM lead_events WHERE brand_id IN (${brands})`,
+    feedback: `SELECT COUNT(*) AS n FROM feedback WHERE brand_id IN (${brands})`,
+    alert_deliveries: `SELECT COUNT(*) AS n FROM alert_deliveries WHERE brand_id IN (${brands})`,
+  };
+  const counts: Record<string, number> = {};
+  for (const [table, sql] of Object.entries(queries)) {
+    counts[table] = (await db.prepare(sql).bind(accountId).first<{ n: number }>())?.n ?? 0;
+  }
+  return counts;
 }

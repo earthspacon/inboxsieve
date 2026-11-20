@@ -79,15 +79,67 @@ describe("screenshots", () => {
     await capture({ session: filled.session, label, shot: SOURCES_PENDING });
     await capture({ session: full.session, label, shot: USAGE_BANNER });
 
-    expect(
-      consoleReport
-        .filter(({ shot }) => shot.endsWith(label))
-        .every(({ errors }) => {
-          return errors === 0;
-        }),
-    ).toBe(true);
+    expectNoConsoleErrors(label);
+  });
+
+  it.each(VIEWPORTS)("public, team and billing pages ($label)", async ({ label, size }) => {
+    const visitor = await openSession({ browser, viewport: size });
+    const agency = await prepareAccount({ browser, viewport: size, plan: "agency" });
+    await agency.session.page.goto("/app/team");
+    await agency.session.page.getByLabel("Teammate email").fill(uniqueEmail("teammate"));
+    await agency.session.page.getByRole("button", { name: "Send invite" }).click();
+    await agency.session.page.getByText("2 of 3 seats used").waitFor();
+
+    await capture({ session: visitor, label, shot: LANDING });
+    await capture({ session: visitor, label, shot: PRICING });
+    await capture({ session: agency.session, label, shot: TEAM });
+    await capture({ session: agency.session, label, shot: BILLING });
+
+    expectNoConsoleErrors(label);
   });
 });
+
+function expectNoConsoleErrors(label: string) {
+  expect(
+    consoleReport
+      .filter(({ shot }) => shot.endsWith(label))
+      .every(({ errors }) => {
+        return errors === 0;
+      }),
+  ).toBe(true);
+}
+
+const LANDING: Shot = {
+  name: "landing",
+  open: async (page) => {
+    await page.goto("/");
+    await page.getByRole("heading", { name: /Stop digging through form spam/ }).waitFor();
+  },
+};
+
+const PRICING: Shot = {
+  name: "pricing",
+  open: async (page) => {
+    await page.goto("/pricing");
+    await page.getByText("$26.55").waitFor();
+  },
+};
+
+const TEAM: Shot = {
+  name: "team",
+  open: async (page) => {
+    await page.goto("/app/team");
+    await page.getByText("Invited").waitFor();
+  },
+};
+
+const BILLING: Shot = {
+  name: "billing",
+  open: async (page) => {
+    await page.goto("/app/billing");
+    await page.getByText("Current period ends").waitFor();
+  },
+};
 
 const SIGN_IN: Shot = {
   name: "sign-in",
@@ -172,9 +224,17 @@ async function capture({ session, label, shot }: { session: Session; label: stri
   });
 }
 
-async function prepareAccount({ browser, viewport }: { browser: Browser; viewport: typeof DESKTOP }) {
+async function prepareAccount({
+  browser,
+  viewport,
+  plan = "solo",
+}: {
+  browser: Browser;
+  viewport: typeof DESKTOP;
+  plan?: "solo" | "agency";
+}) {
   const email = uniqueEmail("shots");
-  const { brandId } = await createTrialAccount({ email });
+  const { brandId } = await createTrialAccount({ email, plan });
   const session = await openSession({ browser, viewport });
   await signInWithUi({ page: session.page, email });
   await session.page.getByRole("heading", { name: "Inbox" }).waitFor();

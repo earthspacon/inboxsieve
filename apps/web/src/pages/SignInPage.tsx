@@ -19,7 +19,7 @@ export const SignInPage = () => {
   const { sentTo } = useUnit({ sentTo: $sentTo });
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-4 py-10">
-      <Logo />
+      <Logo to="/" />
       {sentTo ? <LinkSent email={sentTo} /> : <SignInForm />}
     </div>
   );

@@ -4,3 +4,5 @@ export * from "./feedback";
 export * from "./leads";
 export * from "./sources";
 export * from "./billing";
+export * from "./seats";
+export * from "./data";

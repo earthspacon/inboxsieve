@@ -12,7 +12,15 @@ export const MORE_LINKS = [
     label: "Hot-lead alerts",
   },
   {
+    to: "/app/team",
+    label: "Team",
+  },
+  {
     to: "/app/billing",
     label: "Billing",
+  },
+  {
+    to: "/app/data",
+    label: "Export and delete",
   },
 ];

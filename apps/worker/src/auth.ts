@@ -3,7 +3,7 @@ import { magicLink } from "better-auth/plugins";
 
 import type { Env } from "./env";
 import type { Mailer } from "./mailer";
-import { createAccount } from "./repo";
+import { acceptPendingInvites, createAccount, hasPendingInvite } from "./repo";
 
 export const MAGIC_LINK_TTL_SECONDS = 15 * 60;
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -66,6 +66,10 @@ export function createAuth({ env, mailer }: { env: Env; mailer: Mailer }) {
       user: {
         create: {
           after: async (user) => {
+            // An invited person joins the inviting workspace instead of starting their own.
+            if (await hasPendingInvite({ db: env.DB, email: user.email })) {
+              return;
+            }
             await createAccount({
               db: env.DB,
               userId: user.id,
@@ -77,12 +81,27 @@ export function createAuth({ env, mailer }: { env: Env; mailer: Mailer }) {
           },
         },
       },
+      session: {
+        create: {
+          after: async (session) => {
+            await acceptPendingInvites({ db: env.DB, userId: session.userId });
+          },
+        },
+      },
     },
     plugins: [
       magicLink({
         expiresIn: MAGIC_LINK_TTL_SECONDS,
         storeToken: "hashed",
         sendMagicLink: async ({ email, url }) => {
+          if (await hasPendingInvite({ db: env.DB, email })) {
+            await mailer.send({
+              to: email,
+              subject: "You're invited to an InboxSieve workspace",
+              text: `You've been invited to a team on InboxSieve.\nAccept and sign in:\n${url}\n\nThe link works once and expires in 15 minutes.`,
+            });
+            return;
+          }
           await mailer.send({
             to: email,
             subject: "Your InboxSieve sign-in link",

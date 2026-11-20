@@ -1,0 +1,33 @@
+# InboxSieve
+
+> InboxSieve scores every website inquiry, filters spam, drafts a reply and pings you about hot leads. For small agencies and service businesses. Self-serve, no sales call.
+
+## What it does
+- Takes inquiries from any form that can send an email (forwarding address) or a webhook (Webflow, Tally, Typeform, WPForms, Zapier, Make).
+- Rule-based spam filter first, then Claude Haiku scores each inquiry 0-100 against the customer's own business profile (services, ideal client, minimum budget, tone).
+- Drafts a reply. A human always sends it from their own mail (copy, or open in Gmail/Outlook compose). InboxSieve never sends email as the customer.
+- Hot-lead alerts by email to every seat and by Slack incoming webhook.
+- Inbox with score and stage filters, lead detail, pipeline (new, contacted, meeting, won, lost, spam).
+- CSV export per brand, workspace deletion, 90-day purge of raw message bodies.
+
+## Pricing (USD, sales tax/VAT added by Paddle where due)
+- Solo: $29/month or $290/year. 1 brand, 2 sources, 500 analyzed leads/month, 1 seat.
+- Agency: $79/month or $790/year. 10 brands, 20 sources, 3,000 analyzed leads/month, 3 seats.
+- 7-day trial, card required. Cancel any time. 14-day refund, no questions asked.
+- Over the limit, leads are stored but not analyzed. Nothing is lost.
+- Paddle.com is the merchant of record.
+
+## Not included
+- Sending replies from InboxSieve servers, Gmail/Outlook OAuth, CRM sync, auto-replies.
+
+## Data
+- The customer is the controller, InboxSieve the processor (GDPR/UK GDPR). A DPA is published.
+- Sub-processors: Cloudflare, Anthropic, Resend, Paddle.
+- Lead data is never used to train AI models.
+
+## Pages
+- [Pricing](/pricing)
+- [Terms](/terms)
+- [Privacy](/privacy)
+- [Refund policy](/refunds)
+- [DPA](/dpa)

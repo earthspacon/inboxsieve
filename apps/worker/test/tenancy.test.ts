@@ -31,6 +31,9 @@ const TENANT_RESOLVERS = new Set([
   "listEndedCancellations",
   "listCheckoutReminders",
   "markCheckoutReminded",
+  // Invites are matched by the invited email at sign-in.
+  "hasPendingInvite",
+  "acceptPendingInvites",
 ]);
 
 const NOW = new Date("2026-11-20T10:00:00.000Z");
@@ -110,6 +113,36 @@ const CASES: Record<string, (a: Tenant, b: Tenant) => Promise<unknown>> = {
   getBillingRow: async (a, b) => {
     const row = await repo.getBillingRow({ db, accountId: b.accountId });
     return row?.account_id === a.accountId ? row : null;
+  },
+  listSeats: async (a, b) =>
+    (await repo.listSeats({ db, accountId: b.accountId })).filter((seat) => seat.email === a.email),
+  inviteSeat: async (a, b) => {
+    const seat = await repo.inviteSeat({
+      db,
+      accountId: b.accountId,
+      email: `invite-${a.accountId}@x.example`,
+      now: NOW,
+    });
+    const inA = await repo.listSeats({ db, accountId: a.accountId });
+    return inA.some((item) => item.id === seat?.id) ? seat : null;
+  },
+  revokeSeat: async (a, b) => {
+    const seat = await repo.inviteSeat({
+      db,
+      accountId: a.accountId,
+      email: `member-${a.accountId}@x.example`,
+      now: NOW,
+    });
+    return repo.revokeSeat({ db, accountId: b.accountId, seatId: seat?.id ?? "" });
+  },
+  listLeadsForExport: async (a, b) =>
+    (await repo.listLeadsForExport({ db, brandId: b.brandId })).filter((row) => row.id === a.leadId),
+  deleteBrand: async (a, b) => (await repo.deleteBrand({ db, accountId: b.accountId, brandId: a.brandId })) || null,
+  requestAccountDeletion: async (a, b) => {
+    await repo.requestAccountDeletion({ db, accountId: b.accountId, now: NOW });
+    const row = await db.prepare("SELECT deletion_requested_at FROM accounts WHERE id = ?").bind(a.accountId).first();
+    await db.prepare("UPDATE accounts SET deletion_requested_at = NULL WHERE id = ?").bind(b.accountId).run();
+    return row?.deletion_requested_at ?? null;
   },
   renameBrand: (a, b) => repo.renameBrand({ db, accountId: b.accountId, brandId: a.brandId, name: "hijack" }),
   countBrands: async (_a, b) => (await repo.countBrands({ db, accountId: b.accountId })) - 1,
@@ -256,6 +289,8 @@ describe("tenancy", () => {
       [
         "saveBrandProfile",
         "renameBrand",
+        "deleteBrand",
+        "revokeSeat",
         "updateSourceState",
         "renameSource",
         "rotateSourceToken",

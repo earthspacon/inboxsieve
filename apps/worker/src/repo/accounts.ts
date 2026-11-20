@@ -26,7 +26,7 @@ export async function getAccountContext({ db, userId }: { db: D1Database; userId
       `SELECT u.id AS user_id, u.email, a.id AS account_id, a.plan, s.status, seat.role
        FROM users u
        JOIN seats seat ON seat.user_id = u.id AND seat.status = 'active'
-       JOIN accounts a ON a.id = seat.account_id
+       JOIN accounts a ON a.id = seat.account_id AND a.deletion_requested_at IS NULL
        JOIN subscriptions s ON s.account_id = a.id
        WHERE u.id = ?
        ORDER BY seat.created_at

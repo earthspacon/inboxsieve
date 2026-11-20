@@ -1,5 +1,7 @@
 import { billingRoutes } from "./api/billing";
 import { brandRoutes } from "./api/brands";
+import { dataRoutes } from "./api/data";
+import { teamRoutes } from "./api/team";
 import type { ApiContext, PublicContext } from "./api/context";
 import { devRoutes } from "./api/dev";
 import { leadRoutes } from "./api/leads";
@@ -13,9 +15,17 @@ import { handleWebhook } from "./ingest/webhook";
 import { runQueues } from "./leads/jobs";
 import { getAccountContext, getBrand, type AccountContext } from "./repo";
 
-const API_ROUTES: Route<ApiContext>[] = [...brandRoutes, ...sourceRoutes, ...leadRoutes, ...billingRoutes];
+const API_ROUTES: Route<ApiContext>[] = [
+  ...brandRoutes,
+  ...sourceRoutes,
+  ...leadRoutes,
+  ...billingRoutes,
+  ...teamRoutes,
+  ...dataRoutes,
+];
 const LOCKED_PATHS = new Set(["/api/me", "/api/billing"]);
 const PADDLE_WEBHOOK_PATH = "/paddle/webhook";
+const BRAND_PATH = "/api/brands/:brandId";
 const READ_METHODS = new Set(["GET", "HEAD"]);
 const AUTH_PREFIX = "/api/auth/";
 const WEBHOOK_PATH = /^\/h\/([a-f0-9]{32})$/;
@@ -95,7 +105,9 @@ async function routeApiRequest({ deps, request }: { deps: Deps; request: Request
     throw new HttpError(403, "read_only", "The account is read-only");
   }
 
-  if (match.params.brandId && !READ_METHODS.has(request.method)) {
+  // Deleting a read-only brand is how an account gets back under its plan, so only that write is allowed.
+  const isBrandDelete = request.method === "DELETE" && match.route.pattern.pathname === BRAND_PATH;
+  if (match.params.brandId && !READ_METHODS.has(request.method) && !isBrandDelete) {
     await requireWritableBrand({ deps, account, brandId: match.params.brandId });
   }
 

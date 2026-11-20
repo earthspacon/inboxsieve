@@ -178,3 +178,34 @@ export type BillingDto = {
 };
 
 export const PAST_DUE_GRACE_DAYS = 7;
+
+export type SeatDto = {
+  id: string;
+  email: string;
+  role: "owner" | "member";
+  status: "invited" | "active" | "revoked";
+  createdAt: string;
+};
+
+// CSV export (F9): one row per lead, in this column order.
+export const LEAD_CSV_COLUMNS = [
+  "id",
+  "received_at",
+  "source_id",
+  "status",
+  "stage",
+  "name",
+  "email",
+  "company",
+  "subject",
+  "message",
+  "score",
+  "category",
+  "summary",
+  "draft",
+  "replied_at",
+] as const;
+
+export type LeadCsvColumn = (typeof LEAD_CSV_COLUMNS)[number];
+
+export const DELETE_ACCOUNT_CONFIRMATION = "DELETE";

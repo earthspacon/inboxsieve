@@ -146,6 +146,30 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 
 `BrandDto.alertState` is `enabled`, `disabled` or `delivery_failed` (`alertLastError` has the reason). A lead that reaches `analyzed` with `score ≥ alertThreshold` (default 80) queues one email per active seat and one Slack post; each is tried at once, then after 10 s and 30 s, and after the 3rd failure the brand shows `delivery_failed`.
 
-| Dev route                   | Request                | Response                                                                         |
-| --------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
-| `POST /dev/run-maintenance` | `{ "now"?: ISO time }` | `200 { planChanges, expired, reminders }`. Runs the hourly job at the given time |
+| Dev route                   | Request                | Response                                                                                                     |
+| --------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `POST /dev/run-maintenance` | `{ "now"?: ISO time }` | `200 { planChanges, expired, reminders, rawPurged, accountsDeleted }`. Runs the hourly job at the given time |
+
+## Team (F8)
+
+| Route                       | Request                    | Response                                                                                                                                                                                        |
+| --------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/seats`            | –                          | `200 SeatDto[]`, owner first, revoked seats left out                                                                                                                                            |
+| `POST /api/seats`           | `{ "email": string ≤254 }` | `201 SeatDto` in `invited` and an invite email with a magic link (owner only). `403 plan_limit` when the plan's seats (owner included) are used, `409 conflict` if the email already has a seat |
+| `DELETE /api/seats/:seatId` | –                          | `200 SeatDto` in `revoked`; that person's sessions are deleted at once, so their next request gets `401`. Owner only; the owner seat can't be revoked (`404`)                                   |
+
+An invited email that signs in joins the inviting workspace instead of getting its own account, and the seat turns `active`.
+
+## Data (F9)
+
+| Route                                 | Request                       | Response                                                                                                                                                                          |
+| ------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/brands/:brandId/export.csv` | –                             | `200 text/csv`, columns `LEAD_CSV_COLUMNS` from the contract, one row per lead. Cells starting with `= + - @` get a leading `'`                                                   |
+| `DELETE /api/brands/:brandId`         | `{ "confirm": <brand name> }` | `204`; the brand and its sources, leads, events, feedback and alert deliveries are deleted at once (owner only). `409 last_brand` for the only brand. Allowed on read-only brands |
+| `DELETE /api/account`                 | `{ "confirm": "DELETE" }`     | `202 { scheduled: true }`; every seat is signed out, the Paddle subscription is canceled (if `PADDLE_API_KEY` is set), and the hourly job deletes every row and emails the owner  |
+
+The hourly job also nulls raw bodies older than 90 days (`/original` then answers `404`) and schedules accounts that have been `expired` for 30 days for deletion.
+
+| Dev route                              | Request | Response                                                            |
+| -------------------------------------- | ------- | ------------------------------------------------------------------- |
+| `GET /dev/account-rows?accountId=<id>` | –       | `200 { <table>: count }` for every table holding the account's rows |

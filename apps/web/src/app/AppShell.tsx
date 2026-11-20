@@ -4,6 +4,7 @@ import {
   Bell,
   Building2,
   CreditCard,
+  Database,
   Filter,
   Inbox,
   KanbanSquare,
@@ -11,6 +12,7 @@ import {
   Menu,
   PlugZap,
   UserRound,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
@@ -61,9 +63,19 @@ const NAV_ITEMS: NavItem[] = [
     icon: Bell,
   },
   {
+    to: "/app/team",
+    label: "Team",
+    icon: Users,
+  },
+  {
     to: "/app/billing",
     label: "Billing",
     icon: CreditCard,
+  },
+  {
+    to: "/app/data",
+    label: "Data",
+    icon: Database,
   },
 ];
 
@@ -138,9 +150,9 @@ const NoAccess = () => {
   );
 };
 
-export const Logo = () => {
+export const Logo = ({ to }: { to: string }) => {
   return (
-    <Link to="/" className="flex items-center gap-2">
+    <Link to={to} className="flex items-center gap-2">
       <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600 text-white">
         <Filter className="size-4" />
       </span>
@@ -152,7 +164,7 @@ export const Logo = () => {
 const Sidebar = () => {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-slate-200 bg-white px-4 py-6 lg:flex">
-      <Logo />
+      <Logo to="/app" />
       <BrandSwitcher />
       <nav className="mt-6 flex flex-col gap-1">
         {NAV_ITEMS.map((item) => {
@@ -253,7 +265,7 @@ const TopBar = () => {
   const { brand } = useUnit({ brand: $brand });
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
-      <Logo />
+      <Logo to="/app" />
       <span className="truncate text-sm text-slate-500">{brand?.name}</span>
     </header>
   );
