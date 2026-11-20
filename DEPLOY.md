@@ -25,7 +25,7 @@ Names used below:
 
 1. `pnpm exec wrangler d1 create inboxsieve`
 2. Copy the printed `database_id` into `[[env.production.d1_databases]]` in `wrangler.toml` (replace `REPLACE_WITH_D1_DATABASE_ID`).
-3. `pnpm exec wrangler d1 migrations apply inboxsieve --remote --env production` (applies `0001`–`0003`).
+3. `pnpm exec wrangler d1 migrations apply inboxsieve --remote --env production` (applies `0001`–`0005`).
 
 ## 3. Resend (outbound mail)
 
@@ -49,7 +49,16 @@ For a sandbox dry run first, use sandbox values and set `PADDLE_ENV = "sandbox"`
 
 ## 5. Anthropic
 
-Console → API keys → create a key for the workspace that bills InboxSieve. Optionally set a monthly spend limit (the plan math in the spec assumes ≈ $0.0004 per lead).
+1. Console → API keys → create a key for the workspace that bills InboxSieve.
+2. **Required:** Console → Limits → set the workspace's monthly spend limit to **$20**. This is the hard stop if everything else fails; the plan math in the spec assumes ≈ $0.0004 per lead.
+3. The Worker has its own daily caps in `[env.production.vars]`: `LLM_DAILY_USD_CAP` (all accounts, default `3`) and `LLM_ACCOUNT_DAILY_USD_CAP` (one account, default `0.25`). Over a cap, leads stay `queued` and are analyzed after 00:00 UTC. Set `OWNER_ALERT_EMAIL` to the address that gets the one "daily AI budget used up" email per day.
+
+## 5a. Cloudflare Turnstile (bot check on sign-in)
+
+1. Cloudflare → Turnstile → Add widget: name `InboxSieve sign-in`, hostname `inboxsieve.com`, mode **Managed**.
+2. Copy the **site key**: it is baked into the SPA at build time as `VITE_TURNSTILE_SITE_KEY` (step 7). Without it the build falls back to Cloudflare's test key and every real sign-in fails, loudly.
+3. Copy the **secret key** for step 6 (`TURNSTILE_SECRET_KEY`).
+4. Rate limits need nothing in the dashboard: the `AUTH_LIMITER` (30 auth writes per IP per minute) and `WEBHOOK_LIMITER` (120 submissions per webhook per minute) bindings come from `wrangler.toml`. Their `namespace_id`s (`1001`, `1002`) must be unique in the Cloudflare account. Magic-link sends (3 per email per 15 min, 10 per IP per hour) are counted in D1.
 
 ## 6. Secrets
 
@@ -61,12 +70,14 @@ pnpm exec wrangler secret put ANTHROPIC_API_KEY --env production
 pnpm exec wrangler secret put RESEND_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_WEBHOOK_SECRET --env production
+pnpm exec wrangler secret put TURNSTILE_SECRET_KEY --env production
 ```
 
 ## 7. Build and deploy
 
 ```sh
-pnpm --filter @inboxsieve/web build      # from the repo root: builds apps/web/dist
+VITE_TURNSTILE_SITE_KEY=<site key from 5a> pnpm --filter @inboxsieve/web build   # from the repo root: builds and prerenders apps/web/dist
+.agents/launch-gate.sh                    # from the repo root: must exit 0
 cd apps/worker
 pnpm exec wrangler deploy --dry-run --env production   # check the bindings list
 pnpm exec wrangler deploy --env production
@@ -82,8 +93,8 @@ The custom-domain route in `wrangler.toml` attaches `inboxsieve.com` to the Work
 
 ## 9. Smoke test (about 10 minutes)
 
-1. Open `https://inboxsieve.com`, then `/pricing`, `/terms`, `/privacy`, `/refunds`, `/dpa`, `/llms.txt`.
-2. Sign in with your own email: the magic link arrives from `login@mail.inboxsieve.com`.
+1. Open `https://inboxsieve.com`, then `/pricing`, `/terms`, `/privacy`, `/refunds`, `/dpa`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`. `curl -sI https://inboxsieve.com` shows `content-security-policy` and `strict-transport-security`. Submit the sitemap in Google Search Console.
+2. Sign in with your own email: the Turnstile box turns green and the magic link arrives from `login@mail.inboxsieve.com`.
 3. The new account lands on Free with no card. Billing → Try Solo free for 14 days switches it to Solo. Then Upgrade to Solo with a real card (refund it afterwards in Paddle). Billing should show Active within seconds; Paddle → Notifications → the destination's log should show `200` responses.
 4. Onboarding → Forward email: send a message to the shown address from another mailbox. A lead appears and gets a score.
 5. Billing → Manage billing opens the Paddle portal.
