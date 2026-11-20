@@ -236,7 +236,7 @@ export async function claimLead({
 }
 
 // The cron sweep is the queue: it runs across brands and hands each job its brand id.
-// Analysis runs only for accounts with access; past_due keeps it for PAST_DUE_GRACE_DAYS, then pauses.
+// Analysis runs for every account but a paused one (Free included); past_due keeps it for PAST_DUE_GRACE_DAYS, then pauses.
 export async function listDueLeads({ db, now, limit }: { db: D1Database; now: Date; limit: number }) {
   const graceStart = new Date(now.getTime() - PAST_DUE_GRACE_DAYS * DAY_MS);
   const { results } = await db
@@ -245,7 +245,7 @@ export async function listDueLeads({ db, now, limit }: { db: D1Database; now: Da
        JOIN brands b ON b.id = l.brand_id
        JOIN subscriptions s ON s.account_id = b.account_id
        WHERE l.status = 'queued' AND l.next_attempt_at <= ?
-         AND s.status IN ('trialing', 'active', 'past_due', 'canceled')
+         AND s.status != 'paused'
          AND (s.status != 'past_due' OR s.past_due_since IS NULL OR s.past_due_since > ?)
        ORDER BY l.next_attempt_at LIMIT ?`,
     )

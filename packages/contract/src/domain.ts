@@ -1,36 +1,85 @@
 import type { Analysis, Category } from "./analysis";
 
-export type Plan = "solo" | "agency";
+export type Plan = "free" | "solo" | "agency";
+
+// The plan stored on the account; Free isn't a subscription, it's what runs without one.
+export type PaidPlan = Exclude<Plan, "free">;
 
 export type SubscriptionStatus =
   "no_subscription" | "trialing" | "active" | "past_due" | "paused" | "canceled" | "expired";
 
-export const PLAN_LIMITS: Record<Plan, { brands: number; sources: number; leadsPerMonth: number; seats: number }> = {
+export const PLAN_LIMITS: Record<
+  Plan,
+  { brands: number; sources: number; leadsPerMonth: number; seats: number; slackAlerts: boolean }
+> = {
+  free: {
+    brands: 1,
+    sources: 1,
+    leadsPerMonth: 50,
+    seats: 1,
+    slackAlerts: false,
+  },
   solo: {
     brands: 1,
     sources: 2,
     leadsPerMonth: 500,
     seats: 1,
+    slackAlerts: true,
   },
   agency: {
     brands: 10,
     sources: 20,
     leadsPerMonth: 3000,
     seats: 3,
+    slackAlerts: true,
   },
 };
 
-export type AccessLevel = "locked" | "read_only" | "full";
+export const TRIAL_DAYS = 14;
 
-export const SUBSCRIPTION_ACCESS: Record<SubscriptionStatus, AccessLevel> = {
-  no_subscription: "locked",
-  trialing: "full",
-  active: "full",
-  past_due: "full",
-  paused: "read_only",
-  canceled: "full",
-  expired: "read_only",
+export type AccessLevel = "read_only" | "full";
+
+// isFree: no live Paddle subscription or trial, so the Free plan's limits apply.
+export const SUBSCRIPTION_RULES: Record<SubscriptionStatus, { access: AccessLevel; isFree: boolean }> = {
+  no_subscription: {
+    access: "full",
+    isFree: true,
+  },
+  trialing: {
+    access: "full",
+    isFree: false,
+  },
+  active: {
+    access: "full",
+    isFree: false,
+  },
+  past_due: {
+    access: "full",
+    isFree: false,
+  },
+  paused: {
+    access: "read_only",
+    isFree: false,
+  },
+  canceled: {
+    access: "full",
+    isFree: false,
+  },
+  expired: {
+    access: "full",
+    isFree: true,
+  },
 };
+
+export function getEffectivePlan({
+  paidPlan,
+  subscription,
+}: {
+  paidPlan: PaidPlan;
+  subscription: SubscriptionStatus;
+}): Plan {
+  return SUBSCRIPTION_RULES[subscription].isFree ? "free" : paidPlan;
+}
 
 export type SourceKind = "email" | "webhook";
 
@@ -165,7 +214,10 @@ export type BillingDto = {
   plan: Plan;
   subscription: SubscriptionStatus;
   currentPeriodEnd: string | null;
-  pendingPlan: Plan | null;
+  pendingPlan: PaidPlan | null;
+  trialEndsAt: string | null;
+  canStartTrial: boolean;
+  hasPaidSubscription: boolean;
   scheduledChange: ScheduledChange | null;
   pastDueSince: string | null;
   isAnalysisPaused: boolean;
@@ -173,7 +225,7 @@ export type BillingDto = {
   checkout: {
     environment: "sandbox" | "production";
     clientToken: string | null;
-    prices: Record<Plan, Record<BillingInterval, string | null>>;
+    prices: Record<PaidPlan, Record<BillingInterval, string | null>>;
   };
 };
 

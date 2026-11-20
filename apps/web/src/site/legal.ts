@@ -28,7 +28,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         paragraphs: [
           MOR_TEXT,
           "Subscriptions renew each month or year until you cancel. Prices are on the pricing page; Paddle adds sales tax or VAT where due.",
-          "A 7-day trial needs a card. If you don't cancel during the trial, the first payment is taken when it ends.",
+          "The Free plan needs no card and has no time limit. The 14-day Solo trial needs no card either; when it ends the workspace returns to Free unless you subscribe. Nothing is charged without a checkout you complete.",
         ],
       },
       {

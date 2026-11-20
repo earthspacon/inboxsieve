@@ -1,10 +1,20 @@
 import { useUnit } from "effector-react";
 import { Link } from "react-router-dom";
 
+import type { Plan } from "@inboxsieve/contract";
+
 import { $interval, intervalChosen } from "../billing/model";
+import { FREE_TAGLINE, TRIAL_CTA } from "../pricing/config";
 import { IntervalToggle, PlanCards } from "../pricing/PlanCards";
 import { BUTTON_PRIMARY } from "../shared/ui";
-import { NEVER_DO } from "./config";
+import { NEVER_DO, START_CTA } from "./config";
+
+// Every sign-up starts on Free; the Solo trial starts from Billing once signed in.
+const PUBLIC_PLAN_CTA: Record<Plan, string> = {
+  free: START_CTA,
+  solo: TRIAL_CTA,
+  agency: START_CTA,
+};
 
 export const PricingSection = () => {
   const { interval } = useUnit({
@@ -17,17 +27,17 @@ export const PricingSection = () => {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Every dollar shown</h2>
           <p className="text-sm text-slate-500">
-            7-day trial, card required. Cancel any time. 14-day refund, no questions asked.
+            {FREE_TAGLINE} {TRIAL_CTA}, also without a card. Cancel any time. 14-day refund, no questions asked.
           </p>
         </div>
         <IntervalToggle interval={interval} onChange={intervalChosen} />
       </div>
       <PlanCards
         interval={interval}
-        renderAction={() => {
+        renderAction={(plan) => {
           return (
             <Link to="/sign-in" className={`${BUTTON_PRIMARY} w-full`}>
-              Start 7-day trial
+              {PUBLIC_PLAN_CTA[plan]}
             </Link>
           );
         }}

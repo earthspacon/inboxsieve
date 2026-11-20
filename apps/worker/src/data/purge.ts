@@ -1,7 +1,6 @@
 import type { Mailer } from "../mailer";
 
 const RAW_RETENTION_DAYS = 90;
-const EXPIRED_RETENTION_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Raw message bodies older than 90 days are dropped; parsed fields stay until deletion.
@@ -9,20 +8,6 @@ export async function purgeOldRawBodies({ db, now }: { db: D1Database; now: Date
   const result = await db
     .prepare("UPDATE leads SET raw = NULL WHERE raw IS NOT NULL AND received_at < ?")
     .bind(new Date(now.getTime() - RAW_RETENTION_DAYS * DAY_MS).toISOString())
-    .run();
-  return result.meta.changes;
-}
-
-// Expired for 30 days → scheduled for deletion like a user-requested one.
-export async function scheduleExpiredDeletions({ db, now }: { db: D1Database; now: Date }) {
-  const result = await db
-    .prepare(
-      `UPDATE accounts SET deletion_requested_at = ?
-       WHERE deletion_requested_at IS NULL AND id IN (
-         SELECT account_id FROM subscriptions WHERE status = 'expired' AND status_since < ?
-       )`,
-    )
-    .bind(now.toISOString(), new Date(now.getTime() - EXPIRED_RETENTION_DAYS * DAY_MS).toISOString())
     .run();
   return result.meta.changes;
 }

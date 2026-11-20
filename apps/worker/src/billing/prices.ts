@@ -1,8 +1,8 @@
-import type { BillingInterval, Plan } from "@inboxsieve/contract";
+import type { BillingInterval, PaidPlan } from "@inboxsieve/contract";
 
 import type { Env } from "../env";
 
-export function buildPriceTable(env: Env): Record<Plan, Record<BillingInterval, string | null>> {
+export function buildPriceTable(env: Env): Record<PaidPlan, Record<BillingInterval, string | null>> {
   return {
     solo: {
       monthly: env.PADDLE_PRICE_SOLO_MONTHLY || null,
@@ -15,12 +15,12 @@ export function buildPriceTable(env: Env): Record<Plan, Record<BillingInterval, 
   };
 }
 
-export function findPlanByPrice({ env, priceId }: { env: Env; priceId: string | null }): Plan | null {
+export function findPlanByPrice({ env, priceId }: { env: Env; priceId: string | null }): PaidPlan | null {
   if (!priceId) {
     return null;
   }
   const table = buildPriceTable(env);
-  const plans: Plan[] = ["solo", "agency"];
+  const plans: PaidPlan[] = ["solo", "agency"];
   return (
     plans.find((plan) => {
       return Object.values(table[plan]).includes(priceId);

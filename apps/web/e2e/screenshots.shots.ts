@@ -89,11 +89,16 @@ describe("screenshots", () => {
     await agency.session.page.getByLabel("Teammate email").fill(uniqueEmail("teammate"));
     await agency.session.page.getByRole("button", { name: "Send invite" }).click();
     await agency.session.page.getByText("2 of 3 seats used").waitFor();
+    const free = await openSession({ browser, viewport: size });
+    await signInWithUi({ page: free.page, email: uniqueEmail("free") });
+    await free.page.getByRole("heading", { name: "What's the business called?" }).waitFor();
 
     await capture({ session: visitor, label, shot: LANDING });
     await capture({ session: visitor, label, shot: PRICING });
     await capture({ session: agency.session, label, shot: TEAM });
     await capture({ session: agency.session, label, shot: BILLING });
+    await capture({ session: free, label, shot: BILLING_FREE });
+    await capture({ session: free, label, shot: BILLING_TRIAL });
 
     expectNoConsoleErrors(label);
   });
@@ -141,11 +146,27 @@ const BILLING: Shot = {
   },
 };
 
+const BILLING_FREE: Shot = {
+  name: "billing-free",
+  open: async (page) => {
+    await page.goto("/app/billing");
+    await page.getByRole("heading", { name: "You're on the Free plan" }).waitFor();
+  },
+};
+
+const BILLING_TRIAL: Shot = {
+  name: "billing-trial",
+  open: async (page) => {
+    await page.getByRole("button", { name: "Try Solo free for 14 days" }).click();
+    await page.getByText(/Your Solo trial ends on/).waitFor();
+  },
+};
+
 const SIGN_IN: Shot = {
   name: "sign-in",
   open: async (page) => {
     await page.goto("/sign-in");
-    await page.getByText("Sign in or start your trial").waitFor();
+    await page.getByText("Sign in or start free").waitFor();
   },
 };
 

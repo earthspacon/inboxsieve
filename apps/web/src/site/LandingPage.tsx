@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 
+import { FREE_TAGLINE } from "../pricing/config";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, Card } from "../shared/ui";
-import { COMPARE_ROWS, FAQ, HOW_IT_WORKS } from "./config";
+import { COMPARE_ROWS, FAQ, HOW_IT_WORKS, START_CTA } from "./config";
 import { PricingSection } from "./PricingSection";
 import { SiteLayout } from "./SiteLayout";
 
@@ -46,15 +47,16 @@ const Hero = () => {
       <h1 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
         Stop digging through form spam. Every inquiry scored, the good ones answered first.
       </h1>
-      <p className="text-lg text-slate-600">$29/mo. Every dollar shown below.</p>
+      <p className="text-lg text-slate-600">Free for 50 leads a month. Solo is $29/mo. Every dollar shown below.</p>
       <div className="flex flex-wrap justify-center gap-2">
         <Link to="/sign-in" className={BUTTON_PRIMARY}>
-          Start 7-day trial
+          {START_CTA}
         </Link>
         <Link to="/pricing" className={BUTTON_SECONDARY}>
           See pricing
         </Link>
       </div>
+      <p className="text-sm text-slate-500">{FREE_TAGLINE}</p>
     </section>
   );
 };

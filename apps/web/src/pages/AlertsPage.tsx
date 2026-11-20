@@ -1,15 +1,20 @@
+import { PLAN_LIMITS } from "@inboxsieve/contract";
 import { useGate, useUnit } from "effector-react";
 import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
 
 import { $alertForm, alertFormChanged, alertsSaveClicked, AlertsGate, saveAlertsFx } from "../alerts/model";
-import { $brand } from "../session/model";
+import { $brand, $plan } from "../session/model";
 import { Banner, BUTTON_PRIMARY, Card, INPUT, PageHeader } from "../shared/ui";
 
 export const AlertsPage = () => {
   useGate(AlertsGate);
   return (
     <div className="space-y-4">
-      <PageHeader title="Hot-lead alerts" subtitle="Email to every seat, plus Slack if you add a webhook." />
+      <PageHeader
+        title="Hot-lead alerts"
+        subtitle="Email to every seat, plus Slack on paid plans if you add a webhook."
+      />
       <AlertStateNotice />
       <AlertsForm />
     </div>
@@ -30,9 +35,8 @@ const AlertStateNotice = () => {
 };
 
 const AlertsForm = () => {
-  const { form, brand, isSaving } = useUnit({
+  const { form, isSaving } = useUnit({
     form: $alertForm,
-    brand: $brand,
     isSaving: saveAlertsFx.pending,
   });
 
@@ -64,32 +68,56 @@ const AlertsForm = () => {
             className={`${INPUT} max-w-32`}
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium text-slate-700">Slack incoming webhook URL</span>
-          <input
-            type="url"
-            placeholder={
-              brand?.slackConfigured ? "Saved. Paste a new URL to replace it" : "https://hooks.slack.com/services/…"
-            }
-            value={form.slackWebhookUrl}
-            onChange={(event) => alertFormChanged({ slackWebhookUrl: event.target.value })}
-            className={INPUT}
-          />
-        </label>
-        {brand?.slackConfigured && (
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            <input
-              type="checkbox"
-              checked={form.isSlackRemoved}
-              onChange={(event) => alertFormChanged({ isSlackRemoved: event.target.checked })}
-            />
-            Remove the saved Slack webhook
-          </label>
-        )}
+        <SlackFields />
         <button type="submit" disabled={isSaving} className={BUTTON_PRIMARY}>
           Save alerts
         </button>
       </form>
     </Card>
+  );
+};
+
+const SlackFields = () => {
+  const { form, brand, plan } = useUnit({
+    form: $alertForm,
+    brand: $brand,
+    plan: $plan,
+  });
+
+  if (!plan || !PLAN_LIMITS[plan].slackAlerts) {
+    return (
+      <p className="text-sm text-slate-600">
+        Slack alerts come with Solo and Agency.{" "}
+        <Link to="/app/billing" className="font-semibold text-brand-700 underline">
+          Upgrade
+        </Link>
+      </p>
+    );
+  }
+  return (
+    <>
+      <label className="block text-sm">
+        <span className="font-medium text-slate-700">Slack incoming webhook URL</span>
+        <input
+          type="url"
+          placeholder={
+            brand?.slackConfigured ? "Saved. Paste a new URL to replace it" : "https://hooks.slack.com/services/…"
+          }
+          value={form.slackWebhookUrl}
+          onChange={(event) => alertFormChanged({ slackWebhookUrl: event.target.value })}
+          className={INPUT}
+        />
+      </label>
+      {brand?.slackConfigured && (
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={form.isSlackRemoved}
+            onChange={(event) => alertFormChanged({ isSlackRemoved: event.target.checked })}
+          />
+          Remove the saved Slack webhook
+        </label>
+      )}
+    </>
   );
 };

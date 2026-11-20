@@ -120,6 +120,9 @@ export const brandRoutes: Route<ApiContext>[] = [
     if (slackWebhookUrl !== undefined && slackWebhookUrl !== null && !isSlackUrlOrEmpty(slackWebhookUrl)) {
       throw new HttpError(400, "invalid_field", `"slackWebhookUrl" must start with ${SLACK_WEBHOOK_PREFIX}`);
     }
+    if (typeof slackWebhookUrl === "string" && slackWebhookUrl.trim() && !PLAN_LIMITS[account.plan].slackAlerts) {
+      throw new HttpError(403, "plan_limit", "Slack alerts aren't on the Free plan. Upgrade to add Slack");
+    }
     return json(
       await saveAlertSettings({
         db: deps.db,

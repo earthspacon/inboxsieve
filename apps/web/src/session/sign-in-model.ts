@@ -13,6 +13,7 @@ export const sendLinkFx = createEffect((email: string) => {
     body: {
       email,
       callbackURL: "/app",
+      newUserCallbackURL: "/app/onboarding",
       errorCallbackURL: "/sign-in",
     },
   });

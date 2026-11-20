@@ -59,7 +59,7 @@ describe("F9 data", () => {
 
     await page.getByLabel("Type DELETE to confirm").fill("DELETE");
     await deleteButton.click();
-    await page.getByText("Sign in or start your trial").waitFor();
+    await page.getByText("Sign in or start free").waitFor();
     expect((await apiJson({ page, path: "/api/me" })).status).toBe(401);
 
     const before = await countAccountRows(accountId);

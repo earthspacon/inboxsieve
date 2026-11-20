@@ -33,15 +33,15 @@ describe("F1 sign-in (auth part)", () => {
     expect(body.brands).toHaveLength(1);
   });
 
-  it("F1: a new email gets an account in no_subscription that is locked behind checkout", async () => {
+  it("F1: a new email gets an account on the Free plan that can use the app", async () => {
     const email = uniqueEmail("new");
 
     const cookie = await signIn(email);
     const me = await SELF.fetch(`${BASE}/api/me`, { headers: { cookie } });
     const brands = await SELF.fetch(`${BASE}/api/brands`, { headers: { cookie } });
 
-    expect((await me.json<{ account: { subscription: string } }>()).account.subscription).toBe("no_subscription");
-    expect(brands.status).toBe(402);
+    expect(await me.json()).toMatchObject({ account: { plan: "free", subscription: "no_subscription" } });
+    expect(brands.status).toBe(200);
   });
 
   it('F1: a used magic link does not sign in again and sends the user to "send a new link"', async () => {

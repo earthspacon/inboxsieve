@@ -1,4 +1,4 @@
-import type { Plan } from "@inboxsieve/contract";
+import { PLAN_LIMITS, TRIAL_DAYS, type Plan } from "@inboxsieve/contract";
 
 type PriceLine = { label: string; amount: string };
 
@@ -13,8 +13,48 @@ export type PlanCard = {
   total: PriceLine;
 };
 
+export const FREE_TAGLINE = "Free forever. No card needed.";
+export const TRIAL_CTA = `Try Solo free for ${TRIAL_DAYS} days`;
+
 // Spec §3.2, copied line by line: every dollar shown.
 export const PLAN_CARDS: PlanCard[] = [
+  {
+    plan: "free",
+    name: "Free",
+    monthly: "$0",
+    yearly: "$0",
+    yearlyNote: "forever",
+    limits: [
+      "1 brand",
+      "1 source",
+      `${PLAN_LIMITS.free.leadsPerMonth} leads/mo`,
+      "1 seat",
+      "email alerts (no Slack)",
+      "CSV export",
+    ],
+    lines: [
+      {
+        label: "Payment processing",
+        amount: "$0.00",
+      },
+      {
+        label: `Claude Haiku AI, ${PLAN_LIMITS.free.leadsPerMonth} leads at ~$0.0004 (we pay it)`,
+        amount: "≈ $0.02",
+      },
+      {
+        label: "Hosting + email delivery (we pay it)",
+        amount: "≈ $0.03",
+      },
+      {
+        label: "Our fee",
+        amount: "$0.00",
+      },
+    ],
+    total: {
+      label: "You pay. No card needed",
+      amount: "$0.00",
+    },
+  },
   {
     plan: "solo",
     name: "Solo",
@@ -78,6 +118,7 @@ export const PLAN_CARDS: PlanCard[] = [
 ];
 
 export const PLAN_NAMES: Record<Plan, string> = {
+  free: "Free",
   solo: "Solo",
   agency: "Agency",
 };

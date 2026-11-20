@@ -42,8 +42,8 @@ const SignInForm = () => {
   return (
     <Card className="space-y-4 p-6">
       <div>
-        <h1 className="text-xl font-semibold">Sign in or start your trial</h1>
-        <p className="text-sm text-slate-500">We email you a sign-in link. No password.</p>
+        <h1 className="text-xl font-semibold">Sign in or start free</h1>
+        <p className="text-sm text-slate-500">We email you a sign-in link. No password, no card.</p>
       </div>
       {linkError && (
         <Banner tone="warning">That sign-in link expired or was already used. Send a new link below.</Banner>

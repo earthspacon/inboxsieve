@@ -172,7 +172,7 @@ describe("F9 data", () => {
     expect(original.status).toBe(404);
   });
 
-  it("F9: an account expired for 30 days is hard-deleted", async () => {
+  it("F9: an account expired for 30 days stays on Free and keeps its data", async () => {
     const session = await signInTrial({ email: uniqueEmail("expired") });
     await db
       .prepare("UPDATE subscriptions SET status = 'expired', status_since = ? WHERE account_id = ?")
@@ -183,7 +183,7 @@ describe("F9 data", () => {
 
     expect(
       await countRows({ sql: "SELECT COUNT(*) AS n FROM accounts WHERE id = ?", binds: [session.accountId] }),
-    ).toBe(0);
+    ).toBe(1);
   });
 
   it("F9: delete brand needs its name typed, and the last brand can't go", async () => {

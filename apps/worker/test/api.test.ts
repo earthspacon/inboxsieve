@@ -356,9 +356,9 @@ describe("API: account, brands, usage and access", () => {
     expect(usage).toMatchObject({ used: 2, limit: 500 });
   });
 
-  it("an expired account can read but not write", async () => {
+  it("a paused account can read but not write", async () => {
     const context = await setUp();
-    await db.prepare(`UPDATE subscriptions SET status = 'expired' WHERE account_id = ?`).bind(context.accountId).run();
+    await db.prepare(`UPDATE subscriptions SET status = 'paused' WHERE account_id = ?`).bind(context.accountId).run();
 
     const read = await context.api(`/api/brands/${context.brandId}/leads`);
     const write = await context.api(`/api/brands/${context.brandId}/sources`, {

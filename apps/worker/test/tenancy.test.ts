@@ -22,15 +22,15 @@ const TENANT_RESOLVERS = new Set([
   "mapSourceRowToDto",
   "mapLeadRowToSummary",
   "mapLeadRowToDetail",
-  // Billing is driven by signed Paddle events and the hourly job, which resolve the account themselves.
+  // Billing is driven by signed Paddle events, the hourly job and the owner's session, which resolve the account.
   "findAccountIdForPaddle",
   "saveSubscription",
   "recordPaddleEvent",
   "setPaddleEventOutcome",
   "listDuePlanChanges",
   "listEndedCancellations",
-  "listCheckoutReminders",
-  "markCheckoutReminded",
+  "listEndedLocalTrials",
+  "startLocalTrial",
   // Invites are matched by the invited email at sign-in.
   "hasPendingInvite",
   "acceptPendingInvites",

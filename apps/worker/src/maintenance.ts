@@ -1,30 +1,28 @@
-import { PLAN_LIMITS } from "@inboxsieve/contract";
+import { getEffectivePlan, PLAN_LIMITS, TRIAL_DAYS } from "@inboxsieve/contract";
 
-import { nextSubscriptionStatus } from "./billing/state";
-import { purgeDeletedAccounts, purgeOldRawBodies, scheduleExpiredDeletions } from "./data/purge";
+import { nextSubscriptionStatus, type SubscriptionEvent } from "./billing/state";
+import { purgeDeletedAccounts, purgeOldRawBodies } from "./data/purge";
 import type { Deps } from "./deps";
 import {
   applyBrandLimit,
   getBillingRow,
-  listCheckoutReminders,
   listDuePlanChanges,
   listEndedCancellations,
-  markCheckoutReminded,
+  listEndedLocalTrials,
   saveSubscription,
   type BillingRow,
 } from "./repo";
 
 export const MAINTENANCE_CRON = "0 * * * *";
-const CHECKOUT_REMINDER_DELAY_MS = 24 * 60 * 60 * 1000;
 
-// Hourly: plan downgrades due at period end, canceled → expired, the one-time checkout reminder,
+// Hourly: plan downgrades due at period end, canceled → expired (Free), ended no-card trials → Free,
 // the 90-day raw-body purge and account deletions.
 export async function runMaintenance({ deps, now }: { deps: Pick<Deps, "db" | "mailer" | "env">; now: Date }) {
   const db = deps.db;
   const summary = {
     planChanges: 0,
     expired: 0,
-    reminders: 0,
+    trialsEnded: 0,
     rawPurged: 0,
     accountsDeleted: 0,
   };
@@ -39,31 +37,49 @@ export async function runMaintenance({ deps, now }: { deps: Pick<Deps, "db" | "m
   }
 
   for (const accountId of await listEndedCancellations({ db, now })) {
-    const row = await getBillingRow({ db, accountId });
-    const transition = row ? nextSubscriptionStatus({ current: row.status, event: { type: "period_ended" } }) : null;
-    if (row && transition?.ok) {
-      await saveRow({ db, row, now, changes: { status: transition.status, statusSince: now.toISOString() } });
+    if (await endPaidAccess({ db, accountId, now, event: { type: "period_ended" } })) {
       summary.expired += 1;
     }
   }
 
-  const reminders = await listCheckoutReminders({
-    db,
-    createdBefore: new Date(now.getTime() - CHECKOUT_REMINDER_DELAY_MS),
-  });
-  for (const reminder of reminders) {
-    await deps.mailer.send({
-      to: reminder.email,
-      subject: "Your InboxSieve trial is one step away",
-      text: `You signed up for InboxSieve but didn't finish checkout.\nStart your 7-day trial here: ${deps.env.APP_URL}/app/checkout\n\nWe only send this once.`,
-    });
-    await markCheckoutReminded({ db, accountId: reminder.account_id, now });
-    summary.reminders += 1;
+  for (const trial of await listEndedLocalTrials({ db, now })) {
+    if (await endPaidAccess({ db, accountId: trial.account_id, now, event: { type: "trial_ended" } })) {
+      await deps.mailer.send({
+        to: trial.email,
+        subject: "Your InboxSieve Solo trial has ended",
+        text: `Your ${TRIAL_DAYS}-day Solo trial has ended, so your workspace is on the Free plan now: ${PLAN_LIMITS.free.leadsPerMonth} analyzed leads a month and email alerts. Nothing was deleted.\nTo keep Solo, upgrade here: ${deps.env.APP_URL}/app/billing`,
+      });
+      summary.trialsEnded += 1;
+    }
   }
+
   summary.rawPurged = await purgeOldRawBodies({ db, now });
-  await scheduleExpiredDeletions({ db, now });
   summary.accountsDeleted = await purgeDeletedAccounts({ db, mailer: deps.mailer, now });
   return summary;
+}
+
+// Moves the account onto Free limits; brands over them turn read-only, nothing is deleted.
+async function endPaidAccess({
+  db,
+  accountId,
+  now,
+  event,
+}: {
+  db: D1Database;
+  accountId: string;
+  now: Date;
+  event: SubscriptionEvent;
+}) {
+  const row = await getBillingRow({ db, accountId });
+  const transition = row ? nextSubscriptionStatus({ current: row.status, event }) : null;
+
+  if (!row || !transition?.ok) {
+    return false;
+  }
+  await saveRow({ db, row, now, changes: { status: transition.status, statusSince: now.toISOString() } });
+  const plan = getEffectivePlan({ paidPlan: row.plan, subscription: transition.status });
+  await applyBrandLimit({ db, accountId, limit: PLAN_LIMITS[plan].brands });
+  return true;
 }
 
 async function saveRow({

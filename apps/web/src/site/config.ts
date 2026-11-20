@@ -88,7 +88,14 @@ export const COMPARE_ROWS = [
   },
 ];
 
+export const START_CTA = "Start free";
+
 export const FAQ = [
+  {
+    question: "Is there a free plan? Do I need a card?",
+    answer:
+      "Yes. Free is 1 brand, 1 source and 50 analyzed leads a month, forever, with no card. You can also try Solo free for 14 days without a card; after that you're back on Free unless you upgrade.",
+  },
   {
     question: "Is it GDPR-ready? Do you sign a DPA?",
     answer:
@@ -106,7 +113,8 @@ export const FAQ = [
   },
   {
     question: "Can I cancel any time?",
-    answer: "Yes, in the billing portal. You keep full access until the end of the paid period.",
+    answer:
+      "Yes, in the billing portal. You keep full access until the end of the paid period, then the workspace moves to the Free plan. Nothing is deleted.",
   },
   {
     question: "What's the refund policy?",

@@ -49,6 +49,7 @@ export const $brand = combine($me, $selectedBrandId, (me, brandId) => {
 
 export const $brandId = $brand.map((brand) => brand?.id ?? "");
 export const $isOwner = $me.map((me) => me?.role === "owner");
+export const $plan = $me.map((me) => me?.account.plan ?? null);
 
 // #region load
 sample({

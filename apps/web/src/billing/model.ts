@@ -1,8 +1,8 @@
-import type { BillingDto, BillingInterval, BrandDto, Plan } from "@inboxsieve/contract";
+import type { BillingDto, BillingInterval, BrandDto, PaidPlan } from "@inboxsieve/contract";
 import { attach, createEffect, createEvent, createStore, sample } from "effector";
 import { createGate } from "effector-react";
 
-import { $me, meFx, meRefreshRequested } from "../session/model";
+import { $me, meRefreshRequested } from "../session/model";
 import { apiRequest, ApiRequestError } from "../shared/api";
 import { createRemote } from "../shared/remote";
 import { toastShown } from "../shared/toast-model";
@@ -14,7 +14,8 @@ export const BillingGate = createGate();
 export const BrandsGate = createGate();
 
 export const intervalChosen = createEvent<BillingInterval>();
-export const checkoutClicked = createEvent<Plan>();
+export const checkoutClicked = createEvent<PaidPlan>();
+export const trialStartClicked = createEvent();
 export const manageBillingClicked = createEvent();
 export const brandCreateSubmitted = createEvent<string>();
 export const upgradePromptClosed = createEvent();
@@ -38,7 +39,7 @@ const openCheckoutFx = attach({
     me: $me,
     interval: $interval,
   },
-  effect: async ({ billing, me, interval }, plan: Plan) => {
+  effect: async ({ billing, me, interval }, plan: PaidPlan) => {
     if (!billing || !me) {
       throw new Error("Billing isn't loaded yet");
     }
@@ -63,6 +64,10 @@ const waitFx = createEffect(() => {
   return new Promise((resolve) => {
     setTimeout(resolve, ACTIVATION_POLL_MS);
   });
+});
+
+export const startTrialFx = createEffect(() => {
+  return apiRequest<BillingDto>({ path: "/api/billing/trial", method: "POST" });
 });
 
 export const portalFx = createEffect(async () => {
@@ -109,23 +114,47 @@ sample({
   target: [$isWaitingForActivation, waitFx],
 });
 
-// The webhook unlocks the account a moment after checkout; poll /api/me until it does.
+// The webhook attaches the subscription a moment after checkout; poll /api/billing until it does.
 sample({
   clock: waitFx.done,
-  target: meRefreshRequested,
+  target: billingRemote.fx,
 });
 
 sample({
-  clock: meFx.doneData,
+  clock: billingRemote.fx.doneData,
   source: $isWaitingForActivation,
-  filter: (isWaiting, me) => isWaiting && me.account.access === "locked",
+  filter: (isWaiting, billing) => isWaiting && !billing?.hasPaidSubscription,
   target: waitFx,
 });
 
 sample({
-  clock: meFx.doneData,
-  filter: (me) => me.account.access !== "locked",
-  target: $isWaitingForActivation.reinit,
+  clock: billingRemote.fx.doneData,
+  source: $isWaitingForActivation,
+  filter: (isWaiting, billing) => isWaiting && Boolean(billing?.hasPaidSubscription),
+  target: [$isWaitingForActivation.reinit, meRefreshRequested],
+});
+// #endregion
+
+// #region trial
+sample({
+  clock: trialStartClicked,
+  target: startTrialFx,
+});
+
+sample({
+  clock: startTrialFx.doneData,
+  target: [billingRemote.$data, meRefreshRequested],
+});
+
+sample({
+  clock: startTrialFx.failData,
+  fn: (error) => {
+    return {
+      text: error.message,
+      tone: "error" as const,
+    };
+  },
+  target: toastShown,
 });
 // #endregion
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Logo } from "../app/AppShell";
 import { BUTTON_PRIMARY } from "../shared/ui";
-import { CONTACT_EMAIL, FOOTER_LINKS, SELLER_LEGAL_NAME } from "./config";
+import { CONTACT_EMAIL, FOOTER_LINKS, SELLER_LEGAL_NAME, START_CTA } from "./config";
 
 export const SiteLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -19,7 +19,7 @@ export const SiteLayout = ({ children }: { children: ReactNode }) => {
               Sign in
             </Link>
             <Link to="/sign-in" className={BUTTON_PRIMARY}>
-              Start 7-day trial
+              {START_CTA}
             </Link>
           </nav>
         </div>

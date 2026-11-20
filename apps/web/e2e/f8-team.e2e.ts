@@ -73,7 +73,7 @@ describe("F8 team", () => {
     const me = await apiJson({ page: member.page, path: "/api/me" });
     expect(me.status).toBe(401);
     await member.page.goto("/app");
-    await member.page.getByText("Sign in or start your trial").waitFor();
+    await member.page.getByText("Sign in or start free").waitFor();
   });
 
   function seatRow(email: string) {

@@ -3,7 +3,6 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AlertsPage } from "../pages/AlertsPage";
 import { BillingPage } from "../pages/BillingPage";
 import { BrandsPage } from "../pages/BrandsPage";
-import { CheckoutPage } from "../pages/CheckoutPage";
 import { DataPage } from "../pages/DataPage";
 import { InboxPage } from "../pages/InboxPage";
 import { LeadPage } from "../pages/LeadPage";
@@ -34,7 +33,6 @@ export const App = () => {
         <Route path="/ai" element={<AiPage />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/app" element={<RequireSession />}>
-          <Route path="checkout" element={<CheckoutPage />} />
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route element={<AppShell />}>
             <Route index element={<InboxPage />} />

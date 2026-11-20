@@ -1,10 +1,12 @@
 import {
   DEFAULT_ALERT_THRESHOLD,
+  getEffectivePlan,
   type AlertState,
   type BrandDto,
   type BusinessProfile,
-  type Plan,
+  type PaidPlan,
   type ProfileDto,
+  type SubscriptionStatus,
 } from "@inboxsieve/contract";
 
 import { DEFAULT_PROFILE } from "../analysis/analyzer";
@@ -198,10 +200,21 @@ function mapProfileColumnToDto(profile: string | null): ProfileDto {
 }
 
 export async function getBrandOwner({ db, brandId }: { db: D1Database; brandId: string }) {
-  return db
+  const row = await db
     .prepare(
-      "SELECT b.account_id AS accountId, a.plan FROM brands b JOIN accounts a ON a.id = b.account_id WHERE b.id = ?",
+      `SELECT b.account_id AS accountId, a.plan, s.status FROM brands b
+       JOIN accounts a ON a.id = b.account_id
+       JOIN subscriptions s ON s.account_id = b.account_id
+       WHERE b.id = ?`,
     )
     .bind(brandId)
-    .first<{ accountId: string; plan: Plan }>();
+    .first<{ accountId: string; plan: PaidPlan; status: SubscriptionStatus }>();
+
+  if (!row) {
+    return null;
+  }
+  return {
+    accountId: row.accountId,
+    plan: getEffectivePlan({ paidPlan: row.plan, subscription: row.status }),
+  };
 }

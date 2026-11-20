@@ -15,7 +15,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet } from "react-router-dom";
 
 import { usageRemote } from "../profile/model";
 import {
@@ -88,15 +88,12 @@ const MOBILE_NAV_ITEMS: NavItem[] = [
   },
 ];
 
-const CHECKOUT_PATH = "/app/checkout";
-
 export const RequireSession = () => {
   const { status, error, me } = useUnit({
     status: $sessionStatus,
     error: $sessionError,
     me: $me,
   });
-  const { pathname } = useLocation();
 
   if (status === "loading") {
     return (
@@ -117,9 +114,6 @@ export const RequireSession = () => {
         <ErrorState message={error} onRetry={() => meRefreshRequested()} />
       </div>
     );
-  }
-  if (me.account.access === "locked" && pathname !== CHECKOUT_PATH) {
-    return <Navigate to={CHECKOUT_PATH} replace />;
   }
   return <Outlet />;
 };

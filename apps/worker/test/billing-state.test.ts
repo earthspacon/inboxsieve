@@ -14,6 +14,7 @@ const STATUSES: SubscriptionStatus[] = [
 ];
 
 // The spec's subscription lifecycle (§3.4 F1), written out pair by pair. Staying in the same status is always legal.
+// no_subscription and expired run on the Free plan; trialing → no_subscription is the end of the no-card trial.
 const LEGAL = new Set([
   "no_subscription>trialing",
   "no_subscription>active",
@@ -21,6 +22,7 @@ const LEGAL = new Set([
   "trialing>past_due",
   "trialing>paused",
   "trialing>canceled",
+  "trialing>no_subscription",
   "active>past_due",
   "active>paused",
   "active>canceled",
@@ -36,7 +38,8 @@ const LEGAL = new Set([
   "expired>active",
 ]);
 
-const EVENT_FOR_TARGET: Record<Exclude<SubscriptionStatus, "no_subscription">, SubscriptionEvent> = {
+const EVENT_FOR_TARGET: Record<SubscriptionStatus, SubscriptionEvent> = {
+  no_subscription: { type: "trial_ended" },
   trialing: { type: "subscription.trialing" },
   active: { type: "subscription.activated" },
   past_due: { type: "subscription.past_due" },
@@ -79,6 +82,14 @@ describe("F1 billing: subscription state machine", () => {
       ok: true,
       status: "active",
     });
+  });
+
+  it("the no-card trial starts only from Free (no_subscription or expired)", () => {
+    const starts = STATUSES.filter((current) => {
+      return nextSubscriptionStatus({ current, event: { type: "trial_started" } }).ok;
+    });
+
+    expect(starts).toEqual(["no_subscription", "expired"]);
   });
 
   it("an update that would jump from no_subscription to past_due is rejected", () => {

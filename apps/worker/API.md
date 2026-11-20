@@ -7,23 +7,21 @@ JSON over HTTPS. Types live in `packages/contract/src/domain.ts` (`Me`, `BrandDt
 - **Auth:** an HttpOnly session cookie set by the magic-link flow. Every `/api/*` route except `/api/auth/*` needs it.
 - **Errors:** every error body is `ApiError`, `{ "error": "<code>", "message": "<text for humans>" }`.
 
-| Status | `error`                         | When                                                                                     |
-| ------ | ------------------------------- | ---------------------------------------------------------------------------------------- |
-| 400    | `invalid_json`, `invalid_field` | The body isn't a JSON object, or a field is missing, the wrong type or too long          |
-| 401    | `unauthorized`                  | No session or an expired one                                                             |
-| 402    | `subscription_required`         | The account is `no_subscription`. Only `GET /api/me` still works; show "Finish checkout" |
-| 403    | `no_account`                    | The user has no active seat                                                              |
-| 403    | `read_only`                     | The account is `paused` or `expired` and the request isn't a GET                         |
-| 403    | `plan_limit`                    | Creating one more brand or source than the plan allows                                   |
-| 404    | `not_found`                     | Unknown route, or a brand, source or lead outside your account                           |
-| 409    | `invalid_transition`            | The stage or status move isn't allowed (see the stage rules below)                       |
-| 409    | `conflict`                      | The lead changed between the read and the write. Reload it                               |
-| 500    | `internal`                      | Unexpected error. Nothing is logged except the error class                               |
+| Status | `error`                         | When                                                                            |
+| ------ | ------------------------------- | ------------------------------------------------------------------------------- |
+| 400    | `invalid_json`, `invalid_field` | The body isn't a JSON object, or a field is missing, the wrong type or too long |
+| 401    | `unauthorized`                  | No session or an expired one                                                    |
+| 403    | `no_account`                    | The user has no active seat                                                     |
+| 403    | `read_only`                     | The account is `paused` and the request isn't a GET, or the brand is read-only  |
+| 403    | `plan_limit`                    | One more brand, source or seat than the plan allows, or Slack alerts on Free    |
+| 404    | `not_found`                     | Unknown route, or a brand, source or lead outside your account                  |
+| 409    | `invalid_transition`            | The stage or status move isn't allowed (see the stage rules below)              |
+| 409    | `conflict`                      | The lead changed between the read and the write. Reload it                      |
+| 500    | `internal`                      | Unexpected error. Nothing is logged except the error class                      |
 
-- **Access by subscription** (`SUBSCRIPTION_ACCESS`):
-  - `trialing`, `active`, `past_due`, `canceled`: full access.
-  - `paused`, `expired`: read-only.
-  - `no_subscription`: locked.
+- **Access and plan by subscription** (`SUBSCRIPTION_RULES`):
+  - `paused`: read-only. Every other status: full access.
+  - `no_subscription` and `expired` run on the **Free** plan (1 brand, 1 source, 1 seat, 50 leads/month, email alerts only). `accounts.plan` keeps the paid plan; `Me.account.plan` and `BillingDto.plan` are the effective one.
 - **Timestamps:** ISO 8601 strings in UTC.
 - **IDs:** opaque strings.
 
@@ -36,15 +34,15 @@ JSON over HTTPS. Types live in `packages/contract/src/domain.ts` (`Me`, `BrandDt
 | `GET /api/auth/get-session`                                                | cookie                                                                                                    | `{ session, user }` or `null`                                                                                                                                                          |
 | `POST /api/auth/sign-out`                                                  | cookie + `Origin`                                                                                         | `200 { "success": true }`; the session is deleted                                                                                                                                      |
 
-The first sign-in of an unknown email creates a user and an account in `no_subscription` with one default brand ("My brand") and an owner seat.
+The first sign-in of an unknown email creates a user and an account in `no_subscription` (the Free plan) with one default brand ("My brand") and an owner seat.
 
 ## Account and brands
 
 | Route                                 | Request                  | Response                                                                                                                                                                      |
 | ------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/me`                         | –                        | `200 Me & { brands: BrandDto[] }`. `account.access` is `full`, `read_only` or `locked`                                                                                        |
+| `GET /api/me`                         | –                        | `200 Me & { brands: BrandDto[] }`. `account.access` is `full` or `read_only`; `account.plan` is `free`, `solo` or `agency`                                                    |
 | `GET /api/brands`                     | –                        | `200 BrandDto[]`                                                                                                                                                              |
-| `POST /api/brands`                    | `{ "name": string ≤80 }` | `201 BrandDto`; `403 plan_limit` (Solo 1, Agency 10)                                                                                                                          |
+| `POST /api/brands`                    | `{ "name": string ≤80 }` | `201 BrandDto`; `403 plan_limit` (Free 1, Solo 1, Agency 10)                                                                                                                  |
 | `PATCH /api/brands/:brandId`          | `{ "name": string ≤80 }` | `200 BrandDto` (onboarding step 1)                                                                                                                                            |
 | `POST /api/brands/:brandId/test-lead` | –                        | `201 { id, status }`. Injects one sample lead through the first source of the brand and analyzes it ("Send a test lead"). `409 no_source` if the brand has no source          |
 | `GET /api/brands/:brandId/usage`      | –                        | `200 UsageDto` `{ month: "2026-11", used, limit }`. `used` counts the account's leads this UTC month that went to analysis. Rule-filtered spam and parse failures don't count |
@@ -59,13 +57,13 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 
 ## Sources (F2)
 
-| Route                                                      | Request                                                                               | Response                                                                                                                                                                                                                    |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/brands/:brandId/sources`                         | –                                                                                     | `200 SourceDto[]`. An empty list is the `not_connected` state; show the "Connect a source" CTA                                                                                                                              |
-| `POST /api/brands/:brandId/sources`                        | `{ "kind": "email" \| "webhook", "name": string ≤80 }` (an empty name gets a default) | `201 SourceDto` in `awaiting_first_message`. Email sources get `address` (`<brand>-<10 hex>@<INBOUND_DOMAIN>`); webhook sources get `webhookUrl` (`<APP_URL>/h/<32 hex>`). `403 plan_limit` (Solo 2, Agency 20 per account) |
-| `PATCH /api/brands/:brandId/sources/:sourceId`             | `{ "name"?: string, "enabled"?: boolean }`                                            | `200 SourceDto`. `enabled: false` sets `disabled`. `enabled: true` sets `connected` if the source has leads, else `awaiting_first_message`                                                                                  |
-| `POST /api/brands/:brandId/sources/:sourceId/rotate-token` | –                                                                                     | `200 SourceDto` with a new `webhookUrl`. The old URL answers 404 at once                                                                                                                                                    |
-| `DELETE /api/brands/:brandId/sources/:sourceId`            | –                                                                                     | `204`; its leads are deleted too                                                                                                                                                                                            |
+| Route                                                      | Request                                                                               | Response                                                                                                                                                                                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/brands/:brandId/sources`                         | –                                                                                     | `200 SourceDto[]`. An empty list is the `not_connected` state; show the "Connect a source" CTA                                                                                                                                      |
+| `POST /api/brands/:brandId/sources`                        | `{ "kind": "email" \| "webhook", "name": string ≤80 }` (an empty name gets a default) | `201 SourceDto` in `awaiting_first_message`. Email sources get `address` (`<brand>-<10 hex>@<INBOUND_DOMAIN>`); webhook sources get `webhookUrl` (`<APP_URL>/h/<32 hex>`). `403 plan_limit` (Free 1, Solo 2, Agency 20 per account) |
+| `PATCH /api/brands/:brandId/sources/:sourceId`             | `{ "name"?: string, "enabled"?: boolean }`                                            | `200 SourceDto`. `enabled: false` sets `disabled`. `enabled: true` sets `connected` if the source has leads, else `awaiting_first_message`                                                                                          |
+| `POST /api/brands/:brandId/sources/:sourceId/rotate-token` | –                                                                                     | `200 SourceDto` with a new `webhookUrl`. The old URL answers 404 at once                                                                                                                                                            |
+| `DELETE /api/brands/:brandId/sources/:sourceId`            | –                                                                                     | `204`; its leads are deleted too                                                                                                                                                                                                    |
 
 `SourceDto.state` values and what the UI shows:
 
@@ -126,17 +124,19 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 
 ## Billing (F1, F7)
 
-| Route                      | Request                                     | Response                                                                                                                                                                                                                                                                                                  |
-| -------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/billing`         | –                                           | `200 BillingDto`: plan, status, `currentPeriodEnd`, `pendingPlan` (a downgrade waiting for the period end), `scheduledChange`, `pastDueSince`, `isAnalysisPaused`, `hasCustomer` and the Paddle.js `checkout` config (environment, client token, price ids). Works while the account is `no_subscription` |
-| `POST /api/billing/portal` | –                                           | `200 { url }`, a fresh Paddle customer-portal link (owner only). `409 no_customer` before the first subscription, `503 billing_unavailable` without `PADDLE_API_KEY`, `403 owner_only` for members                                                                                                        |
-| `POST /paddle/webhook`     | Paddle event, `Paddle-Signature: ts=…;h1=…` | `200 { received, outcome }` with `outcome` = `applied`, `duplicate`, `recorded` (non-subscription events), `illegal_transition`, `stale`, `unknown_account` or `other_subscription`. `401` for a missing, wrong or >5 s old signature; nothing is stored then                                             |
+| Route                      | Request                                     | Response                                                                                                                                                                                                                                                                                                                                          |
+| -------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/billing`         | –                                           | `200 BillingDto`: plan, status, `currentPeriodEnd`, `pendingPlan` (a downgrade waiting for the period end), `scheduledChange`, `pastDueSince`, `isAnalysisPaused`, `hasCustomer`, `trialEndsAt` (while the no-card trial runs), `canStartTrial`, `hasPaidSubscription` and the Paddle.js `checkout` config (environment, client token, price ids) |
+| `POST /api/billing/trial`  | –                                           | `200 BillingDto`. Starts the 14-day Solo trial with no card and no Paddle call (owner only). `409 trial_used` after the one trial, `409 already_paid` unless the account is on Free                                                                                                                                                               |
+| `POST /api/billing/portal` | –                                           | `200 { url }`, a fresh Paddle customer-portal link (owner only). `409 no_customer` before the first subscription, `503 billing_unavailable` without `PADDLE_API_KEY`, `403 owner_only` for members                                                                                                                                                |
+| `POST /paddle/webhook`     | Paddle event, `Paddle-Signature: ts=…;h1=…` | `200 { received, outcome }` with `outcome` = `applied`, `duplicate`, `recorded` (non-subscription events), `illegal_transition`, `stale`, `unknown_account` or `other_subscription`. `401` for a missing, wrong or >5 s old signature; nothing is stored then                                                                                     |
 
 - The account is found by `custom_data.account_id` (set by the SPA in `Paddle.Checkout.open`) or by the stored subscription id.
 - Status moves only through `nextSubscriptionStatus` (`src/billing/state.ts`).
 - Upgrades apply at once. A downgrade sets `pendingPlan` and applies at `current_period_end` (hourly job); brands over the new limit get `readOnly: true`, and any write to them answers `403 read_only`.
 - `past_due`: full access; queued analysis stops after 7 days and resumes when the status leaves `past_due`.
-- `canceled` keeps access until `current_period_end`, then the hourly job sets `expired` (read-only).
+- `canceled` keeps access until `current_period_end`, then the hourly job sets `expired`: Free limits, brands past the first turn read-only.
+- The no-card trial is `trialing` with no Paddle subscription. When `trial_ends_at` passes, the hourly job moves it to `no_subscription` (Free) and emails the owner once. Paying during the trial attaches a Paddle subscription, and the trial end no longer applies.
 
 ## Alerts (F6)
 
@@ -144,11 +144,11 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `PATCH /api/brands/:brandId/alerts` | `{ "enabled": boolean, "threshold": 0–100, "slackWebhookUrl"?: string \| null }`. `null`/missing keeps the saved Slack URL, `""` removes it; a URL must start with `https://hooks.slack.com/` | `200 BrandDto`. Saving clears `delivery_failed` |
 
-`BrandDto.alertState` is `enabled`, `disabled` or `delivery_failed` (`alertLastError` has the reason). A lead that reaches `analyzed` with `score ≥ alertThreshold` (default 80) queues one email per active seat and one Slack post; each is tried at once, then after 10 s and 30 s, and after the 3rd failure the brand shows `delivery_failed`.
+`BrandDto.alertState` is `enabled`, `disabled` or `delivery_failed` (`alertLastError` has the reason). A lead that reaches `analyzed` with `score ≥ alertThreshold` (default 80) queues one email per active seat and one Slack post (not on Free: saving a Slack URL there answers `403 plan_limit`, and a saved one is skipped); each is tried at once, then after 10 s and 30 s, and after the 3rd failure the brand shows `delivery_failed`.
 
-| Dev route                   | Request                | Response                                                                                                     |
-| --------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `POST /dev/run-maintenance` | `{ "now"?: ISO time }` | `200 { planChanges, expired, reminders, rawPurged, accountsDeleted }`. Runs the hourly job at the given time |
+| Dev route                   | Request                | Response                                                                                                       |
+| --------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `POST /dev/run-maintenance` | `{ "now"?: ISO time }` | `200 { planChanges, expired, trialsEnded, rawPurged, accountsDeleted }`. Runs the hourly job at the given time |
 
 ## Team (F8)
 
@@ -168,7 +168,7 @@ An invited email that signs in joins the inviting workspace instead of getting i
 | `DELETE /api/brands/:brandId`         | `{ "confirm": <brand name> }` | `204`; the brand and its sources, leads, events, feedback and alert deliveries are deleted at once (owner only). `409 last_brand` for the only brand. Allowed on read-only brands |
 | `DELETE /api/account`                 | `{ "confirm": "DELETE" }`     | `202 { scheduled: true }`; every seat is signed out, the Paddle subscription is canceled (if `PADDLE_API_KEY` is set), and the hourly job deletes every row and emails the owner  |
 
-The hourly job also nulls raw bodies older than 90 days (`/original` then answers `404`) and schedules accounts that have been `expired` for 30 days for deletion.
+The hourly job also nulls raw bodies older than 90 days (`/original` then answers `404`). Free is forever, so `expired` accounts are not deleted.
 
 | Dev route                              | Request | Response                                                            |
 | -------------------------------------- | ------- | ------------------------------------------------------------------- |

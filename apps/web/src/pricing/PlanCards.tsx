@@ -42,7 +42,7 @@ export const PlanCards = ({
   renderAction: (plan: Plan) => ReactNode;
 }) => {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-3">
       {PLAN_CARDS.map((card) => {
         return <PlanCardView key={card.plan} card={card} interval={interval} action={renderAction(card.plan)} />;
       })}

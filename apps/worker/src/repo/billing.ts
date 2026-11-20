@@ -1,24 +1,25 @@
-import type { Plan, ScheduledChange, SubscriptionStatus } from "@inboxsieve/contract";
+import type { PaidPlan, ScheduledChange, SubscriptionStatus } from "@inboxsieve/contract";
 
 export type BillingRow = {
   account_id: string;
-  plan: Plan;
+  plan: PaidPlan;
   status: SubscriptionStatus;
   paddle_subscription_id: string | null;
   paddle_customer_id: string | null;
   paddle_price_id: string | null;
   current_period_end: string | null;
-  pending_plan: Plan | null;
+  pending_plan: PaidPlan | null;
   scheduled_change: string | null;
   past_due_since: string | null;
   status_since: string | null;
   last_event_at: string | null;
+  trial_ends_at: string | null;
 };
 
 export type SubscriptionUpdate = {
   status: SubscriptionStatus;
-  plan: Plan;
-  pendingPlan: Plan | null;
+  plan: PaidPlan;
+  pendingPlan: PaidPlan | null;
   paddleSubscriptionId: string | null;
   paddleCustomerId: string | null;
   paddlePriceId: string | null;
@@ -148,22 +149,40 @@ export async function listEndedCancellations({ db, now }: { db: D1Database; now:
   return results.map((row) => row.account_id);
 }
 
-export async function listCheckoutReminders({ db, createdBefore }: { db: D1Database; createdBefore: Date }) {
-  const { results } = await db
-    .prepare(
-      `SELECT a.id AS account_id, u.email FROM accounts a
-       JOIN subscriptions s ON s.account_id = a.id
-       JOIN users u ON u.id = a.owner_user_id
-       WHERE s.status = 'no_subscription' AND a.checkout_reminder_sent_at IS NULL AND a.created_at <= ?`,
-    )
-    .bind(createdBefore.toISOString())
-    .all<{ account_id: string; email: string }>();
-  return results;
+// The no-card trial has no Paddle subscription; paying during it attaches one and keeps the plan.
+export async function startLocalTrial({
+  db,
+  accountId,
+  status,
+  endsAt,
+  now,
+}: {
+  db: D1Database;
+  accountId: string;
+  status: SubscriptionStatus;
+  endsAt: Date;
+  now: Date;
+}) {
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE subscriptions SET status = ?, trial_ends_at = ?, status_since = ?, pending_plan = NULL, updated_at = ?
+         WHERE account_id = ?`,
+      )
+      .bind(status, endsAt.toISOString(), now.toISOString(), now.toISOString(), accountId),
+    db.prepare("UPDATE accounts SET plan = 'solo' WHERE id = ?").bind(accountId),
+  ]);
 }
 
-export async function markCheckoutReminded({ db, accountId, now }: { db: D1Database; accountId: string; now: Date }) {
-  await db
-    .prepare("UPDATE accounts SET checkout_reminder_sent_at = ? WHERE id = ?")
-    .bind(now.toISOString(), accountId)
-    .run();
+export async function listEndedLocalTrials({ db, now }: { db: D1Database; now: Date }) {
+  const { results } = await db
+    .prepare(
+      `SELECT s.account_id, u.email FROM subscriptions s
+       JOIN accounts a ON a.id = s.account_id
+       JOIN users u ON u.id = a.owner_user_id
+       WHERE s.status = 'trialing' AND s.paddle_subscription_id IS NULL AND s.trial_ends_at <= ?`,
+    )
+    .bind(now.toISOString())
+    .all<{ account_id: string; email: string }>();
+  return results;
 }

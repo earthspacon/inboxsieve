@@ -1,3 +1,5 @@
+import { getEffectivePlan, PLAN_LIMITS, type PaidPlan, type SubscriptionStatus } from "@inboxsieve/contract";
+
 import type { Mailer } from "../mailer";
 import type { SlackPoster } from "./slack";
 
@@ -26,7 +28,7 @@ export type AlertChannels = {
   appUrl: string;
 };
 
-// Queues one email per active seat and one Slack post when the score reaches the brand threshold.
+// Queues one email per active seat, plus one Slack post on plans with Slack, when the score reaches the threshold.
 export async function queueHotLeadAlerts({
   db,
   brandId,
@@ -40,8 +42,10 @@ export async function queueHotLeadAlerts({
 }) {
   const brand = await db
     .prepare(
-      `SELECT b.account_id, b.alerts_enabled, b.alert_threshold, b.slack_webhook_url, l.score
+      `SELECT b.account_id, b.alerts_enabled, b.alert_threshold, b.slack_webhook_url, l.score, a.plan, s.status
        FROM leads l JOIN brands b ON b.id = l.brand_id
+       JOIN accounts a ON a.id = b.account_id
+       JOIN subscriptions s ON s.account_id = b.account_id
        WHERE l.id = ? AND l.brand_id = ?`,
     )
     .bind(leadId, brandId)
@@ -51,6 +55,8 @@ export async function queueHotLeadAlerts({
       alert_threshold: number;
       slack_webhook_url: string | null;
       score: number | null;
+      plan: PaidPlan;
+      status: SubscriptionStatus;
     }>();
 
   if (!brand || !brand.alerts_enabled || brand.score === null || brand.score < brand.alert_threshold) {
@@ -66,7 +72,8 @@ export async function queueHotLeadAlerts({
       )
       .bind(brandId, leadId, at, at, brand.account_id),
   ];
-  if (brand.slack_webhook_url) {
+  const plan = getEffectivePlan({ paidPlan: brand.plan, subscription: brand.status });
+  if (brand.slack_webhook_url && PLAN_LIMITS[plan].slackAlerts) {
     statements.push(
       db
         .prepare(

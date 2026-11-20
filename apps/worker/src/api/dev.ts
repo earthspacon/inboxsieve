@@ -1,4 +1,4 @@
-import type { Plan } from "@inboxsieve/contract";
+import type { PaidPlan } from "@inboxsieve/contract";
 
 import { HttpError, json, readJson, readString, route, type Route } from "../http";
 import { newId } from "../ids";
@@ -17,7 +17,7 @@ export const devRoutes: Route<PublicContext>[] = [
   route("POST", "/dev/accounts", async ({ deps, request }) => {
     const data = await readJson(request);
     const email = readString({ data, key: "email", maxLength: EMAIL_MAX_LENGTH }).trim().toLowerCase();
-    const plan: Plan = data.plan === "agency" ? "agency" : "solo";
+    const plan: PaidPlan = data.plan === "agency" ? "agency" : "solo";
     const now = deps.now();
 
     if (!email.includes("@")) {

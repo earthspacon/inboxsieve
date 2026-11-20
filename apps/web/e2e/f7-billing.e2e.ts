@@ -31,7 +31,7 @@ describe("F7 billing", () => {
     session = await openSession({ browser });
     const email = uniqueEmail("f7");
     await signInWithUi({ page: session.page, email });
-    await session.page.getByRole("heading", { name: /Finish checkout/ }).waitFor();
+    await session.page.getByRole("heading", { name: "What's the business called?" }).waitFor();
     accountId = (await apiJson<{ account: { id: string } }>({ page: session.page, path: "/api/me" })).body.account.id;
     await sendPaddleFixture({ fixture: "subscription.activated", accountId, periodEnd, occurredAt: nextEventTime() });
   });

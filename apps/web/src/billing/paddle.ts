@@ -1,4 +1,4 @@
-import type { BillingDto, BillingInterval, Plan } from "@inboxsieve/contract";
+import type { BillingDto, BillingInterval, PaidPlan } from "@inboxsieve/contract";
 
 type PaddleEvent = { name?: string };
 
@@ -88,7 +88,7 @@ export function findPriceId({
   interval,
 }: {
   checkout: BillingDto["checkout"];
-  plan: Plan;
+  plan: PaidPlan;
   interval: BillingInterval;
 }) {
   return checkout.prices[plan][interval];

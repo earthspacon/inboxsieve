@@ -1,4 +1,4 @@
-import { PLAN_LIMITS, type Plan, type ScheduledChange } from "@inboxsieve/contract";
+import { PLAN_LIMITS, type PaidPlan, type ScheduledChange } from "@inboxsieve/contract";
 
 import { createEnumGuard } from "../api/context";
 import type { Deps } from "../deps";
@@ -35,7 +35,7 @@ type SubscriptionData = {
 
 type StatusEventType = Exclude<
   SubscriptionEvent["type"],
-  "subscription.created" | "subscription.updated" | "period_ended"
+  "subscription.created" | "subscription.updated" | "period_ended" | "trial_started" | "trial_ended"
 >;
 
 const PADDLE_STATUSES: Record<PaddleStatus, true> = {
@@ -176,10 +176,10 @@ export function decidePlanChange({
   now,
 }: {
   row: Pick<BillingRow, "plan" | "status">;
-  newPlan: Plan;
+  newPlan: PaidPlan;
   periodEnd: string | null;
   now: Date;
-}): { plan: Plan; pendingPlan: Plan | null } {
+}): { plan: PaidPlan; pendingPlan: PaidPlan | null } {
   const isDowngrade = PLAN_LIMITS[newPlan].brands < PLAN_LIMITS[row.plan].brands;
   const hasPaidPeriod = row.status !== "no_subscription" && row.status !== "expired";
   const isPeriodRunning = periodEnd !== null && periodEnd > now.toISOString();

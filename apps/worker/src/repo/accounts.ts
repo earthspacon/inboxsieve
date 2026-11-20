@@ -1,7 +1,9 @@
 import {
   DEFAULT_ALERT_THRESHOLD,
-  SUBSCRIPTION_ACCESS,
+  getEffectivePlan,
+  SUBSCRIPTION_RULES,
   type AccessLevel,
+  type PaidPlan,
   type Plan,
   type SubscriptionStatus,
 } from "@inboxsieve/contract";
@@ -37,7 +39,7 @@ export async function getAccountContext({ db, userId }: { db: D1Database; userId
       user_id: string;
       email: string;
       account_id: string;
-      plan: Plan;
+      plan: PaidPlan;
       status: SubscriptionStatus;
       role: "owner" | "member";
     }>();
@@ -50,9 +52,9 @@ export async function getAccountContext({ db, userId }: { db: D1Database; userId
     userId: row.user_id,
     email: row.email,
     accountId: row.account_id,
-    plan: row.plan,
+    plan: getEffectivePlan({ paidPlan: row.plan, subscription: row.status }),
     subscription: row.status,
-    access: SUBSCRIPTION_ACCESS[row.status],
+    access: SUBSCRIPTION_RULES[row.status].access,
     role: row.role,
   };
   return context;
@@ -69,7 +71,7 @@ export async function createAccount({
   db: D1Database;
   userId: string;
   email: string;
-  plan: Plan;
+  plan: PaidPlan;
   status: SubscriptionStatus;
   now: Date;
 }) {
@@ -105,7 +107,7 @@ export async function setSubscription({
   db: D1Database;
   accountId: string;
   status: SubscriptionStatus;
-  plan: Plan;
+  plan: PaidPlan;
   now: Date;
 }) {
   await db.batch([
@@ -117,6 +119,6 @@ export async function setSubscription({
 }
 
 export async function getAccountPlan({ db, accountId }: { db: D1Database; accountId: string }) {
-  const row = await db.prepare("SELECT plan FROM accounts WHERE id = ?").bind(accountId).first<{ plan: Plan }>();
+  const row = await db.prepare("SELECT plan FROM accounts WHERE id = ?").bind(accountId).first<{ plan: PaidPlan }>();
   return row?.plan ?? null;
 }

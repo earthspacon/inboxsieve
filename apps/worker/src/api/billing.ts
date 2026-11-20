@@ -1,38 +1,51 @@
-import { PAST_DUE_GRACE_DAYS, type BillingDto, type ScheduledChange } from "@inboxsieve/contract";
+import {
+  getEffectivePlan,
+  PAST_DUE_GRACE_DAYS,
+  PLAN_LIMITS,
+  SUBSCRIPTION_RULES,
+  TRIAL_DAYS,
+  type BillingDto,
+  type ScheduledChange,
+} from "@inboxsieve/contract";
 
 import { createPortalSession, getPaddleEnvironment } from "../billing/paddle-api";
 import { buildPriceTable } from "../billing/prices";
+import { nextSubscriptionStatus } from "../billing/state";
+import type { Deps } from "../deps";
 import { HttpError, json, route, type Route } from "../http";
-import { getBillingRow } from "../repo";
+import { applyBrandLimit, getBillingRow, startLocalTrial } from "../repo";
 import { requireOwner, type ApiContext } from "./context";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const billingRoutes: Route<ApiContext>[] = [
   route("GET", "/api/billing", async ({ deps, account }) => {
-    const row = await getBillingRow({ db: deps.db, accountId: account.accountId });
+    return json(await loadBilling({ deps, accountId: account.accountId }));
+  }),
 
-    if (!row) {
-      throw new HttpError(404, "not_found", "No subscription record");
+  // The no-card Solo trial: local only, one per account, no Paddle call.
+  route("POST", "/api/billing/trial", async ({ deps, account }) => {
+    requireOwner(account);
+    const row = await requireBillingRow({ deps, accountId: account.accountId });
+
+    if (row.trial_ends_at) {
+      throw new HttpError(409, "trial_used", "This workspace has already used its free trial");
     }
-    const graceStart = new Date(deps.now().getTime() - PAST_DUE_GRACE_DAYS * DAY_MS).toISOString();
-    const scheduledChange: ScheduledChange | null = row.scheduled_change ? JSON.parse(row.scheduled_change) : null;
-    const billing: BillingDto = {
-      plan: row.plan,
-      subscription: row.status,
-      currentPeriodEnd: row.current_period_end,
-      pendingPlan: row.pending_plan,
-      scheduledChange,
-      pastDueSince: row.past_due_since,
-      isAnalysisPaused: row.status === "past_due" && row.past_due_since !== null && row.past_due_since <= graceStart,
-      hasCustomer: row.paddle_customer_id !== null,
-      checkout: {
-        environment: getPaddleEnvironment(deps.env),
-        clientToken: deps.env.PADDLE_CLIENT_TOKEN || null,
-        prices: buildPriceTable(deps.env),
-      },
-    };
-    return json(billing);
+    const transition = nextSubscriptionStatus({ current: row.status, event: { type: "trial_started" } });
+    if (!transition.ok) {
+      throw new HttpError(409, "already_paid", "The trial is for workspaces on the Free plan");
+    }
+
+    const now = deps.now();
+    await startLocalTrial({
+      db: deps.db,
+      accountId: account.accountId,
+      status: transition.status,
+      endsAt: new Date(now.getTime() + TRIAL_DAYS * DAY_MS),
+      now,
+    });
+    await applyBrandLimit({ db: deps.db, accountId: account.accountId, limit: PLAN_LIMITS.solo.brands });
+    return json(await loadBilling({ deps, accountId: account.accountId }));
   }),
 
   route("POST", "/api/billing/portal", async ({ deps, account }) => {
@@ -54,3 +67,39 @@ export const billingRoutes: Route<ApiContext>[] = [
     return json({ url });
   }),
 ];
+
+async function requireBillingRow({ deps, accountId }: { deps: Deps; accountId: string }) {
+  const row = await getBillingRow({ db: deps.db, accountId });
+
+  if (!row) {
+    throw new HttpError(404, "not_found", "No subscription record");
+  }
+  return row;
+}
+
+async function loadBilling({ deps, accountId }: { deps: Deps; accountId: string }) {
+  const row = await requireBillingRow({ deps, accountId });
+  const graceStart = new Date(deps.now().getTime() - PAST_DUE_GRACE_DAYS * DAY_MS).toISOString();
+  const scheduledChange: ScheduledChange | null = row.scheduled_change ? JSON.parse(row.scheduled_change) : null;
+  const isFree = SUBSCRIPTION_RULES[row.status].isFree;
+  const isLocalTrial = row.status === "trialing" && row.paddle_subscription_id === null;
+  const billing: BillingDto = {
+    plan: getEffectivePlan({ paidPlan: row.plan, subscription: row.status }),
+    subscription: row.status,
+    currentPeriodEnd: row.current_period_end,
+    pendingPlan: row.pending_plan,
+    trialEndsAt: isLocalTrial ? row.trial_ends_at : null,
+    canStartTrial: isFree && row.trial_ends_at === null,
+    hasPaidSubscription: !isFree && row.paddle_subscription_id !== null,
+    scheduledChange,
+    pastDueSince: row.past_due_since,
+    isAnalysisPaused: row.status === "past_due" && row.past_due_since !== null && row.past_due_since <= graceStart,
+    hasCustomer: row.paddle_customer_id !== null,
+    checkout: {
+      environment: getPaddleEnvironment(deps.env),
+      clientToken: deps.env.PADDLE_CLIENT_TOKEN || null,
+      prices: buildPriceTable(deps.env),
+    },
+  };
+  return billing;
+}

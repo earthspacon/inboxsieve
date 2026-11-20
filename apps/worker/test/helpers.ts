@@ -1,4 +1,4 @@
-import type { Analysis, LeadInput, Plan, SourceKind, SubscriptionStatus } from "@inboxsieve/contract";
+import type { Analysis, LeadInput, PaidPlan, SourceKind, SubscriptionStatus } from "@inboxsieve/contract";
 import { env } from "cloudflare:test";
 
 import type { AnalysisRequest, LeadAnalyzer } from "../src/analysis/analyzer";
@@ -32,7 +32,7 @@ export async function seedAccount({
   status = "trialing",
 }: {
   email?: string;
-  plan?: Plan;
+  plan?: PaidPlan;
   status?: SubscriptionStatus;
 } = {}) {
   const userId = crypto.randomUUID();
