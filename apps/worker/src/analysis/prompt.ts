@@ -36,6 +36,8 @@ export function buildAnalysisPrompt({ lead, profile, examples }: AnalysisRequest
           profile,
           examples,
         }),
+        // Open question: this prefix (~400 tokens) may be under Haiku 5.5's minimum cacheable length;
+        // check usage.cache_read_input_tokens in the live smoke before relying on the cache discount.
         cache_control: { type: "ephemeral" },
       },
     ],
