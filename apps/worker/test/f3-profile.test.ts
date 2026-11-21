@@ -48,7 +48,7 @@ async function seedAnalyzedLeads({ brandId, count }: { brandId: string; count: n
 }
 
 describe("F3 business profile", () => {
-  it("F3: the built prompt caches the system prompt and business profile", () => {
+  it("F3: the built prompt is one system message with the profile plus the lead", () => {
     const prompt = buildAnalysisPrompt({
       lead: buildLeadInput(),
       profile: PROFILE,
@@ -99,9 +99,9 @@ describe("F3 business profile", () => {
       rescoreOffered: true,
     });
     expect(call?.profile).toEqual(PROFILE);
-    expect(buildAnalysisPrompt({ lead: buildLeadInput(), profile: PROFILE, examples: [] }).system[1].text).toContain(
-      "Minimum budget: $8k",
-    );
+    expect(
+      buildAnalysisPrompt({ lead: buildLeadInput(), profile: PROFILE, examples: [] }).messages[0].content,
+    ).toContain("Minimum budget: $8k");
   });
 
   it("F3: a profile field that is not a string is rejected", async () => {

@@ -12,7 +12,7 @@ export type Env = {
   PADDLE_PRICE_AGENCY_MONTHLY?: string;
   PADDLE_PRICE_AGENCY_YEARLY?: string;
   BETTER_AUTH_SECRET: string;
-  ANTHROPIC_API_KEY?: string;
+  GROQ_API_KEY?: string;
   RESEND_API_KEY?: string;
   PADDLE_API_KEY?: string;
   PADDLE_WEBHOOK_SECRET?: string;
@@ -21,6 +21,7 @@ export type Env = {
   GOOGLE_CLIENT_SECRET?: string;
   AUTH_LIMITER: RateLimit;
   WEBHOOK_LIMITER: RateLimit;
+  LLM_MODEL?: string;
   LLM_DAILY_USD_CAP?: string;
   LLM_ACCOUNT_DAILY_USD_CAP?: string;
   OWNER_ALERT_EMAIL?: string;

@@ -1,36 +1,20 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`F3 business profile > F3: the built prompt caches the system prompt and business profile 1`] = `
+exports[`F3 business profile > F3: the built prompt is one system message with the profile plus the lead 1`] = `
 {
-  "max_tokens": 1200,
+  "max_completion_tokens": 1200,
   "messages": [
     {
-      "content": "From: Dana Reyes <dana@northwind.example>
-Company: Northwind
-Subject: Website rebuild
-
-We need a new marketing site with a CMS. Budget is $12k, launch within 6 weeks.",
-      "role": "user",
-    },
-  ],
-  "model": "claude-haiku-5-5",
-  "system": [
-    {
-      "text": "You qualify inbound sales inquiries for the business described in the profile below.
+      "content": "You qualify inbound sales inquiries for the business described in the profile below.
 Reply with one JSON object only, no prose, matching:
 {"score": 0-100 fit score, "category": "hot"|"warm"|"cold"|"spam", "intent": "new-project"|"partnership"|"rfp"|"support"|"job"|"spam"|"other",
 "budget": string|null (as written), "timeline": string|null (as written), "decisionMaker": boolean,
 "summary": one sentence, "reasons": 2-5 short strings explaining the score,
 "draftReply": a short reply email in the profile's tone, ending with the profile's signature ("" for spam)}.
 hot >= 75, warm 50-74, cold < 50. Score against the profile: services offered, ideal client and minimum budget.
-If the profile has a booking link and the lead is hot or warm, offer it in the reply.",
-      "type": "text",
-    },
-    {
-      "cache_control": {
-        "type": "ephemeral",
-      },
-      "text": "Business profile:
+If the profile has a booking link and the lead is hot or warm, offer it in the reply.
+
+Business profile:
 - Services: Webflow sites and marketing automation for B2B SaaS
 - Ideal client: Series A SaaS with a marketing team of 3+
 - Minimum budget: $8k
@@ -41,8 +25,21 @@ If the profile has a booking link and the lead is hot or warm, offer it in the r
 Corrections from this business (follow them):
 - "Partnership idea": We resell your services to our clients. → NOT spam
 - "Logo please": Need a cheap logo. → score should be 10 (we do not do logos)",
-      "type": "text",
+      "role": "system",
+    },
+    {
+      "content": "From: Dana Reyes <dana@northwind.example>
+Company: Northwind
+Subject: Website rebuild
+
+We need a new marketing site with a CMS. Budget is $12k, launch within 6 weeks.",
+      "role": "user",
     },
   ],
+  "model": "openai/gpt-oss-120b",
+  "reasoning_effort": "low",
+  "response_format": {
+    "type": "json_object",
+  },
 }
 `;

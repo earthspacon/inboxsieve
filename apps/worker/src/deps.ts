@@ -1,6 +1,6 @@
 import { createSlackPoster, type SlackPoster } from "./alerts/slack";
 import type { LeadAnalyzer } from "./analysis/analyzer";
-import { createAnthropicAnalyzer } from "./analysis/anthropic";
+import { createGroqAnalyzer } from "./analysis/groq";
 import { ruleAnalyzer } from "./analysis/rules";
 import { isDev, type Env } from "./env";
 import { createMailer, type Mailer } from "./mailer";
@@ -30,11 +30,11 @@ export function createDeps({ env, ctx }: { env: Env; ctx: ExecutionContext }): D
 }
 
 function createAnalyzer(env: Env): LeadAnalyzer {
-  if (env.ANTHROPIC_API_KEY) {
-    return createAnthropicAnalyzer({ apiKey: env.ANTHROPIC_API_KEY });
+  if (env.GROQ_API_KEY) {
+    return createGroqAnalyzer({ apiKey: env.GROQ_API_KEY, model: env.LLM_MODEL });
   }
   if (isDev(env)) {
     return ruleAnalyzer;
   }
-  throw new Error("ANTHROPIC_API_KEY is not set");
+  throw new Error("GROQ_API_KEY is not set");
 }

@@ -2,8 +2,9 @@ import { AnalysisContract, type Analysis } from "@inboxsieve/contract";
 
 import { queueHotLeadAlerts, runAlertDeliveries } from "../alerts/alerts";
 import { DEFAULT_PROFILE, type LeadAnalyzer } from "../analysis/analyzer";
-import type { Deps } from "../deps";
 import { readLlmBudget, type LlmBudget } from "../analysis/budget";
+import { RateLimitedError } from "../analysis/groq";
+import type { Deps } from "../deps";
 import {
   addLlmSpend,
   claimLead,
@@ -49,6 +50,23 @@ export async function processLead({
     analysis = await analyzeClaimedLead({ db, analyzer, lead, now });
   } catch (error) {
     const lastError = error instanceof Error ? error.message : "Analysis failed";
+
+    // A provider rate limit is not the lead's fault: keep it queued and give the attempt back.
+    if (error instanceof RateLimitedError) {
+      return transitionLead({
+        db,
+        brandId,
+        leadId,
+        now,
+        from: "analyzing",
+        to: "queued",
+        set: {
+          attempts: lead.attempts - 1,
+          last_error: lastError,
+          next_attempt_at: new Date(now.getTime() + error.retryAfterMs).toISOString(),
+        },
+      });
+    }
 
     if (lead.attempts >= MAX_ATTEMPTS) {
       return transitionLead({

@@ -1,6 +1,6 @@
 import type { AnalysisRequest, FeedbackExample } from "./analyzer";
 
-export const ANALYSIS_MODEL = "claude-haiku-5-5";
+export const ANALYSIS_MODEL = "openai/gpt-oss-120b";
 export const MAX_OUTPUT_TOKENS = 1200;
 const EXAMPLE_MESSAGE_CHARS = 600;
 const LEAD_MESSAGE_CHARS = 8000;
@@ -14,34 +14,25 @@ Reply with one JSON object only, no prose, matching:
 hot >= 75, warm 50-74, cold < 50. Score against the profile: services offered, ideal client and minimum budget.
 If the profile has a booking link and the lead is hot or warm, offer it in the reply.`;
 
-export type AnthropicRequestBody = {
+export type ChatCompletionBody = {
   model: string;
-  max_tokens: number;
-  system: Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }>;
-  messages: Array<{ role: "user"; content: string }>;
+  max_completion_tokens: number;
+  response_format: { type: "json_object" };
+  reasoning_effort: "low";
+  messages: Array<{ role: "system" | "user"; content: string }>;
 };
 
-export function buildAnalysisPrompt({ lead, profile, examples }: AnalysisRequest): AnthropicRequestBody {
+export function buildAnalysisPrompt({ lead, profile, examples }: AnalysisRequest): ChatCompletionBody {
   return {
     model: ANALYSIS_MODEL,
-    max_tokens: MAX_OUTPUT_TOKENS,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT,
-      },
-      {
-        type: "text",
-        text: buildProfileBlock({
-          profile,
-          examples,
-        }),
-        // Open question: this prefix (~400 tokens) may be under Haiku 5.5's minimum cacheable length;
-        // check usage.cache_read_input_tokens in the live smoke before relying on the cache discount.
-        cache_control: { type: "ephemeral" },
-      },
-    ],
+    max_completion_tokens: MAX_OUTPUT_TOKENS,
+    response_format: { type: "json_object" },
+    reasoning_effort: "low",
     messages: [
+      {
+        role: "system",
+        content: `${SYSTEM_PROMPT}\n\n${buildProfileBlock({ profile, examples })}`,
+      },
       {
         role: "user",
         content: `From: ${lead.name} <${lead.email}>\nCompany: ${lead.company || "unknown"}\nSubject: ${lead.subject}\n\n${lead.message.slice(0, LEAD_MESSAGE_CHARS)}`,

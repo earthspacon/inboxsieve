@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { RateLimitedError } from "../src/analysis/groq";
 import { MAX_ATTEMPTS, RETRY_DELAYS_MS, processLead, runDueJobs } from "../src/leads/jobs";
 import { admitLead } from "../src/leads/pipeline";
 import { getLead } from "../src/repo";
@@ -115,6 +116,27 @@ describe("F4 lead processing", () => {
     expect(lead?.last_error).toMatch(/contract/);
   });
 
+  it("F4: a Groq 429 keeps the lead queued, never analysis_failed, and does not burn attempts", async () => {
+    const { brandId } = await seedAccount();
+    const source = await seedSource({ brandId, kind: "webhook" });
+    const { analyzer } = createMockAnalyzer(() => {
+      throw new RateLimitedError(60_000);
+    });
+    const start = new Date("2026-11-20T10:00:00.000Z");
+    const { leadId } = await admit({ brandId, sourceId: source.id, now: start });
+
+    let now = start;
+    for (let round = 0; round < MAX_ATTEMPTS + 2; round += 1) {
+      await processLead({ db, analyzer, brandId, leadId, now });
+      now = new Date(now.getTime() + 60_000);
+    }
+
+    const lead = await getLead({ db, brandId, leadId });
+    expect(lead?.status).toBe("queued");
+    expect(lead?.attempts).toBe(0);
+    expect(lead?.last_error).toMatch(/rate limit/i);
+  });
+
   it("F4: an LLM error is retried and a later success still ends analyzed", async () => {
     const { brandId } = await seedAccount();
     const source = await seedSource({ brandId, kind: "webhook" });
@@ -122,7 +144,7 @@ describe("F4 lead processing", () => {
     const { analyzer } = createMockAnalyzer(() => {
       attempt += 1;
       if (attempt === 1) {
-        throw new Error("Anthropic API returned 529");
+        throw new Error("Groq API returned 503");
       }
       return VALID_ANALYSIS;
     });
