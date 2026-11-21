@@ -26,7 +26,7 @@ With `DEV_ROUTES=1`:
 
 - Sign-in links go to the `dev_outbox` table. Read them with `GET /dev/outbox?to=<email>`.
 - `POST /dev/accounts {"email": "..."}` creates an account in `trialing` without Paddle.
-- Leads are scored by the rule analyzer when `ANTHROPIC_API_KEY` is not set, so local runs make no paid calls.
+- Leads are scored by the rule analyzer when `GROQ_API_KEY` is not set, so local runs make no paid calls.
 
 To test inbound mail, post a raw `.eml` to the local email handler:
 
@@ -52,7 +52,7 @@ pnpm --filter @inboxsieve/web shots      # screenshots + console-error check
 
 Deploying once the accounts exist: [`DEPLOY.md`](DEPLOY.md).
 
-Every test mocks the LLM. The Anthropic client is tested against a stubbed `fetch`.
+Every test mocks the LLM. The Groq client is tested against a stubbed `fetch`.
 
 ## Async analysis: `waitUntil` + cron, not Queues
 
@@ -80,7 +80,7 @@ Secrets are set with `wrangler secret put`, or in `.dev.vars` locally:
 | Secret                                     | Purpose                                                                          |
 | ------------------------------------------ | -------------------------------------------------------------------------------- |
 | `BETTER_AUTH_SECRET`                       | Signs session cookies (32+ characters)                                           |
-| `ANTHROPIC_API_KEY`                        | Claude Haiku 5.5 for lead analysis                                               |
+| `GROQ_API_KEY`                             | Groq (gpt-oss-120b) for lead analysis                                            |
 | `RESEND_API_KEY`                           | Sends sign-in emails. Without it, production refuses to send                     |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Both set: "Continue with Google" on the sign-in page (`DEPLOY.md` §5b) |
 

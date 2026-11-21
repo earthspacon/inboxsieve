@@ -40,9 +40,9 @@ type LeadAnalyzer = {
 
 **Demo mode (default)** is a deterministic rule-based analyzer (`src/leads/analyzer.ts`). It looks for budget amounts and ranges, deadlines, decision-maker titles, the kind of work asked for, and spam patterns, then builds the score, the reasons and a reply from templates. It waits about a second to feel like an agent thinking. No network, no key.
 
-**Live mode** (`src/leads/live-analyzer.ts`) sends the lead to the Anthropic Messages API with model `claude-haiku-5-5` and asks for one JSON object. The reply is checked against a schema (`src/leads/contract.ts`): wrong categories, a score outside 0–100 or missing fields are rejected and shown as an error, never saved.
+**Live mode** (`src/leads/live-analyzer.ts`) sends the lead to the Groq chat completions API with model `openai/gpt-oss-120b` and asks for one JSON object. The reply is checked against a schema (`src/leads/contract.ts`): wrong categories, a score outside 0–100 or missing fields are rejected and shown as an error, never saved.
 
-To try it, open **Settings**, choose **Live**, and paste your Anthropic API key. The key stays in memory only: it is not written to storage and is gone after a reload. Requests go straight from your browser to `api.anthropic.com`. For a production setup the call would move behind a small server so the key never reaches the browser.
+To try it, open **Settings**, choose **Live**, and paste your Groq API key. The key stays in memory only: it is not written to storage and is gone after a reload. Requests go straight from your browser to `api.groq.com`. For a production setup the call would move behind a small server so the key never reaches the browser.
 
 ## Run it
 

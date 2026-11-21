@@ -1,6 +1,6 @@
 # Deploying InboxSieve
 
-Run these in order once the Cloudflare, Paddle, Resend and Anthropic accounts exist. Every command runs from `apps/worker` unless it says otherwise. Production config is the `[env.production]` block in `apps/worker/wrangler.toml`; the domain there is `inboxsieve.com`, so change every `inboxsieve.com` in that block first if you bought another one.
+Run these in order once the Cloudflare, Paddle, Resend and Groq accounts exist. Every command runs from `apps/worker` unless it says otherwise. Production config is the `[env.production]` block in `apps/worker/wrangler.toml`; the domain there is `inboxsieve.com`, so change every `inboxsieve.com` in that block first if you bought another one.
 
 Names used below:
 
@@ -47,11 +47,12 @@ Names used below:
 
 For a sandbox dry run first, use sandbox values and set `PADDLE_ENV = "sandbox"`.
 
-## 5. Anthropic
+## 5. Groq
 
-1. Console → API keys → create a key for the workspace that bills InboxSieve.
-2. **Required:** Console → Limits → set the workspace's monthly spend limit to **$20**. This is the hard stop if everything else fails; the plan math in the spec assumes ≈ $0.0004 per lead.
-3. The Worker has its own daily caps in `[env.production.vars]`: `LLM_DAILY_USD_CAP` (all accounts, default `3`) and `LLM_ACCOUNT_DAILY_USD_CAP` (one account, default `0.25`). Over a cap, leads stay `queued` and are analyzed after 00:00 UTC. Set `OWNER_ALERT_EMAIL` to the address that gets the one "daily AI budget used up" email per day.
+1. console.groq.com → API Keys → create a key (the free tier is enough to start).
+2. **Required:** Settings → Data Controls → turn on **Zero Data Retention**. The privacy page promises inputs are not retained.
+3. Optional: set `LLM_MODEL` in `[env.production.vars]` to use a model other than `openai/gpt-oss-120b`. On a Groq 429 the lead stays `queued` and is retried; it is never marked failed for that.
+4. The Worker has its own daily caps in `[env.production.vars]`: `LLM_DAILY_USD_CAP` (all accounts, default `3`) and `LLM_ACCOUNT_DAILY_USD_CAP` (one account, default `0.25`). Over a cap, leads stay `queued` and are analyzed after 00:00 UTC. Set `OWNER_ALERT_EMAIL` to the address that gets the one "daily AI budget used up" email per day.
 
 ## 5a. Cloudflare Turnstile (bot check on sign-in)
 
@@ -83,7 +84,7 @@ Each command prompts for the value; never put them in `wrangler.toml`.
 
 ```sh
 openssl rand -base64 48 | pnpm exec wrangler secret put BETTER_AUTH_SECRET --env production
-pnpm exec wrangler secret put ANTHROPIC_API_KEY --env production
+pnpm exec wrangler secret put GROQ_API_KEY --env production
 pnpm exec wrangler secret put RESEND_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_WEBHOOK_SECRET --env production

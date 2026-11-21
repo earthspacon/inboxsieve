@@ -2,7 +2,7 @@ import { formatPrice, PLAN_PRICES } from "@inboxsieve/contract";
 
 // The owner fills these two before the Paddle domain review. Every public page reads them from here.
 export const SELLER_LEGAL_NAME = "SELLER_LEGAL_NAME";
-export const CONTACT_EMAIL = "CONTACT_EMAIL";
+export const CONTACT_EMAIL = "support@inboxsieve.com";
 
 export const LEGAL_UPDATED = "November 20, 2026";
 export const REFUND_DAYS = 14;
@@ -49,8 +49,8 @@ export const SUB_PROCESSORS = [
     purpose: "Hosting, database, inbound email",
   },
   {
-    name: "Anthropic, PBC",
-    purpose: "AI scoring and reply drafts (no training, no default retention)",
+    name: "Groq, Inc.",
+    purpose: "Scores and summarises each message (no training; inputs not retained by default)",
   },
   {
     name: "Resend",

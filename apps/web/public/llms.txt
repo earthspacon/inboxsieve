@@ -24,7 +24,7 @@
 
 ## Data
 - The customer is the controller, InboxSieve the processor (GDPR/UK GDPR). A DPA is published.
-- Sub-processors: Cloudflare, Anthropic, Resend, Paddle.
+- Sub-processors: Cloudflare, Groq, Resend, Paddle.
 - Lead data is never used to train AI models.
 
 ## Pages
