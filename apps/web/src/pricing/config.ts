@@ -50,7 +50,7 @@ export const PLAN_CARDS: PlanCard[] = [
         amount: formatUsd(FREE.paymentCents),
       },
       {
-        label: `Claude Haiku AI, ${PLAN_LIMITS.free.leadsPerMonth} leads at ~$0.0004 (we pay it)`,
+        label: `Groq AI, ${PLAN_LIMITS.free.leadsPerMonth} leads at ~$0.0004 (we pay it)`,
         amount: `≈ ${formatUsd(FREE.aiCents)}`,
       },
       {
@@ -80,7 +80,7 @@ export const PLAN_CARDS: PlanCard[] = [
         amount: formatUsd(SOLO.paymentCents),
       },
       {
-        label: "Claude Haiku AI, 500 leads at ~$0.0004 (shown at cost)",
+        label: "Groq AI, 500 leads at ~$0.0004 (shown at cost)",
         amount: `≈ ${formatUsd(SOLO.aiCents)}`,
       },
       {
@@ -110,7 +110,7 @@ export const PLAN_CARDS: PlanCard[] = [
         amount: formatUsd(AGENCY.paymentCents),
       },
       {
-        label: "Claude Haiku AI, 3,000 leads",
+        label: "Groq AI, 3,000 leads",
         amount: `≈ ${formatUsd(AGENCY.aiCents)}`,
       },
       {

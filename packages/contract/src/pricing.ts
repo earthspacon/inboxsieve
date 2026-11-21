@@ -22,7 +22,7 @@ export const PADDLE_FEE = {
   fixedCents: 50,
 };
 
-// Claude Haiku per analyzed lead (spec §3.6) and hosting + email delivery per month, pro-rata (spec §3.2).
+// Groq (openai/gpt-oss-120b) per analyzed lead (spec §3.6) and hosting + email delivery per month, pro-rata (spec §3.2).
 export const AI_COST_PER_LEAD_USD = 0.0004;
 const HOSTING_CENTS: Record<Plan, number> = {
   free: 3,
