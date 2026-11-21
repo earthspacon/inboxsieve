@@ -14,7 +14,9 @@ import {
   type BillingRow,
 } from "./repo";
 
-export const MAINTENANCE_CRON = "0 * * * *";
+export function isMaintenanceTick({ at }: { at: Date }) {
+  return at.getUTCMinutes() === 0;
+}
 
 // Hourly: plan downgrades due at period end, canceled → expired (Free), ended no-card trials → Free,
 // the 90-day raw-body purge and account deletions.

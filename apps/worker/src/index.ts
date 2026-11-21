@@ -3,7 +3,7 @@ import { createDeps } from "./deps";
 import type { Env } from "./env";
 import { handleInboundEmail } from "./ingest/email";
 import { runQueues } from "./leads/jobs";
-import { MAINTENANCE_CRON, runMaintenance } from "./maintenance";
+import { isMaintenanceTick, runMaintenance } from "./maintenance";
 
 export default {
   fetch: async (request, env, ctx) => {
@@ -22,7 +22,9 @@ export default {
   scheduled: async (controller, env, ctx) => {
     const deps = createDeps({ env, ctx });
 
-    if (controller.cron === MAINTENANCE_CRON) {
+    // Three products share the Free plan's 5 cron triggers, so one minute trigger runs every job.
+    // The top-of-hour tick does the hourly work instead of the minute job, keeping each invocation within its limits.
+    if (isMaintenanceTick({ at: new Date(controller.scheduledTime) })) {
       deps.schedule(runMaintenance({ deps, now: deps.now() }));
       return;
     }

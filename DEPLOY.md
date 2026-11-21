@@ -103,7 +103,7 @@ pnpm exec wrangler deploy --dry-run --env production   # check the bindings list
 pnpm exec wrangler deploy --env production
 ```
 
-The custom-domain route in `wrangler.toml` attaches `inboxsieve.com` to the Worker and creates its DNS record. The two crons (every minute, hourly) come from `[env.production.triggers]`.
+The custom-domain route in `wrangler.toml` attaches `inboxsieve.com` to the Worker and creates its DNS record. The one cron trigger (every minute; the hourly jobs run at :00) comes from `[env.production.triggers]`.
 
 ## 8. Inbound mail (Email Routing)
 
