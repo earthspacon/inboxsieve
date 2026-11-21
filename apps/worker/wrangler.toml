@@ -77,7 +77,7 @@ simple = { limit = 120, period = 60 }
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "inboxsieve"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "63517062-b177-4a47-8d51-d2a0ddaa59cd"
 migrations_dir = "migrations"
 
 [env.production.triggers]
@@ -86,7 +86,7 @@ crons = ["* * * * *"]
 [env.production.vars]
 APP_URL = "https://inboxsieve.com"
 INBOUND_DOMAIN = "in.inboxsieve.com"
-MAIL_FROM = "InboxSieve <login@mail.inboxsieve.com>"
+MAIL_FROM = "InboxSieve <inboxsieve@mail.spacesonlabs.com>"
 DEV_ROUTES = "0"
 PADDLE_ENV = "production"
 PADDLE_CLIENT_TOKEN = "REPLACE_WITH_PADDLE_CLIENT_TOKEN"
@@ -96,4 +96,4 @@ PADDLE_PRICE_AGENCY_MONTHLY = "REPLACE_WITH_PRICE_ID"
 PADDLE_PRICE_AGENCY_YEARLY = "REPLACE_WITH_PRICE_ID"
 LLM_DAILY_USD_CAP = "3"
 LLM_ACCOUNT_DAILY_USD_CAP = "0.25"
-OWNER_ALERT_EMAIL = "REPLACE_WITH_OWNER_EMAIL"
+OWNER_ALERT_EMAIL = "alerts@spacesonlabs.com"
