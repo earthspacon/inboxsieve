@@ -81,7 +81,7 @@ Secrets are set with `wrangler secret put`, or in `.dev.vars` locally:
 | ------------------------------------------ | -------------------------------------------------------------------------------- |
 | `BETTER_AUTH_SECRET`                       | Signs session cookies (32+ characters)                                           |
 | `GROQ_API_KEY`                             | Groq (gpt-oss-120b) for lead analysis                                            |
-| `RESEND_API_KEY`                           | Sends sign-in emails. Without it, production refuses to send                     |
+| `BREVO_API_KEY`                            | Sends sign-in emails. Without it, production refuses to send                     |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Both set: "Continue with Google" on the sign-in page (`DEPLOY.md` §5b) |
 
 ## Privacy

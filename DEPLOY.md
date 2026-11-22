@@ -1,6 +1,6 @@
 # Deploying InboxSieve
 
-Run these in order once the Cloudflare, Paddle, Resend and Groq accounts exist. Every command runs from `apps/worker` unless it says otherwise. Production config is the `[env.production]` block in `apps/worker/wrangler.toml`; the domain there is `inboxsieve.com`, so change every `inboxsieve.com` in that block first if you bought another one.
+Run these in order once the Cloudflare, Paddle, Brevo and Groq accounts exist. Every command runs from `apps/worker` unless it says otherwise. Production config is the `[env.production]` block in `apps/worker/wrangler.toml`; the domain there is `inboxsieve.com`, so change every `inboxsieve.com` in that block first if you bought another one.
 
 Names used below:
 
@@ -27,11 +27,11 @@ Names used below:
 2. Copy the printed `database_id` into `[[env.production.d1_databases]]` in `wrangler.toml` (replace `REPLACE_WITH_D1_DATABASE_ID`).
 3. `pnpm exec wrangler d1 migrations apply inboxsieve --remote --env production` (applies `0001`–`0005`).
 
-## 3. Resend (outbound mail)
+## 3. Brevo (outbound mail)
 
-1. Resend → Domains → Add `mail.inboxsieve.com`.
-2. Add the DNS records Resend shows (DKIM `TXT`, the SPF `MX` + `TXT` on the `send` subdomain, optional DMARC `TXT`) in Cloudflare DNS. Set them to **DNS only** (grey cloud). Wait for "Verified".
-3. Resend → API Keys → create a key with "Sending access" for that domain. Keep it for step 6.
+1. Brevo → Senders, domains, IPs → Domains → Add the domain of `MAIL_FROM` (`mail.spacesonlabs.com`).
+2. Add the DNS records Brevo shows (the `brevo-code` `TXT`, two DKIM `CNAME`s, DMARC `TXT`) in Cloudflare DNS, **DNS only** (grey cloud). Wait for "Authenticated".
+3. Brevo → SMTP & API → API keys → a restricted key with "Transactional email: All". Keep it for step 6. The Free plan sends 300 emails a day.
 
 ## 4. Paddle (live account, after the domain review passes)
 
@@ -86,7 +86,7 @@ Each command prompts for the value; never put them in `wrangler.toml`.
 ```sh
 openssl rand -base64 48 | pnpm exec wrangler secret put BETTER_AUTH_SECRET --env production
 pnpm exec wrangler secret put GROQ_API_KEY --env production
-pnpm exec wrangler secret put RESEND_API_KEY --env production
+pnpm exec wrangler secret put BREVO_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_API_KEY --env production
 pnpm exec wrangler secret put PADDLE_WEBHOOK_SECRET --env production
 pnpm exec wrangler secret put TURNSTILE_SECRET_KEY --env production

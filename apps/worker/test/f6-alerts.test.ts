@@ -4,7 +4,7 @@ import { ALERT_RETRY_DELAYS_MS } from "../src/alerts/alerts";
 import { createSlackPoster } from "../src/alerts/slack";
 import { runQueues } from "../src/leads/jobs";
 import { admitLead } from "../src/leads/pipeline";
-import { createResendMailer } from "../src/mailer";
+import { createBrevoMailer } from "../src/mailer";
 import { saveAlertSettings } from "../src/repo";
 import {
   buildLeadInput,
@@ -19,19 +19,19 @@ import {
 } from "./helpers";
 
 const SLACK_URL = "https://hooks.slack.com/services/T000/B000/example";
-const RESEND_URL = "https://api.resend.com/emails";
+const BREVO_URL = "https://api.brevo.com/v3/smtp/email";
 
-// Resend and Slack are the only network boundaries; the stub counts calls per host and can fail Slack.
+// Brevo and Slack are the only network boundaries; the stub counts calls per host and can fail Slack.
 function stubNetwork({ slackStatus = 200 }: { slackStatus?: number } = {}) {
   const calls = {
-    resend: 0,
+    mail: 0,
     slack: 0,
   };
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
     const url = String(input instanceof Request ? input.url : input);
-    if (url === RESEND_URL) {
-      calls.resend += 1;
-      return Response.json({ id: "email_example" });
+    if (url === BREVO_URL) {
+      calls.mail += 1;
+      return Response.json({ messageId: "<example@smtp-relay.mailin.fr>" }, { status: 201 });
     }
     if (url === SLACK_URL) {
       calls.slack += 1;
@@ -81,7 +81,7 @@ async function analyzeLeadWithScore({ score, now }: { score: number; now: Date }
     };
   });
   const { deps } = buildTestDeps({ analyzer: mock.analyzer, now: () => now });
-  deps.mailer = createResendMailer({ apiKey: "re_test_key", from: "InboxSieve <alerts@inboxsieve.example>" });
+  deps.mailer = createBrevoMailer({ apiKey: "xkeysib-test-key", from: "InboxSieve <alerts@inboxsieve.example>" });
   deps.slack = createSlackPoster();
   await admitLead({
     db,
@@ -117,7 +117,7 @@ describe("F6 hot-lead alerts", () => {
 
     const brand = await analyzeLeadWithScore({ score: 85, now: new Date() });
 
-    expect(calls).toEqual({ resend: 2, slack: 1 });
+    expect(calls).toEqual({ mail: 2, slack: 1 });
     expect(
       await countRows({
         sql: "SELECT COUNT(*) AS n FROM alert_deliveries WHERE brand_id = ? AND status = 'sent'",
@@ -131,7 +131,7 @@ describe("F6 hot-lead alerts", () => {
 
     const brand = await analyzeLeadWithScore({ score: 40, now: new Date() });
 
-    expect(calls).toEqual({ resend: 0, slack: 0 });
+    expect(calls).toEqual({ mail: 0, slack: 0 });
     expect(
       await countRows({ sql: "SELECT COUNT(*) AS n FROM alert_deliveries WHERE brand_id = ?", binds: [brand.brandId] }),
     ).toBe(0);
@@ -171,7 +171,7 @@ describe("F6 hot-lead alerts", () => {
 
     await runQueues(brand.deps);
 
-    expect(calls).toEqual({ resend: 2, slack: 1 });
+    expect(calls).toEqual({ mail: 2, slack: 1 });
   });
 
   it("F6: disabled alerts send nothing", async () => {
@@ -199,6 +199,6 @@ describe("F6 hot-lead alerts", () => {
 
     await runQueues(deps);
 
-    expect(calls).toEqual({ resend: 0, slack: 0 });
+    expect(calls).toEqual({ mail: 0, slack: 0 });
   });
 });

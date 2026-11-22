@@ -53,7 +53,7 @@ export const SUB_PROCESSORS = [
     purpose: "Scores and summarises each message (no training; inputs not retained by default)",
   },
   {
-    name: "Resend",
+    name: "Brevo",
     purpose: "Sign-in links and hot-lead alert emails",
   },
   {

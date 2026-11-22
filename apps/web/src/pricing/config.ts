@@ -84,7 +84,7 @@ export const PLAN_CARDS: PlanCard[] = [
         amount: `≈ ${formatUsd(SOLO.aiCents)}`,
       },
       {
-        label: "Hosting + email delivery (Cloudflare + Resend, pro-rata)",
+        label: "Hosting + email delivery (Cloudflare + Brevo, pro-rata)",
         amount: `≈ ${formatUsd(SOLO.hostingCents)}`,
       },
       {
