@@ -10,6 +10,7 @@ import {
   HOT_LEAD,
   launchBrowser,
   openSession,
+  PITCH_LEAD,
   postWebhookLead,
   signInWithUi,
   SPAM_LEAD,
@@ -26,6 +27,7 @@ describe("F5 triage", () => {
     hot: "",
     cold: "",
     spam: "",
+    pitch: "",
   };
 
   beforeAll(async () => {
@@ -56,13 +58,14 @@ describe("F5 triage", () => {
     await page.getByRole("button", { name: "Send a test lead" }).waitFor();
 
     const leads = await Promise.all(
-      [HOT_LEAD, COLD_LEAD, SPAM_LEAD].map((lead) => {
+      [HOT_LEAD, COLD_LEAD, SPAM_LEAD, PITCH_LEAD].map((lead) => {
         return postWebhookLead({ url: source.webhookUrl ?? "", lead });
       }),
     );
     ids.hot = leads[0].id;
     ids.cold = leads[1].id;
     ids.spam = leads[2].id;
+    ids.pitch = leads[3].id;
     await Promise.all(
       Object.values(ids).map((leadId) => {
         return waitForLead({ page, brandId, leadId, until: (lead) => lead.score !== null });
@@ -90,6 +93,38 @@ describe("F5 triage", () => {
     expect(hotVisible).toBe(true);
     expect(spamVisible).toBe(false);
     expect(spamOnly).toBe(true);
+  });
+
+  it("F5: a vendor pitch gets its own counted Pitches tab", async () => {
+    const { page } = session;
+    await page.goto("/app");
+    await page.getByText(HOT_LEAD.subject).waitFor();
+    const pitchInAll = await page.getByText(PITCH_LEAD.subject).isVisible();
+
+    const pitches = page.getByRole("button", { name: "Pitches", exact: true });
+    await pitches.click();
+    await page.getByText(HOT_LEAD.subject).waitFor({ state: "detached" });
+    const pitchOnly = await page.getByText(PITCH_LEAD.subject).isVisible();
+
+    expect(pitchInAll).toBe(true);
+    expect(await pitches.textContent()).toBe("Pitches1");
+    expect(pitchOnly).toBe(true);
+  });
+
+  it("F5: a pitch moved back to New leaves the Pitches tab empty", async () => {
+    const { page } = session;
+    await page.goto(`/app/leads/${ids.pitch}`);
+    await page.getByRole("button", { name: "Move to New" }).click();
+    await page.getByText("Stage updated").waitFor();
+    const { body } = await apiJson<LeadDetailDto>({ page, path: `/api/brands/${brandId}/leads/${ids.pitch}` });
+
+    await page.goto("/app");
+    await page.getByRole("button", { name: "Pitches", exact: true }).click();
+    const empty = page.getByText("Vendor offers, SEO and dev-shop pitches land here, out of your way.");
+    await empty.waitFor();
+
+    expect(body.stage).toBe("new");
+    expect(await empty.isVisible()).toBe(true);
   });
 
   it("F5: a filter that matches nothing shows its own empty state", async () => {

@@ -25,7 +25,7 @@ Names used below:
 
 1. `pnpm exec wrangler d1 create inboxsieve`
 2. Copy the printed `database_id` into `[[env.production.d1_databases]]` in `wrangler.toml` (replace `REPLACE_WITH_D1_DATABASE_ID`).
-3. `pnpm exec wrangler d1 migrations apply inboxsieve --remote --env production` (applies `0001`–`0005`).
+3. `pnpm exec wrangler d1 migrations apply inboxsieve --remote --env production` (applies `0001`–`0006`).
 
 ## 3. Brevo (outbound mail)
 

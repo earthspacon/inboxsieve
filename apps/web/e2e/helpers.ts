@@ -215,6 +215,15 @@ export const SPAM_LEAD = {
   message: "We sell cheap backlinks and guaranteed first page ranking. Reply now for a discount.",
 };
 
+export const PITCH_LEAD = {
+  name: "Ravi Menon",
+  email: "ravi@devbench.example",
+  company: "DevBench",
+  subject: "Dedicated React developers for your studio",
+  message:
+    "Hello, we run an offshore team of 30 engineers and our developers are available from next month. Happy to send rates and case studies.",
+};
+
 export async function sendPaddleFixture({
   fixture,
   accountId,

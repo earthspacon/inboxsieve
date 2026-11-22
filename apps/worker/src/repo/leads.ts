@@ -6,6 +6,7 @@ import {
   type LeadEventDto,
   type LeadInput,
   type LeadStage,
+  type LeadStageCountsDto,
   type LeadStatus,
   type LeadSummaryDto,
 } from "@inboxsieve/contract";
@@ -360,6 +361,48 @@ export async function listLeads({ db, brandId, filters }: { db: D1Database; bran
     .bind(...values, filters.limit)
     .all<LeadRow>();
   return results.map(mapLeadRowToSummary);
+}
+
+export async function countLeadsByStage({ db, brandId }: { db: D1Database; brandId: string }) {
+  const counts: LeadStageCountsDto = {
+    new: 0,
+    contacted: 0,
+    meeting: 0,
+    won: 0,
+    lost: 0,
+    spam: 0,
+    pitch: 0,
+  };
+  const { results } = await db
+    .prepare("SELECT stage, COUNT(*) AS n FROM leads WHERE brand_id = ? GROUP BY stage")
+    .bind(brandId)
+    .all<{ stage: LeadStage; n: number }>();
+
+  for (const row of results) {
+    counts[row.stage] = row.n;
+  }
+  return counts;
+}
+
+// True once a person has moved the lead out of that stage; the classifier must not put it back.
+export async function hasLeftStage({
+  db,
+  brandId,
+  leadId,
+  stage,
+}: {
+  db: D1Database;
+  brandId: string;
+  leadId: string;
+  stage: LeadStage;
+}) {
+  const row = await db
+    .prepare(
+      "SELECT 1 AS found FROM lead_events WHERE lead_id = ? AND brand_id = ? AND type = 'stage' AND from_value = ? LIMIT 1",
+    )
+    .bind(leadId, brandId, stage)
+    .first<{ found: number }>();
+  return row !== null;
 }
 
 export async function getLead({ db, brandId, leadId }: { db: D1Database; brandId: string; leadId: string }) {

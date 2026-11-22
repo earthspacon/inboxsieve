@@ -1,6 +1,6 @@
 import type { Category, Intent, LeadStage, LeadStatus, SourceState } from "@inboxsieve/contract";
 
-export const STAGES: LeadStage[] = ["new", "contacted", "meeting", "won", "lost", "spam"];
+export const STAGES: LeadStage[] = ["new", "contacted", "meeting", "won", "lost", "spam", "pitch"];
 export const PIPELINE_STAGES: LeadStage[] = ["new", "contacted", "meeting", "won", "lost"];
 export const CATEGORIES: Category[] = ["hot", "warm", "cold", "spam"];
 
@@ -28,6 +28,10 @@ export const STAGE_CONFIG: Record<LeadStage, { label: string; tone: string }> = 
   spam: {
     label: "Spam",
     tone: "bg-amber-50 text-amber-800",
+  },
+  pitch: {
+    label: "Pitches",
+    tone: "bg-slate-200 text-slate-700",
   },
 };
 

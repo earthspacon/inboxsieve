@@ -97,16 +97,22 @@ export type LeadStatus =
   | "over_quota"
   | "parse_failed";
 
-export type LeadStage = "new" | "contacted" | "meeting" | "won" | "lost" | "spam";
+// Spam and pitch sit outside the pipeline: set aside, never alerted on.
+export type LeadStage = "new" | "contacted" | "meeting" | "won" | "lost" | "spam" | "pitch";
 
 export const STAGE_TRANSITIONS: Record<LeadStage, LeadStage[]> = {
-  new: ["contacted", "meeting", "lost", "spam"],
+  new: ["contacted", "meeting", "lost", "spam", "pitch"],
   contacted: ["meeting", "won", "lost"],
   meeting: ["won", "lost"],
   won: [],
   lost: ["new"],
   spam: ["new"],
+  pitch: ["new"],
 };
+
+export const SET_ASIDE_STAGES: LeadStage[] = ["spam", "pitch"];
+
+export type LeadStageCountsDto = Record<LeadStage, number>;
 
 export type FeedbackKind = "not_spam" | "wrong_score";
 

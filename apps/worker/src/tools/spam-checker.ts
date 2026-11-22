@@ -2,11 +2,10 @@ import {
   SPAM_CHECKER_IDEAL_CLIENT_MAX_CHARS,
   SPAM_CHECKER_MESSAGE_MAX_CHARS,
   SPAM_CHECKER_RUNS_PER_DAY,
-  WARM_SCORE,
+  getVerdict,
   type Analysis,
   type LeadInput,
   type SpamCheckResultDto,
-  type SpamCheckVerdict,
 } from "@inboxsieve/contract";
 
 import { DEFAULT_PROFILE } from "../analysis/analyzer";
@@ -128,15 +127,4 @@ function buildSpamCheckResult(analysis: Analysis): SpamCheckResultDto {
     summary: analysis.summary,
     reasons: analysis.reasons,
   };
-}
-
-// Vendor and partnership offers with a low fit are what people call "sales pitches" in their form mail.
-function getVerdict(analysis: Analysis): SpamCheckVerdict {
-  if (analysis.category === "spam" || analysis.intent === "spam") {
-    return "spam";
-  }
-  if (analysis.intent === "job" || (analysis.intent === "partnership" && analysis.score < WARM_SCORE)) {
-    return "pitch";
-  }
-  return "request";
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildComposeLinks, buildLeadsQuery, DEFAULT_FILTERS, getInboxEmptyState } from "./lib";
+import { buildComposeLinks, buildLeadsQuery, DEFAULT_FILTERS, getInboxEmptyState, getStageChipCount } from "./lib";
 
 describe("buildLeadsQuery", () => {
   it("sends only the filters the user set, with the server's parameter names", () => {
@@ -36,6 +36,32 @@ describe("getInboxEmptyState", () => {
     };
 
     expect(getInboxEmptyState({ sourceCount: 0, leadCount: 0, filters })).toBe("no_matches");
+  });
+
+  it("explains the Pitches tab when it is the only filter and it is empty", () => {
+    const filters = {
+      ...DEFAULT_FILTERS,
+      stage: "pitch" as const,
+    };
+
+    expect(getInboxEmptyState({ sourceCount: 1, leadCount: 0, filters })).toBe("no_pitches");
+    expect(getInboxEmptyState({ sourceCount: 1, leadCount: 0, filters: { ...filters, scoreMin: 90 } })).toBe(
+      "no_matches",
+    );
+  });
+});
+
+describe("getStageChipCount", () => {
+  const counts = { new: 4, contacted: 1, meeting: 0, won: 0, lost: 0, spam: 2, pitch: 3 };
+
+  it("counts the set-aside tabs, Spam and Pitches, each on its own", () => {
+    expect(getStageChipCount({ stage: "pitch", counts })).toBe(3);
+    expect(getStageChipCount({ stage: "spam", counts })).toBe(2);
+  });
+
+  it("shows no count on pipeline stages or before counts load", () => {
+    expect(getStageChipCount({ stage: "new", counts })).toBeNull();
+    expect(getStageChipCount({ stage: "pitch", counts: null })).toBeNull();
   });
 });
 

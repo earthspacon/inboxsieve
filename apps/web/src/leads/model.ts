@@ -1,4 +1,4 @@
-import type { LeadDetailDto, LeadStage, LeadSummaryDto, SourceDto } from "@inboxsieve/contract";
+import type { LeadDetailDto, LeadStage, LeadStageCountsDto, LeadSummaryDto, SourceDto } from "@inboxsieve/contract";
 import { combine, createEffect, createEvent, createStore, sample } from "effector";
 import { createGate } from "effector-react";
 
@@ -60,6 +60,13 @@ export const inboxSourcesRemote = createRemote({
     return apiRequest<SourceDto[]>({ path: `/api/brands/${brandId}/sources` });
   },
   initial: [],
+});
+
+export const stageCountsRemote = createRemote<BrandParams, LeadStageCountsDto | null>({
+  handler: ({ brandId }) => {
+    return apiRequest<LeadStageCountsDto>({ path: `/api/brands/${brandId}/stage-counts` });
+  },
+  initial: null,
 });
 
 export const leadRemote = createRemote<LeadParams, LeadDetailDto | null>({
@@ -201,6 +208,14 @@ sample({
     });
   },
   target: waitFx,
+});
+
+sample({
+  clock: inboxRemote.fx.done,
+  fn: ({ params }) => {
+    return { brandId: params.brandId };
+  },
+  target: stageCountsRemote.fx,
 });
 
 sample({

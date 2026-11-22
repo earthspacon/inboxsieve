@@ -1,3 +1,5 @@
+import { WARM_SCORE, type Analysis } from "./analysis";
+
 // The free contact-form spam checker: public, no sign-in, nothing it receives is stored.
 export const SPAM_CHECKER_PAGE_PATH = "/tools/contact-form-spam-checker";
 export const SPAM_CHECKER_API_PATH = "/api/tools/contact-form-spam-checker";
@@ -18,3 +20,15 @@ export type SpamCheckResultDto = {
   summary: string;
   reasons: string[];
 };
+
+// One classifier for the free checker and the lead pipeline.
+// Vendor and partnership offers with a low fit are what people call "sales pitches" in their form mail.
+export function getVerdict(analysis: Analysis): SpamCheckVerdict {
+  if (analysis.category === "spam" || analysis.intent === "spam") {
+    return "spam";
+  }
+  if (analysis.intent === "job" || (analysis.intent === "partnership" && analysis.score < WARM_SCORE)) {
+    return "pitch";
+  }
+  return "request";
+}

@@ -1,9 +1,10 @@
 import type { LeadSummaryDto } from "@inboxsieve/contract";
 import { useGate, useUnit } from "effector-react";
-import { Inbox, Loader2, PlugZap, Search, Send } from "lucide-react";
+import { Inbox, Loader2, Megaphone, PlugZap, Search, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { CATEGORIES, CATEGORY_CONFIG, SCORE_FILTERS, STAGE_CONFIG, STAGES, STATUS_LABELS } from "../leads/config";
+import { getStageChipCount, type InboxEmptyState } from "../leads/lib";
 import {
   $filters,
   $inboxEmptyState,
@@ -12,6 +13,7 @@ import {
   filtersReset,
   InboxGate,
   inboxRemote,
+  stageCountsRemote,
   testLeadClicked,
 } from "../leads/model";
 import { $brandId } from "../session/model";
@@ -44,7 +46,7 @@ export const InboxPage = () => {
 };
 
 const Filters = () => {
-  const { filters } = useUnit({ filters: $filters });
+  const { filters, counts } = useUnit({ filters: $filters, counts: stageCountsRemote.$data });
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -85,6 +87,7 @@ const Filters = () => {
               key={stage}
               isActive={filters.stage === stage}
               label={STAGE_CONFIG[stage].label}
+              count={getStageChipCount({ stage, counts })}
               onClick={() => filtersChanged({ stage })}
             />
           );
@@ -110,7 +113,17 @@ const Filters = () => {
   );
 };
 
-const Chip = ({ isActive, label, onClick }: { isActive: boolean; label: string; onClick: () => void }) => {
+const Chip = ({
+  isActive,
+  label,
+  count = null,
+  onClick,
+}: {
+  isActive: boolean;
+  label: string;
+  count?: number | null;
+  onClick: () => void;
+}) => {
   return (
     <button
       type="button"
@@ -119,6 +132,11 @@ const Chip = ({ isActive, label, onClick }: { isActive: boolean; label: string; 
       className={`rounded-full border px-3 py-1 text-xs font-medium ${isActive ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 bg-surface text-slate-600 hover:border-slate-300"}`}
     >
       {label}
+      {typeof count === "number" && (
+        <span aria-hidden="true" className="ml-1.5 tabular-nums opacity-70">
+          {count}
+        </span>
+      )}
     </button>
   );
 };
@@ -151,7 +169,7 @@ const LeadList = () => {
   );
 };
 
-const EmptyInbox = ({ state }: { state: "no_sources" | "no_leads" | "no_matches" }) => {
+const EmptyInbox = ({ state }: { state: NonNullable<InboxEmptyState> }) => {
   const { isSending } = useUnit({ isSending: $isTestLeadSending });
 
   if (state === "no_sources") {
@@ -180,6 +198,14 @@ const EmptyInbox = ({ state }: { state: "no_sources" | "no_leads" | "no_matches"
           <Send className="size-4" />
           Send a test lead
         </button>
+      </Card>
+    );
+  }
+  if (state === "no_pitches") {
+    return (
+      <Card className="space-y-3 p-10 text-center">
+        <Megaphone className="mx-auto size-8 text-brand-ink" />
+        <p className="text-sm text-slate-500">Vendor offers, SEO and dev-shop pitches land here, out of your way.</p>
       </Card>
     );
   }

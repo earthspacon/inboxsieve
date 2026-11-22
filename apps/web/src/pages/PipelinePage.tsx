@@ -1,4 +1,4 @@
-import { STAGE_TRANSITIONS, type LeadStage, type LeadSummaryDto } from "@inboxsieve/contract";
+import { SET_ASIDE_STAGES, STAGE_TRANSITIONS, type LeadStage, type LeadSummaryDto } from "@inboxsieve/contract";
 import { useGate, useUnit } from "effector-react";
 import { Link } from "react-router-dom";
 
@@ -66,7 +66,7 @@ const Column = ({ stage, leads }: { stage: LeadStage; leads: LeadSummaryDto[] })
 
 const PipelineCard = ({ lead }: { lead: LeadSummaryDto }) => {
   const nextStages = STAGE_TRANSITIONS[lead.stage].filter((stage) => {
-    return stage !== "spam";
+    return !SET_ASIDE_STAGES.includes(stage);
   });
   return (
     <Card className="space-y-2 p-3">

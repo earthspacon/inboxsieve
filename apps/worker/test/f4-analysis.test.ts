@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RateLimitedError } from "../src/analysis/groq";
 import { MAX_ATTEMPTS, RETRY_DELAYS_MS, processLead, runDueJobs } from "../src/leads/jobs";
 import { admitLead } from "../src/leads/pipeline";
-import { getLead } from "../src/repo";
+import { getLead, queueRescore, updateLeadStage } from "../src/repo";
 import { buildLeadInput, countRows, createMockAnalyzer, db, seedAccount, seedSource, VALID_ANALYSIS } from "./helpers";
 import { SEED_LEADS } from "./seed-leads";
 
@@ -247,5 +247,47 @@ describe("F4 lead processing", () => {
     await runDueJobs({ db, analyzer, now: new Date(start.getTime() + 6 * 60_000) });
 
     expect((await getLead({ db, brandId, leadId }))?.status).toBe("analyzed");
+  });
+  it("F4: a vendor pitch lands in Pitches instead of New", async () => {
+    const { brandId } = await seedAccount();
+    const source = await seedSource({ brandId, kind: "webhook" });
+    const { analyzer } = createMockAnalyzer(() => ({ ...VALID_ANALYSIS, intent: "job", score: 85, category: "hot" }));
+    const { leadId } = await admit({ brandId, sourceId: source.id });
+
+    await runDueJobs({ db, analyzer, now: new Date() });
+
+    expect((await getLead({ db, brandId, leadId }))?.stage).toBe("pitch");
+  });
+
+  it("F4: a spam analysis still lands in Spam and a project inquiry stays in New", async () => {
+    const { brandId } = await seedAccount();
+    const source = await seedSource({ brandId, kind: "webhook" });
+    const { analyzer } = createMockAnalyzer((request) => {
+      if (request.lead.subject === "Spam") {
+        return { ...VALID_ANALYSIS, category: "spam", intent: "spam", score: 2 };
+      }
+      return VALID_ANALYSIS;
+    });
+    const spam = await admit({ brandId, sourceId: source.id, lead: buildLeadInput({ subject: "Spam" }) });
+    const inquiry = await admit({ brandId, sourceId: source.id, lead: buildLeadInput({ subject: "Inquiry" }) });
+
+    await runDueJobs({ db, analyzer, now: new Date() });
+
+    expect((await getLead({ db, brandId, leadId: spam.leadId }))?.stage).toBe("spam");
+    expect((await getLead({ db, brandId, leadId: inquiry.leadId }))?.stage).toBe("new");
+  });
+
+  it("F4: a pitch the user moved back to New stays there after a rescore", async () => {
+    const { brandId } = await seedAccount();
+    const source = await seedSource({ brandId, kind: "webhook" });
+    const { analyzer } = createMockAnalyzer(() => ({ ...VALID_ANALYSIS, intent: "job", score: 60, category: "warm" }));
+    const { leadId } = await admit({ brandId, sourceId: source.id });
+    await runDueJobs({ db, analyzer, now: new Date() });
+    await updateLeadStage({ db, brandId, leadId, from: "pitch", to: "new", now: new Date() });
+
+    await queueRescore({ db, brandId, limit: 10, now: new Date() });
+    await runDueJobs({ db, analyzer, now: new Date() });
+
+    expect((await getLead({ db, brandId, leadId }))?.stage).toBe("new");
   });
 });

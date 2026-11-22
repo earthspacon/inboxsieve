@@ -1,4 +1,4 @@
-import { AnalysisContract, type Analysis } from "@inboxsieve/contract";
+import { AnalysisContract, getVerdict, type Analysis } from "@inboxsieve/contract";
 
 import { queueHotLeadAlerts, runAlertDeliveries } from "../alerts/alerts";
 import { DEFAULT_PROFILE, type LeadAnalyzer } from "../analysis/analyzer";
@@ -12,6 +12,7 @@ import {
   getBrandOwner,
   getLlmSpend,
   getBrandProfile,
+  hasLeftStage,
   hasNotSpamFeedback,
   listDueLeads,
   listFeedbackExamples,
@@ -107,10 +108,11 @@ export async function processLead({
       draft: analysis.draftReply,
       analyzed_at: now.toISOString(),
       last_error: null,
-      ...getSpamStage({
+      ...getSetAsideStage({
         analysis,
         lead,
         isMarkedNotSpam: await hasNotSpamFeedback({ db, brandId, leadId }),
+        isMovedOutOfPitch: await hasLeftStage({ db, brandId, leadId, stage: "pitch" }),
       }),
     },
   });
@@ -221,18 +223,26 @@ async function analyzeClaimedLead({
   return valid;
 }
 
-// A person's "Not spam" beats the model: the lead stays in its stage.
-function getSpamStage({
+// Only a new lead is set aside, and a person's choice beats the model: "Not spam" or a move out of Pitches sticks.
+function getSetAsideStage({
   analysis,
   lead,
   isMarkedNotSpam,
+  isMovedOutOfPitch,
 }: {
   analysis: Analysis;
   lead: LeadRow;
   isMarkedNotSpam: boolean;
+  isMovedOutOfPitch: boolean;
 }) {
-  if (analysis.category === "spam" && lead.stage === "new" && !isMarkedNotSpam) {
+  if (lead.stage !== "new") {
+    return {};
+  }
+  if (analysis.category === "spam" && !isMarkedNotSpam) {
     return { stage: "spam" as const };
+  }
+  if (getVerdict(analysis) === "pitch" && !isMovedOutOfPitch) {
+    return { stage: "pitch" as const };
   }
   return {};
 }

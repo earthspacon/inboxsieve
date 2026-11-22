@@ -82,6 +82,7 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 | Route                                              | Request                                                                                                                                                                                                                                       | Response                                                                                                                                                                                   |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `GET /api/brands/:brandId/leads`                   | Query: `scoreMin`, `scoreMax` (0–100), `category` (`hot\|warm\|cold\|spam`), `stage`, `status`, `q` (name/email/company/subject contains), `before` (ISO `receivedAt` cursor), `limit` (default 50, max 100). Unknown enum values are ignored | `200 LeadSummaryDto[]`, newest first. Next page: `before=<last.receivedAt>`                                                                                                                |
+| `GET /api/brands/:brandId/stage-counts`            | –                                                                                                                                                                                                                                             | `200 LeadStageCountsDto`: number of leads per stage, every stage present                                                                                                                   |
 | `GET /api/brands/:brandId/leads/:leadId`           | –                                                                                                                                                                                                                                             | `200 LeadDetailDto` with `analysis`, `draft`, `repliedAt`, `lastError`, `hasOriginal` and `events` (status, stage, draft, replied and feedback history)                                    |
 | `GET /api/brands/:brandId/leads/:leadId/original`  | –                                                                                                                                                                                                                                             | `200 text/plain` with the raw email or webhook body ("View original"), capped at 1,000,000 chars. `404` once it's purged                                                                   |
 | `PATCH /api/brands/:brandId/leads/:leadId/stage`   | `{ "stage": LeadStage }`                                                                                                                                                                                                                      | `200 LeadDetailDto`; `409 invalid_transition` (rules below); `400` for an unknown stage                                                                                                    |
@@ -93,12 +94,15 @@ The first sign-in of an unknown email creates a user and an account in `no_subsc
 
 **Stage rules** (`STAGE_TRANSITIONS`):
 
-- `new` → `contacted`, `meeting`, `lost`, `spam`
+- `new` → `contacted`, `meeting`, `lost`, `spam`, `pitch`
 - `contacted` → `meeting`, `won`, `lost`
 - `meeting` → `won`, `lost`
 - `lost` → `new`
 - `spam` → `new`
+- `pitch` → `new`
 - `won` is final.
+
+Analysis sets a `new` lead aside: a `spam` category goes to `spam` (unless someone marked it "Not spam"), a vendor or job pitch, or a partnership offer under 50, goes to `pitch` (unless someone moved it out of `pitch` before). Both stages stay out of the pipeline and never send hot-lead alerts.
 
 **Processing status** (`LeadStatus`, F4):
 

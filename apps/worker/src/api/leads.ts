@@ -5,6 +5,7 @@ import { runQueues } from "../leads/jobs";
 import { queueForAnalysis } from "../leads/pipeline";
 import {
   addFeedback,
+  countLeadsByStage,
   getLead,
   listLeadEvents,
   listLeads,
@@ -52,6 +53,11 @@ export const leadRoutes: Route<ApiContext>[] = [
     const brand = await requireBrand({ deps, account, brandId: params.brandId });
     const filters = readLeadFilters(new URL(request.url).searchParams);
     return json(await listLeads({ db: deps.db, brandId: brand.id, filters }));
+  }),
+
+  route("GET", "/api/brands/:brandId/stage-counts", async ({ deps, account, params }) => {
+    const brand = await requireBrand({ deps, account, brandId: params.brandId });
+    return json(await countLeadsByStage({ db: deps.db, brandId: brand.id }));
   }),
 
   route("GET", "/api/brands/:brandId/leads/:leadId", async (context) => {

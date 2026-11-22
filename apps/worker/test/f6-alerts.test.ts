@@ -1,3 +1,4 @@
+import type { Analysis } from "@inboxsieve/contract";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ALERT_RETRY_DELAYS_MS } from "../src/alerts/alerts";
@@ -71,12 +72,21 @@ async function setUpBrand() {
   };
 }
 
-async function analyzeLeadWithScore({ score, now }: { score: number; now: Date }) {
+async function analyzeLeadWithScore({
+  score,
+  now,
+  intent = VALID_ANALYSIS.intent,
+}: {
+  score: number;
+  now: Date;
+  intent?: Analysis["intent"];
+}) {
   const brand = await setUpBrand();
   const mock = createMockAnalyzer(() => {
     return {
       ...VALID_ANALYSIS,
       score,
+      intent,
       category: score >= 75 ? "hot" : "cold",
     };
   });
@@ -130,6 +140,17 @@ describe("F6 hot-lead alerts", () => {
     const calls = stubNetwork();
 
     const brand = await analyzeLeadWithScore({ score: 40, now: new Date() });
+
+    expect(calls).toEqual({ mail: 0, slack: 0 });
+    expect(
+      await countRows({ sql: "SELECT COUNT(*) AS n FROM alert_deliveries WHERE brand_id = ?", binds: [brand.brandId] }),
+    ).toBe(0);
+  });
+
+  it("F6: a pitch scored 85 sends nothing", async () => {
+    const calls = stubNetwork();
+
+    const brand = await analyzeLeadWithScore({ score: 85, intent: "job", now: new Date() });
 
     expect(calls).toEqual({ mail: 0, slack: 0 });
     expect(

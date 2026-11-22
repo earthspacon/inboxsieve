@@ -1,4 +1,4 @@
-import type { LeadDetailDto, LeadSummaryDto, SourceDto } from "@inboxsieve/contract";
+import type { LeadDetailDto, LeadStageCountsDto, LeadSummaryDto, SourceDto } from "@inboxsieve/contract";
 import { describe, expect, it } from "vitest";
 
 import { admitLead } from "../src/leads/pipeline";
@@ -171,6 +171,35 @@ describe("API: leads", () => {
         binds: [spamId],
       }),
     ).toBe(1);
+  });
+
+  it("sets a new lead aside as a pitch and brings it back, but a pitch can't jump the pipeline", async () => {
+    const context = await setUp();
+    const { hotId } = await seedLeads(context);
+    const path = `/api/brands/${context.brandId}/leads/${hotId}/stage`;
+
+    const toPitch = await context.api(path, { method: "PATCH", body: { stage: "pitch" } });
+    const toContacted = await context.api(path, { method: "PATCH", body: { stage: "contacted" } });
+    const backToNew = await context.api(path, { method: "PATCH", body: { stage: "new" } });
+
+    expect((await toPitch.json<LeadDetailDto>()).stage).toBe("pitch");
+    expect(toContacted.status).toBe(409);
+    expect((await backToNew.json<LeadDetailDto>()).stage).toBe("new");
+  });
+
+  it("counts leads per stage, pitches apart from spam", async () => {
+    const context = await setUp();
+    const { coldId } = await seedLeads(context);
+    await context.api(`/api/brands/${context.brandId}/leads/${coldId}/stage`, {
+      method: "PATCH",
+      body: { stage: "pitch" },
+    });
+
+    const counts = await context
+      .api(`/api/brands/${context.brandId}/stage-counts`)
+      .then((response) => response.json<LeadStageCountsDto>());
+
+    expect(counts).toEqual({ new: 1, contacted: 0, meeting: 0, won: 0, lost: 0, spam: 1, pitch: 1 });
   });
 
   it('"Not spam" on a lead that is not spam answers 409', async () => {

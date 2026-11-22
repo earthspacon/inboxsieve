@@ -34,6 +34,14 @@ describe("stage transitions", () => {
     expect(STAGE_TRANSITIONS.spam).toEqual(["new"]);
   });
 
+  it("lets a pitch go back to new and nowhere else", () => {
+    expect(STAGE_TRANSITIONS.pitch).toEqual(["new"]);
+  });
+
+  it("lets a new lead be set aside as spam or as a pitch", () => {
+    expect(STAGE_TRANSITIONS.new).toEqual(expect.arrayContaining(["spam", "pitch"]));
+  });
+
   it("keeps won final", () => {
     expect(STAGE_TRANSITIONS.won).toEqual([]);
   });

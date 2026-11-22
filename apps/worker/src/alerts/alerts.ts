@@ -1,4 +1,11 @@
-import { getEffectivePlan, PLAN_LIMITS, type PaidPlan, type SubscriptionStatus } from "@inboxsieve/contract";
+import {
+  getEffectivePlan,
+  PLAN_LIMITS,
+  SET_ASIDE_STAGES,
+  type LeadStage,
+  type PaidPlan,
+  type SubscriptionStatus,
+} from "@inboxsieve/contract";
 
 import type { Mailer } from "../mailer";
 import type { SlackPoster } from "./slack";
@@ -29,6 +36,7 @@ export type AlertChannels = {
 };
 
 // Queues one email per active seat, plus one Slack post on plans with Slack, when the score reaches the threshold.
+// Spam and pitches never alert.
 export async function queueHotLeadAlerts({
   db,
   brandId,
@@ -42,7 +50,7 @@ export async function queueHotLeadAlerts({
 }) {
   const brand = await db
     .prepare(
-      `SELECT b.account_id, b.alerts_enabled, b.alert_threshold, b.slack_webhook_url, l.score, a.plan, s.status
+      `SELECT b.account_id, b.alerts_enabled, b.alert_threshold, b.slack_webhook_url, l.score, l.stage, a.plan, s.status
        FROM leads l JOIN brands b ON b.id = l.brand_id
        JOIN accounts a ON a.id = b.account_id
        JOIN subscriptions s ON s.account_id = b.account_id
@@ -55,11 +63,15 @@ export async function queueHotLeadAlerts({
       alert_threshold: number;
       slack_webhook_url: string | null;
       score: number | null;
+      stage: LeadStage;
       plan: PaidPlan;
       status: SubscriptionStatus;
     }>();
 
   if (!brand || !brand.alerts_enabled || brand.score === null || brand.score < brand.alert_threshold) {
+    return 0;
+  }
+  if (SET_ASIDE_STAGES.includes(brand.stage)) {
     return 0;
   }
   const at = now.toISOString();

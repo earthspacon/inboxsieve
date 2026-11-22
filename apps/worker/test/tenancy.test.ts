@@ -229,6 +229,16 @@ const CASES: Record<string, (a: Tenant, b: Tenant) => Promise<unknown>> = {
         },
       })
       .then((leads) => leads.filter((lead) => lead.id === a.leadId)),
+  countLeadsByStage: async (a, b) => {
+    const before = await repo.countLeadsByStage({ db, brandId: b.brandId });
+    await db.prepare("UPDATE leads SET stage = 'pitch' WHERE id = ?").bind(a.leadId).run();
+    return (await repo.countLeadsByStage({ db, brandId: b.brandId })).pitch - before.pitch;
+  },
+  hasLeftStage: async (a, b) => {
+    await repo.updateLeadStage({ db, brandId: a.brandId, leadId: a.leadId, from: "new", to: "pitch", now: NOW });
+    await repo.updateLeadStage({ db, brandId: a.brandId, leadId: a.leadId, from: "pitch", to: "new", now: NOW });
+    return (await repo.hasLeftStage({ db, brandId: b.brandId, leadId: a.leadId, stage: "pitch" })) || null;
+  },
   getLead: (a, b) => repo.getLead({ db, brandId: b.brandId, leadId: a.leadId }),
   listLeadEvents: (a, b) => repo.listLeadEvents({ db, brandId: b.brandId, leadId: a.leadId }),
   updateLeadStage: (a, b) =>
