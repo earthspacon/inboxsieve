@@ -4,7 +4,7 @@
 
 ## What it does
 - Takes inquiries from any form that can send an email (forwarding address) or a webhook (Webflow, Tally, Typeform, WPForms, Zapier, Make).
-- Rule-based spam filter first, then Claude Haiku scores each inquiry 0-100 against the customer's own business profile (services, ideal client, minimum budget, tone).
+- Rule-based spam filter first, then an AI model scores each inquiry 0-100 against the customer's own business profile (services, ideal client, minimum budget, tone).
 - Drafts a reply. A human always sends it from their own mail (copy, or open in Gmail/Outlook compose). InboxSieve never sends email as the customer.
 - Hot-lead alerts by email to every seat and by Slack incoming webhook (Slack on paid plans).
 - Inbox with score and stage filters, lead detail, pipeline (new, contacted, meeting, won, lost, spam).

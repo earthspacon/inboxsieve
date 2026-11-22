@@ -50,7 +50,7 @@ export const PLAN_CARDS: PlanCard[] = [
         amount: formatUsd(FREE.paymentCents),
       },
       {
-        label: `Groq AI, ${PLAN_LIMITS.free.leadsPerMonth} leads at ~$0.0004 (we pay it)`,
+        label: `AI scoring, ${PLAN_LIMITS.free.leadsPerMonth} leads at ~$0.0004 (we pay it)`,
         amount: `≈ ${formatUsd(FREE.aiCents)}`,
       },
       {
@@ -80,11 +80,11 @@ export const PLAN_CARDS: PlanCard[] = [
         amount: formatUsd(SOLO.paymentCents),
       },
       {
-        label: "Groq AI, 500 leads at ~$0.0004 (shown at cost)",
+        label: "AI scoring, 500 leads at ~$0.0004 (shown at cost)",
         amount: `≈ ${formatUsd(SOLO.aiCents)}`,
       },
       {
-        label: "Hosting + email delivery (Cloudflare + Brevo, pro-rata)",
+        label: "Hosting + email delivery (pro-rata)",
         amount: `≈ ${formatUsd(SOLO.hostingCents)}`,
       },
       {
@@ -110,7 +110,7 @@ export const PLAN_CARDS: PlanCard[] = [
         amount: formatUsd(AGENCY.paymentCents),
       },
       {
-        label: "Groq AI, 3,000 leads",
+        label: "AI scoring, 3,000 leads",
         amount: `≈ ${formatUsd(AGENCY.aiCents)}`,
       },
       {
