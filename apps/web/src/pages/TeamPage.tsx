@@ -110,7 +110,7 @@ const SeatList = () => {
                 <button
                   type="button"
                   onClick={() => revokeClicked(seat.id)}
-                  className="font-medium text-rose-700"
+                  className="font-medium text-rose-800"
                   aria-label={`Revoke ${seat.email}`}
                 >
                   Revoke

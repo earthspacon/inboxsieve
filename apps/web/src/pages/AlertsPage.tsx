@@ -88,7 +88,7 @@ const SlackFields = () => {
     return (
       <p className="text-sm text-slate-600">
         Slack alerts come with Solo and Agency.{" "}
-        <Link to="/app/billing" className="font-semibold text-brand-700 underline">
+        <Link to="/app/billing" className="font-semibold text-brand-ink underline">
           Upgrade
         </Link>
       </p>

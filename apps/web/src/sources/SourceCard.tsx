@@ -130,7 +130,7 @@ const SourceActions = ({ source }: { source: SourceDto }) => {
       <button
         type="button"
         onClick={() => sourceDeleteClicked(source.id)}
-        className={`${BUTTON_SECONDARY} text-rose-700`}
+        className={`${BUTTON_SECONDARY} text-rose-800`}
       >
         Delete
       </button>

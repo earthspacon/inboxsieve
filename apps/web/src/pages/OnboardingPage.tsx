@@ -71,7 +71,7 @@ const Stepper = ({ current }: { current: OnboardingStep }) => {
               type="button"
               disabled={index > currentIndex}
               onClick={() => stepChosen(step.key)}
-              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 ${index === currentIndex ? "border-brand-600 bg-brand-50 font-semibold text-brand-700" : "border-slate-200 bg-white text-slate-500"}`}
+              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 ${index === currentIndex ? "border-brand-600 bg-brand-50 font-semibold text-brand-ink" : "border-slate-200 bg-surface text-slate-500"}`}
             >
               {index < currentIndex ? <Check className="size-4" /> : <span className="tabular-nums">{index + 1}</span>}
               {step.label}

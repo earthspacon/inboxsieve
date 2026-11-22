@@ -67,7 +67,7 @@ const BrandList = () => {
               <button
                 type="button"
                 onClick={() => brandSelected(brand.id)}
-                className="text-xs font-medium text-brand-700"
+                className="text-xs font-medium text-brand-ink"
               >
                 Switch
               </button>

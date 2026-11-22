@@ -100,7 +100,7 @@ export const SpamFilterPage = () => {
           <h2 className="text-xl font-semibold">Try it on your own form</h2>
           <p className="text-sm text-slate-600">
             Free for 50 messages a month, no card. Solo is {formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo for 500.{" "}
-            <Link to="/pricing" className="font-medium text-brand-700 underline">
+            <Link to="/pricing" className="font-medium text-brand-ink underline">
               See every dollar
             </Link>
             .

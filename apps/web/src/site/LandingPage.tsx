@@ -41,7 +41,7 @@ export const LandingPage = () => {
 const Hero = () => {
   return (
     <section className="space-y-4 text-center">
-      <p className="text-sm font-semibold text-brand-700">{HERO.audience}</p>
+      <p className="text-sm font-semibold text-brand-ink">{HERO.audience}</p>
       <h1 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">{HERO.title}</h1>
       <p className="mx-auto max-w-2xl text-lg text-slate-600">{HERO.subtitle}</p>
       <div className="flex flex-wrap justify-center gap-2">
@@ -127,7 +127,7 @@ const HowItWorks = () => {
           return (
             <li key={step.title}>
               <Card className="h-full space-y-2 p-5">
-                <span className="text-sm font-semibold text-brand-700">Step {index + 1}</span>
+                <span className="text-sm font-semibold text-brand-ink">Step {index + 1}</span>
                 <h3 className="font-semibold">{step.title}</h3>
                 <p className="text-sm text-slate-600">{step.text}</p>
               </Card>

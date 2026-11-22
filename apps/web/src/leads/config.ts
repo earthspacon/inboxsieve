@@ -23,7 +23,7 @@ export const STAGE_CONFIG: Record<LeadStage, { label: string; tone: string }> = 
   },
   lost: {
     label: "Lost",
-    tone: "bg-rose-50 text-rose-700",
+    tone: "bg-rose-50 text-rose-800",
   },
   spam: {
     label: "Spam",
@@ -91,7 +91,7 @@ export const SOURCE_STATE_CONFIG: Record<SourceState, { label: string; tone: str
   },
   error: {
     label: "Error",
-    tone: "bg-rose-50 text-rose-700",
+    tone: "bg-rose-50 text-rose-800",
   },
   disabled: {
     label: "Disabled",

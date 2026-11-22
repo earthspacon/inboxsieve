@@ -170,7 +170,7 @@ export const ChiliPiperAlternativePage = () => {
           <h2 className="text-xl font-semibold">Start on the Free plan</h2>
           <p className="text-sm text-slate-600">
             50 messages a month, no card, no call.{" "}
-            <Link to="/pricing" className="font-medium text-brand-700 underline">
+            <Link to="/pricing" className="font-medium text-brand-ink underline">
               See pricing
             </Link>
             .

@@ -23,7 +23,7 @@ export const MorePage = () => {
         <button
           type="button"
           onClick={() => signOutClicked()}
-          className="flex w-full items-center justify-between px-4 py-3 text-sm text-rose-700"
+          className="flex w-full items-center justify-between px-4 py-3 text-sm text-rose-800"
         >
           Sign out
           <LogOut className="size-4" />

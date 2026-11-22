@@ -56,7 +56,7 @@ const Filters = () => {
             placeholder="Search name, email, company, subject"
             value={filters.search}
             onChange={(event) => filtersChanged({ search: event.target.value })}
-            className="w-full rounded-lg border border-slate-300 bg-white py-2 pr-3 pl-9 text-sm focus:border-brand-500 focus:outline-none"
+            className="w-full rounded-lg border border-slate-300 bg-surface py-2 pr-3 pl-9 text-sm focus:border-brand-500 focus:outline-none"
           />
         </label>
         <label className="flex items-center gap-2 text-sm text-slate-600 lg:ml-auto">
@@ -65,7 +65,7 @@ const Filters = () => {
             aria-label="Minimum score"
             value={filters.scoreMin}
             onChange={(event) => filtersChanged({ scoreMin: Number(event.target.value) })}
-            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
+            className="rounded-lg border border-slate-300 bg-surface px-2 py-1.5 text-sm"
           >
             {SCORE_FILTERS.map((option) => {
               return (
@@ -116,7 +116,7 @@ const Chip = ({ isActive, label, onClick }: { isActive: boolean; label: string; 
       type="button"
       aria-pressed={isActive}
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-xs font-medium ${isActive ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
+      className={`rounded-full border px-3 py-1 text-xs font-medium ${isActive ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 bg-surface text-slate-600 hover:border-slate-300"}`}
     >
       {label}
     </button>
@@ -157,7 +157,7 @@ const EmptyInbox = ({ state }: { state: "no_sources" | "no_leads" | "no_matches"
   if (state === "no_sources") {
     return (
       <Card className="space-y-3 p-10 text-center">
-        <PlugZap className="mx-auto size-8 text-brand-600" />
+        <PlugZap className="mx-auto size-8 text-brand-ink" />
         <h2 className="text-lg font-semibold">Connect your first source</h2>
         <p className="text-sm text-slate-500">
           Forward your contact-form email or paste a webhook URL into your form tool.
@@ -171,7 +171,7 @@ const EmptyInbox = ({ state }: { state: "no_sources" | "no_leads" | "no_matches"
   if (state === "no_leads") {
     return (
       <Card className="space-y-3 p-10 text-center">
-        <Inbox className="mx-auto size-8 text-brand-600" />
+        <Inbox className="mx-auto size-8 text-brand-ink" />
         <h2 className="text-lg font-semibold">No leads yet</h2>
         <p className="text-sm text-slate-500">
           Your source is set up. Send a test lead to see how scoring and drafts look.
@@ -216,7 +216,7 @@ const LeadRow = ({ lead }: { lead: LeadSummaryDto }) => {
 const LeadScore = ({ lead }: { lead: LeadSummaryDto }) => {
   if (PENDING_STATUSES.has(lead.status)) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-ink">
         <Loader2 className="size-3 animate-spin" />
         Analyzing
       </span>

@@ -123,7 +123,7 @@ const CheckForm = () => {
             <label htmlFor="spam-check-message" className="font-medium text-slate-700">
               The message
             </label>
-            <button type="button" onClick={() => exampleClicked()} className="font-medium text-brand-700">
+            <button type="button" onClick={() => exampleClicked()} className="font-medium text-brand-ink">
               Try an example
             </button>
           </div>

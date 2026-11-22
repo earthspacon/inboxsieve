@@ -27,6 +27,7 @@ import {
   meRefreshRequested,
   signOutClicked,
 } from "../session/model";
+import { ThemeToggle } from "../shared/ThemeToggle";
 import { Banner, ErrorState, LoadingState } from "../shared/ui";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
@@ -137,7 +138,7 @@ const NoAccess = () => {
     <div className="mx-auto max-w-md space-y-3 p-8 text-center">
       <h1 className="text-xl font-semibold">No access</h1>
       <p className="text-sm text-slate-600">This email has no active seat. Ask the workspace owner for a new invite.</p>
-      <button type="button" onClick={() => signOutClicked()} className="text-sm font-medium text-brand-700">
+      <button type="button" onClick={() => signOutClicked()} className="text-sm font-medium text-brand-ink">
         Sign out
       </button>
     </div>
@@ -157,8 +158,11 @@ export const Logo = ({ to }: { to: string }) => {
 
 const Sidebar = () => {
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-slate-200 bg-white px-4 py-6 lg:flex">
-      <Logo to="/app" />
+    <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-slate-200 bg-surface px-4 py-6 lg:flex">
+      <div className="flex items-center justify-between">
+        <Logo to="/app" />
+        <ThemeToggle />
+      </div>
       <BrandSwitcher />
       <nav className="mt-6 flex flex-col gap-1">
         {NAV_ITEMS.map((item) => {
@@ -180,7 +184,7 @@ const SidebarLink = ({ item }: { item: NavItem }) => {
       to={item.to}
       end={item.to === "/app"}
       className={({ isActive }) => {
-        return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-brand-50 text-brand-700" : "text-slate-600 hover:bg-slate-50"}`;
+        return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-brand-50 text-brand-ink" : "text-slate-600 hover:bg-slate-50"}`;
       }}
     >
       <Icon className="size-4" />
@@ -207,7 +211,7 @@ const BrandSwitcher = () => {
       <select
         value={brand.id}
         onChange={(event) => brandSelected(event.target.value)}
-        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-900"
+        className="mt-1 w-full rounded-lg border border-slate-300 bg-surface px-2 py-2 text-sm text-slate-900"
       >
         {me.brands.map((item: BrandDto) => {
           return (
@@ -258,16 +262,19 @@ const AccountFooter = () => {
 const TopBar = () => {
   const { brand } = useUnit({ brand: $brand });
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
       <Logo to="/app" />
-      <span className="truncate text-sm text-slate-500">{brand?.name}</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="truncate text-sm text-slate-500">{brand?.name}</span>
+        <ThemeToggle />
+      </div>
     </header>
   );
 };
 
 const BottomNav = () => {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-slate-200 bg-white lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-slate-200 bg-surface lg:hidden">
       {MOBILE_NAV_ITEMS.map(({ to, label, icon: Icon }) => {
         return (
           <NavLink
@@ -275,7 +282,7 @@ const BottomNav = () => {
             to={to}
             end={to === "/app"}
             className={({ isActive }) => {
-              return `flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${isActive ? "text-brand-600" : "text-slate-500"}`;
+              return `flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${isActive ? "text-brand-ink" : "text-slate-500"}`;
             }}
           >
             <Icon className="size-5" />

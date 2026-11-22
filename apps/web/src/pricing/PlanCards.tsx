@@ -15,7 +15,7 @@ export const IntervalToggle = ({
     <div
       role="group"
       aria-label="Billing period"
-      className="inline-flex rounded-lg border border-slate-300 bg-white p-0.5 text-sm"
+      className="inline-flex rounded-lg border border-slate-300 bg-surface p-0.5 text-sm"
     >
       {(["monthly", "yearly"] as const).map((option) => {
         return (
