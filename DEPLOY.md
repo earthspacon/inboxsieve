@@ -98,7 +98,7 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET --env production   # optional
 
 ```sh
 VITE_TURNSTILE_SITE_KEY=<site key from 5a> pnpm --filter @inboxsieve/web build   # from the repo root: builds and prerenders apps/web/dist
-.agents/launch-gate.sh                    # from the repo root: must exit 0
+.agents/launch-gate.sh --deploy           # from the repo root: must exit 0 (placeholders, test keys, stale build = miss)
 cd apps/worker
 pnpm exec wrangler deploy --dry-run --env production   # check the bindings list
 pnpm exec wrangler deploy --env production
