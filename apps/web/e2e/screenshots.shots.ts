@@ -129,7 +129,7 @@ const PRICING: Shot = {
   name: "pricing",
   open: async (page) => {
     await page.goto("/pricing");
-    await page.getByText("$7.55").waitFor();
+    await page.getByText("$3.75").waitFor();
   },
 };
 

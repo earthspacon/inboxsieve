@@ -36,7 +36,7 @@ Names used below:
 ## 4. Paddle (live account, after the domain review passes)
 
 1. Checkout → Website approval: submit `https://inboxsieve.com`. The landing, pricing, terms, privacy and refund pages must be live (do steps 6–7 first with the sandbox values if the review needs a live site).
-2. Catalog → Products: create **InboxSieve Solo** and **InboxSieve Agency**, each with a monthly and a yearly price (USD): Solo **$9/mo** and **$90/yr**, Agency **$29/mo** and **$290/yr**, with **no** Paddle trial period (the 14-day Solo trial is local and needs no card; a Paddle trial would add a second one). Copy the 4 `pri_…` ids into `PADDLE_PRICE_SOLO_MONTHLY`, `PADDLE_PRICE_SOLO_YEARLY`, `PADDLE_PRICE_AGENCY_MONTHLY`, `PADDLE_PRICE_AGENCY_YEARLY` in `[env.production.vars]`.
+2. Catalog → Products: create **InboxSieve Solo** and **InboxSieve Agency**, each with a monthly and a yearly price (USD): Solo **$5/mo** and **$50/yr**, Agency **$15/mo** and **$150/yr**, with **no** Paddle trial period (the 14-day Solo trial is local and needs no card; a Paddle trial would add a second one). Copy the 4 `pri_…` ids into `PADDLE_PRICE_SOLO_MONTHLY`, `PADDLE_PRICE_SOLO_YEARLY`, `PADDLE_PRICE_AGENCY_MONTHLY`, `PADDLE_PRICE_AGENCY_YEARLY` in `[env.production.vars]`.
 3. Developer tools → Authentication → client-side token: copy it into `PADDLE_CLIENT_TOKEN`.
 4. Developer tools → Authentication → API key with write access to customer portal sessions and subscriptions. Keep it for step 6.
 5. Developer tools → Notifications → New destination:

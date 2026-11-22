@@ -45,15 +45,15 @@ describe("prerender", () => {
     expect(html).toContain("87 Hot");
   });
 
-  it("the landing page has SoftwareApplication with Free $0, Solo $9, Agency $29 and an FAQPage", () => {
+  it("the landing page has SoftwareApplication with Free $0, Solo $5, Agency $15 and an FAQPage", () => {
     const graph: Array<Record<string, unknown>> = readJsonLd(readFile("index.html"))["@graph"];
     const app = graph.find((node) => node["@type"] === "SoftwareApplication");
     const faq = graph.find((node) => node["@type"] === "FAQPage");
 
     expect(app?.offers).toEqual([
       expect.objectContaining({ name: "Free", price: "0", priceCurrency: "USD" }),
-      expect.objectContaining({ name: "Solo", price: "9", priceCurrency: "USD" }),
-      expect.objectContaining({ name: "Agency", price: "29", priceCurrency: "USD" }),
+      expect.objectContaining({ name: "Solo", price: "5", priceCurrency: "USD" }),
+      expect.objectContaining({ name: "Agency", price: "15", priceCurrency: "USD" }),
     ]);
     expect(faq?.mainEntity).toEqual(expect.arrayContaining([expect.objectContaining({ "@type": "Question" })]));
   });
@@ -99,16 +99,16 @@ describe("prerender", () => {
     expect(shell).toContain('<meta name="robots" content="noindex" />');
   });
 
-  it("the pricing page and its meta show Solo $9/mo and Agency $29/mo with the recomputed fee lines", () => {
+  it("the pricing page and its meta show Solo $5/mo and Agency $15/mo with the recomputed fee lines", () => {
     const html = readFile("pricing.html");
 
-    expect(html).toContain("<title>Pricing: Free, Solo $9/mo, Agency $29/mo | InboxSieve</title>");
-    expect(html).toContain("$9/mo");
-    expect(html).toContain("$29/mo");
-    expect(html).toContain("$0.95");
-    expect(html).toContain("$7.55");
-    expect(html).toContain("$24.85");
-    expect(html).not.toMatch(/\$79|\$790|\$26\.55|\$72\.35/);
+    expect(html).toContain("<title>Pricing: Free, Solo $5/mo, Agency $15/mo | InboxSieve</title>");
+    expect(html).toContain("$5/mo");
+    expect(html).toContain("$15/mo");
+    expect(html).toContain("$0.75");
+    expect(html).toContain("$3.75");
+    expect(html).toContain("$11.55");
+    expect(html).not.toMatch(/\$29|\$290|\$79|\$790|\$7\.55|\$24\.85/);
   });
 
   it("the 404 page is noindex, has no canonical and links back home", () => {

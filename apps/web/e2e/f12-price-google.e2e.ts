@@ -67,21 +67,21 @@ describe("F12 prices, Google sign-in, 404, invited teammate", () => {
     expect(new Set(params.get("scope")?.split(" "))).toEqual(new Set(["openid", "email", "profile"]));
   });
 
-  it("F12: the pricing page shows Solo $9/mo and Agency $29/mo with the recomputed lines", async () => {
+  it("F12: the pricing page shows Solo $5/mo and Agency $15/mo with the recomputed lines", async () => {
     const { page } = await openSession({ browser });
     await page.goto("/pricing");
-    await page.getByText("$7.55").waitFor();
+    await page.getByText("$3.75").waitFor();
     const monthly = await page.locator("main").innerText();
     await page.getByRole("button", { name: "Yearly (2 months free)" }).first().click();
-    await page.getByText("$90/yr").waitFor();
+    await page.getByText("$50/yr").waitFor();
     const yearly = await page.locator("main").innerText();
 
-    expect(monthly).toContain("$9/mo");
-    expect(monthly).toContain("$29/mo");
-    expect(monthly).toContain("$0.95");
-    expect(monthly).toContain("$24.85");
-    expect(yearly).toContain("$290/yr");
-    expect(`${monthly}${yearly}`).not.toMatch(/\$79|\$790|\$26\.55|\$72\.35/);
+    expect(monthly).toContain("$5/mo");
+    expect(monthly).toContain("$15/mo");
+    expect(monthly).toContain("$0.75");
+    expect(monthly).toContain("$11.55");
+    expect(yearly).toContain("$150/yr");
+    expect(`${monthly}${yearly}`).not.toMatch(/\$29|\$290|\$79|\$790|\$7\.55|\$24\.85/);
   });
 
   it("F12: an unknown public path gets a real 404 page with noindex, known pages stay 200", async () => {

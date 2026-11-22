@@ -47,7 +47,7 @@ describe("brief 11 screenshots", () => {
   ])("pricing ($label)", async ({ label, size }) => {
     const { page, consoleErrors } = await openSession({ browser, viewport: size });
     await page.goto("/pricing");
-    await page.getByText("$7.55").waitFor();
+    await page.getByText("$3.75").waitFor();
     await page.screenshot({ path: path.join(SHOTS_DIR, `pricing-${label}.png`), fullPage: true });
 
     expect(consoleErrors).toEqual([]);

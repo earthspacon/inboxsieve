@@ -1,18 +1,18 @@
 import { PLAN_LIMITS, type Plan } from "./domain";
 
-// Owner 2026-11-21: $29/$79 was too much for an unknown product. A year costs ten months.
+// Owner 2026-11-23: prices cut again, about half of the closest competitor. A year costs ten months.
 export const PLAN_PRICES: Record<Plan, { monthlyCents: number; yearlyCents: number }> = {
   free: {
     monthlyCents: 0,
     yearlyCents: 0,
   },
   solo: {
-    monthlyCents: 900,
-    yearlyCents: 9000,
+    monthlyCents: 500,
+    yearlyCents: 5000,
   },
   agency: {
-    monthlyCents: 2900,
-    yearlyCents: 29000,
+    monthlyCents: 1500,
+    yearlyCents: 15000,
   },
 };
 

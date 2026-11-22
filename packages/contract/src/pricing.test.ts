@@ -7,11 +7,11 @@ function sumLines(breakdown: PriceBreakdown) {
 }
 
 describe("plan prices", () => {
-  it("Free is $0, Solo $9/mo or $90/yr, Agency $29/mo or $290/yr (owner 2026-11-21)", () => {
+  it("Free is $0, Solo $5/mo or $50/yr, Agency $15/mo or $150/yr (owner 2026-11-23)", () => {
     expect(PLAN_PRICES).toEqual({
       free: { monthlyCents: 0, yearlyCents: 0 },
-      solo: { monthlyCents: 900, yearlyCents: 9000 },
-      agency: { monthlyCents: 2900, yearlyCents: 29000 },
+      solo: { monthlyCents: 500, yearlyCents: 5000 },
+      agency: { monthlyCents: 1500, yearlyCents: 15000 },
     });
   });
 
@@ -22,23 +22,23 @@ describe("plan prices", () => {
 });
 
 describe("itemized price breakdown", () => {
-  it("Solo $9: Paddle 5% + 50¢ = $0.95, AI $0.20, hosting $0.30, our fee $7.55", () => {
+  it("Solo $5: Paddle 5% + 50¢ = $0.75, AI $0.20, hosting $0.30, our fee $3.75", () => {
     expect(buildPriceBreakdown("solo")).toEqual({
-      priceCents: 900,
-      paymentCents: 95,
+      priceCents: 500,
+      paymentCents: 75,
       aiCents: 20,
       hostingCents: 30,
-      ourFeeCents: 755,
+      ourFeeCents: 375,
     });
   });
 
-  it("Agency $29: Paddle 5% + 50¢ = $1.95, AI $1.20, hosting $1.00, our fee $24.85", () => {
+  it("Agency $15: Paddle 5% + 50¢ = $1.25, AI $1.20, hosting $1.00, our fee $11.55", () => {
     expect(buildPriceBreakdown("agency")).toEqual({
-      priceCents: 2900,
-      paymentCents: 195,
+      priceCents: 1500,
+      paymentCents: 125,
       aiCents: 120,
       hostingCents: 100,
-      ourFeeCents: 2485,
+      ourFeeCents: 1155,
     });
   });
 
@@ -70,6 +70,6 @@ describe("formatUsd", () => {
   it("formats cents as dollars with two decimals", () => {
     expect(formatUsd(0)).toBe("$0.00");
     expect(formatUsd(95)).toBe("$0.95");
-    expect(formatUsd(2485)).toBe("$24.85");
+    expect(formatUsd(1155)).toBe("$11.55");
   });
 });

@@ -12,8 +12,8 @@
 
 ## Pricing (USD, sales tax/VAT added by Paddle where due)
 - Free: $0, forever, no card needed. 1 brand, 1 source, 50 analyzed leads/month, 1 seat, email alerts (no Slack), CSV export.
-- Solo: $9/month or $90/year. 1 brand, 2 sources, 500 analyzed leads/month, 1 seat.
-- Agency: $29/month or $290/year. 10 brands, 20 sources, 3,000 analyzed leads/month, 3 seats.
+- Solo: $5/month or $50/year. 1 brand, 2 sources, 500 analyzed leads/month, 1 seat.
+- Agency: $15/month or $150/year. 10 brands, 20 sources, 3,000 analyzed leads/month, 3 seats.
 - Sign-up starts on Free. Solo can be tried free for 14 days, no card needed; afterwards the workspace returns to Free unless you subscribe. Cancel any time. 14-day refund, no questions asked.
 - A canceled subscription falls back to Free at the end of the paid period. Extra brands become read-only; nothing is deleted.
 - Over the limit, leads are stored but not analyzed. Nothing is lost.
