@@ -1,7 +1,7 @@
 import { formatPrice, PLAN_PRICES } from "@inboxsieve/contract";
 
-// The owner fills these two before the Paddle domain review. Every public page reads them from here.
-export const SELLER_LEGAL_NAME = "SELLER_LEGAL_NAME";
+// Every public page reads the seller name and contact from here.
+export const SELLER_LEGAL_NAME = "Spaceson Labs";
 export const CONTACT_EMAIL = "support@inboxsieve.com";
 
 export const LEGAL_UPDATED = "November 20, 2026";

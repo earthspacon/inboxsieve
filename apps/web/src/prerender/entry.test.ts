@@ -26,6 +26,17 @@ function readJsonLd(html: string) {
 }
 
 describe("prerender", () => {
+  it("no prerendered page shows a placeholder seller name, and the legal pages name Spaceson Labs", () => {
+    for (const [file, content] of files) {
+      expect(content, file).not.toMatch(/SELLER_LEGAL_NAME|REPLACE_WITH/);
+    }
+    const legalFiles = [...files.keys()].filter((file) => /^(terms|privacy|dpa)/.test(file));
+    expect(legalFiles.length).toBeGreaterThan(0);
+    for (const file of legalFiles) {
+      expect(readFile(file), file).toContain("Spaceson Labs");
+    }
+  });
+
   it("the landing page HTML carries the hero text before any JavaScript runs", () => {
     const html = readFile("index.html");
 

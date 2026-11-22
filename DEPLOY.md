@@ -12,7 +12,7 @@ Names used below:
 
 ## 0. Before you start
 
-1. Fill `SELLER_LEGAL_NAME` and `CONTACT_EMAIL` in `apps/web/src/site/config.ts`. Every public page reads them; Paddle's domain review wants the legal name in the terms.
+1. Check `SELLER_LEGAL_NAME` ("Spaceson Labs") and `CONTACT_EMAIL` in `apps/web/src/site/config.ts`. Every public page reads them; if Paddle's domain review asks for the registered name, change it there.
 2. `pnpm install` at the repo root, then `pnpm -r test` and `pnpm -r typecheck` must be green.
 
 ## 1. Cloudflare: domain and Worker
