@@ -1,4 +1,4 @@
-import { formatPrice, PLAN_PRICES } from "@inboxsieve/contract";
+import { formatPrice, PLAN_PRICES, SPAM_CHECKER_PAGE_PATH } from "@inboxsieve/contract";
 
 // Every public page reads the seller name and contact from here.
 export const SELLER_LEGAL_NAME = "Spaceson Labs";
@@ -36,6 +36,10 @@ export const FOOTER_LINKS = [
   {
     to: "/contact-form-spam-filter",
     label: "Contact form spam filter",
+  },
+  {
+    to: SPAM_CHECKER_PAGE_PATH,
+    label: "Free spam checker",
   },
   {
     to: "/chili-piper-alternative",

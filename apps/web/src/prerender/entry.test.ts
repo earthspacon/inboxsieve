@@ -81,6 +81,17 @@ describe("prerender", () => {
     expect(readFile("chili-piper-alternative.html")).toContain("$15k/yr minimum");
   });
 
+  it("the free spam checker is prerendered, listed in the sitemap, linked from the footer and promises nothing is saved", () => {
+    const html = readFile("tools/contact-form-spam-checker.html");
+
+    expect(html).toContain("Paste a contact form message. See if it&#x27;s spam, a pitch or a client.");
+    expect(html).toContain("10 free checks a day per connection");
+    expect(html).toContain("Nothing you paste is written to our database");
+    expect(html).toContain('href="/pricing"');
+    expect(readFile("sitemap.xml")).toContain("<loc>https://inboxsieve.com/tools/contact-form-spam-checker</loc>");
+    expect(readFile("index.html")).toContain('href="/tools/contact-form-spam-checker"');
+  });
+
   it("the app shell stays empty and noindex, so /app never shows the landing page", () => {
     const shell = readFile("app-shell.html");
 

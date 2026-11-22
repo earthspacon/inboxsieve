@@ -1,4 +1,9 @@
-import { SECURITY_HEADERS, SIGN_IN_OPTIONS_PATH, type SignInOptionsDto } from "@inboxsieve/contract";
+import {
+  SECURITY_HEADERS,
+  SIGN_IN_OPTIONS_PATH,
+  SPAM_CHECKER_API_PATH,
+  type SignInOptionsDto,
+} from "@inboxsieve/contract";
 
 import { billingRoutes } from "./api/billing";
 import { brandRoutes } from "./api/brands";
@@ -18,6 +23,7 @@ import { runQueues } from "./leads/jobs";
 import { getAccountContext, getBrand, type AccountContext } from "./repo";
 import { guardAuthRequest } from "./shield/auth-guard";
 import { sha256Hex } from "./shield/client";
+import { handleSpamCheck } from "./tools/spam-checker";
 
 export const API_ROUTES: Route<ApiContext>[] = [
   ...brandRoutes,
@@ -80,6 +86,9 @@ async function routeRequest({ deps, request }: { deps: Deps; request: Request })
   if (pathname === SIGN_IN_OPTIONS_PATH && READ_METHODS.has(request.method)) {
     const options: SignInOptionsDto = { google: isGoogleSignInEnabled(deps.env) };
     return Response.json(options);
+  }
+  if (pathname === SPAM_CHECKER_API_PATH && request.method === "POST") {
+    return handleSpamCheck({ deps, request });
   }
   if (pathname.startsWith("/dev/")) {
     return routeDevRequest({ deps, request });

@@ -276,6 +276,6 @@ async function alertCapReached({
   });
 }
 
-function getUtcDay(now: Date) {
+export function getUtcDay(now: Date) {
   return now.toISOString().slice(0, 10);
 }

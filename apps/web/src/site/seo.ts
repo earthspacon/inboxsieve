@@ -1,4 +1,4 @@
-import { formatPrice, PLAN_PRICES } from "@inboxsieve/contract";
+import { formatPrice, PLAN_PRICES, SPAM_CHECKER_PAGE_PATH } from "@inboxsieve/contract";
 
 import { FAQ } from "./config";
 
@@ -26,6 +26,12 @@ export const SEO_PAGES: SeoPage[] = [
     path: "/pricing",
     title: `Pricing: Free, Solo ${SOLO_MONTHLY}/mo, Agency ${AGENCY_MONTHLY}/mo | InboxSieve`,
     description: `Free forever for 50 leads a month. Solo ${SOLO_MONTHLY}/mo, Agency ${AGENCY_MONTHLY}/mo. Every dollar inside the price is listed: payment fees, AI cost, hosting and our margin.`,
+  },
+  {
+    path: SPAM_CHECKER_PAGE_PATH,
+    title: "Free contact form spam checker | InboxSieve",
+    description:
+      "Paste a contact form message and see if it's spam, a sales pitch or a real client request, with a 0-100 score and the reasons. Free, no sign-up, nothing saved.",
   },
   {
     path: "/contact-form-spam-filter",

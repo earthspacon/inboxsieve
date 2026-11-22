@@ -1,3 +1,4 @@
+import { SPAM_CHECKER_PAGE_PATH } from "@inboxsieve/contract";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { AlertsPage } from "../pages/AlertsPage";
@@ -19,6 +20,7 @@ import { LandingPage } from "../site/LandingPage";
 import { LegalPage } from "../site/LegalPage";
 import { NotFoundPage } from "../site/NotFoundPage";
 import { PricingPage } from "../site/PricingPage";
+import { SpamCheckerPage } from "../site/SpamCheckerPage";
 import { SpamFilterPage } from "../site/SpamFilterPage";
 import { AppShell, RequireSession } from "./AppShell";
 import { ToastView } from "./ToastView";
@@ -44,6 +46,7 @@ export const AppRoutes = () => {
         <Route path="/dpa" element={<LegalPage slug="dpa" />} />
         <Route path="/ai" element={<AiPage />} />
         <Route path="/contact-form-spam-filter" element={<SpamFilterPage />} />
+        <Route path={SPAM_CHECKER_PAGE_PATH} element={<SpamCheckerPage />} />
         <Route path="/chili-piper-alternative" element={<ChiliPiperAlternativePage />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/app" element={<RequireSession />}>
