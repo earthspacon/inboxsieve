@@ -7,6 +7,7 @@ import { createAuth } from "../src/auth";
 import { admitLead } from "../src/leads/pipeline";
 import { runQueues } from "../src/leads/jobs";
 import { createLogMailer } from "../src/mailer";
+import { consumeRateLimit } from "../src/repo/shield";
 import { MAGIC_LINK_LIMITS } from "../src/shield/auth-guard";
 import { buildLeadInput, buildTestDeps, countRows, createMockAnalyzer, db, seedSource, uniqueEmail } from "./helpers";
 import { BASE, followMagicLink, readMagicLink, readSessionCookie, requestMagicLink, signInTrial } from "./session";
@@ -171,6 +172,17 @@ describe("Abuse shield: sign-in", () => {
 
     expect(statuses.slice(0, 30)).not.toContain(429);
     expect(statuses.at(-1)).toBe(429);
+  });
+
+  it("Shield: parallel hits on one rate-limit key never pass more than the limit", async () => {
+    const key = `parallel:${uniqueEmail("race")}`;
+    const now = new Date();
+
+    const results = await Promise.all(
+      Array.from({ length: 5 }, () => consumeRateLimit({ db, key, limit: 3, windowMs: 60_000, now })),
+    );
+
+    expect(results.filter(Boolean)).toHaveLength(3);
   });
 });
 
