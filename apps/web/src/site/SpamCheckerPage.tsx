@@ -123,7 +123,11 @@ const CheckForm = () => {
             <label htmlFor="spam-check-message" className="font-medium text-slate-700">
               The message
             </label>
-            <button type="button" onClick={() => exampleClicked()} className="font-medium text-brand-ink">
+            <button
+              type="button"
+              onClick={() => exampleClicked()}
+              className="font-medium text-brand-ink max-sm:min-h-11"
+            >
               Try an example
             </button>
           </div>
@@ -208,8 +212,8 @@ const EveryMessage = () => {
         reply drafted.
       </p>
       <p className="text-sm text-slate-700">
-        Free for {FREE_LEADS} messages a month, no card. The paid plan is {formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo for{" "}
-        {PLAN_LIMITS.solo.leadsPerMonth}.
+        Free for {FREE_LEADS} messages a month, no card. The paid plan is {formatPrice(PLAN_PRICES.solo.monthlyCents)}
+        /mo for {PLAN_LIMITS.solo.leadsPerMonth}.
       </p>
       <div className="flex flex-wrap gap-3">
         <Link to="/sign-in" className={BUTTON_PRIMARY}>

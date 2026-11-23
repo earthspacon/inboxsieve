@@ -8,6 +8,7 @@ import { E2E_URL, SHOTS_DIR } from "./config";
 import {
   COLD_LEAD,
   createSource,
+  addSeatByHand,
   createTrialAccount,
   DESKTOP,
   HOT_LEAD,
@@ -86,8 +87,7 @@ describe("screenshots", () => {
   it.each(VIEWPORTS)("public, team and billing pages ($label)", async ({ label, size }) => {
     const visitor = await openSession({ browser, viewport: size });
     const paid = await prepareAccount({ browser, viewport: size });
-    await paid.session.page.goto("/app/team");
-    await paid.session.page.getByRole("heading", { name: "Team" }).waitFor();
+    await addSeatByHand({ accountId: paid.accountId, email: uniqueEmail("teammate") });
     const free = await openSession({ browser, viewport: size });
     await signInWithUi({ page: free.page, email: uniqueEmail("free") });
     await free.page.getByRole("heading", { name: "What's the business called?" }).waitFor();
@@ -127,7 +127,7 @@ const PRICING: Shot = {
   name: "pricing",
   open: async (page) => {
     await page.goto("/pricing");
-    await page.getByText("$3.75").waitFor();
+    await page.getByText("$4 / month").first().waitFor();
   },
 };
 
@@ -273,12 +273,13 @@ async function prepareAccount({
   viewport: typeof DESKTOP;
 }) {
   const email = uniqueEmail("shots");
-  const { brandId } = await createTrialAccount({ email });
+  const { accountId, brandId } = await createTrialAccount({ email });
   const session = await openSession({ browser, viewport });
   await signInWithUi({ page: session.page, email });
   await session.page.getByRole("heading", { name: "Inbox" }).waitFor();
   return {
     session,
+    accountId,
     brandId,
   };
 }

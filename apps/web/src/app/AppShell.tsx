@@ -147,7 +147,7 @@ const NoAccess = () => {
 
 export const Logo = ({ to }: { to: string }) => {
   return (
-    <Link to={to} className="flex items-center gap-2">
+    <Link to={to} className="flex items-center gap-2 max-sm:min-h-11">
       <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600 text-white">
         <Filter className="size-4" />
       </span>
@@ -262,7 +262,7 @@ const AccountFooter = () => {
 const TopBar = () => {
   const { brand } = useUnit({ brand: $brand });
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-surface/90 px-4 py-2 backdrop-blur sm:py-3 lg:hidden">
       <Logo to="/app" />
       <div className="flex min-w-0 items-center gap-2">
         <span className="truncate text-sm text-slate-500">{brand?.name}</span>

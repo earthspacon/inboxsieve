@@ -144,7 +144,11 @@ const LinkSent = ({ email }: { email: string }) => {
       <p className="text-sm text-slate-600">
         We sent a sign-in link to <span className="font-medium">{email}</span>. It works once and expires in 15 minutes.
       </p>
-      <button type="button" onClick={() => anotherEmailClicked()} className="text-sm font-medium text-brand-ink">
+      <button
+        type="button"
+        onClick={() => anotherEmailClicked()}
+        className="text-sm font-medium text-brand-ink max-sm:min-h-11"
+      >
         Use another email
       </button>
     </Card>
