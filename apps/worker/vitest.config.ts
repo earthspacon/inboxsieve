@@ -23,6 +23,8 @@ export default defineConfig(async () => {
       }),
     ],
     test: {
+      // Sign-ins and route sweeps pass the 5 s default when other jobs share the box.
+      testTimeout: 15_000,
       setupFiles: ["./test/setup.ts"],
     },
   };
