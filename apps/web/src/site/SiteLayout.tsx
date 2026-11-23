@@ -6,6 +6,7 @@ import { ThemeToggle } from "../shared/ThemeToggle";
 import { BUTTON_PRIMARY, TAP_TARGET } from "../shared/ui";
 import { CONTACT_EMAIL, FOOTER_LINKS, SELLER_LEGAL_NAME, START_CTA } from "./config";
 import { findSeoPage } from "./seo";
+import { SessionLink } from "./SessionLink";
 
 export const SiteLayout = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
@@ -27,9 +28,7 @@ export const SiteLayout = ({ children }: { children: ReactNode }) => {
             <Link to="/pricing" className={`${TAP_TARGET} text-slate-600 hover:text-slate-900`}>
               Pricing
             </Link>
-            <Link to="/sign-in" className={`${TAP_TARGET} text-slate-600 hover:text-slate-900 max-sm:hidden`}>
-              Sign in
-            </Link>
+            <SessionLink signedOutLabel="Sign in" className={`${TAP_TARGET} text-slate-600 hover:text-slate-900`} />
             <ThemeToggle />
             <Link to="/sign-in" className={BUTTON_PRIMARY}>
               {START_CTA}

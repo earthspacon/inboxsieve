@@ -84,6 +84,7 @@ const SignInForm = () => {
           {linkError ? "Send a new link" : "Email me a sign-in link"}
         </button>
       </form>
+      <p className="text-center text-sm text-slate-500">New here? Same button creates your account.</p>
     </Card>
   );
 };

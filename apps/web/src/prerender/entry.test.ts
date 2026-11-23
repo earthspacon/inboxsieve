@@ -58,6 +58,17 @@ describe("prerender", () => {
     expect(faq?.mainEntity).toEqual(expect.arrayContaining([expect.objectContaining({ "@type": "Question" })]));
   });
 
+  it("every public page header has a Sign in link that phones see too, with room kept for Open dashboard", () => {
+    for (const page of SEO_PAGES) {
+      const html = readFile(page.path === "/" ? "index.html" : `${page.path.slice(1)}.html`);
+      const header = /<header.*?<\/header>/s.exec(html)?.[0] ?? "";
+      const signIn = /<a [^>]*href="\/sign-in"[^>]*>(?:(?!<\/a>).)*Sign in(?:(?!<\/a>).)*<\/a>/s.exec(header)?.[0] ?? "";
+
+      expect(signIn, page.path).toContain("Open dashboard");
+      expect(signIn, page.path).not.toMatch(/max-(sm|md):hidden|class="hidden/);
+    }
+  });
+
   it("every public page gets its own title, description, canonical, OG/Twitter tags and image", () => {
     const titles = new Set<string>();
 

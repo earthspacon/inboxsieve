@@ -4,6 +4,7 @@ import { FREE_TAGLINE } from "../pricing/config";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, Card } from "../shared/ui";
 import { COMPARE_ROWS, EXAMPLE_HOT_LEAD, EXAMPLE_INBOX, FAQ, HERO, HOW_IT_WORKS, START_CTA } from "./config";
 import { PricingSection } from "./PricingSection";
+import { SessionLink } from "./SessionLink";
 import { SiteLayout } from "./SiteLayout";
 
 type Verdict = (typeof EXAMPLE_INBOX)[number]["verdict"];
@@ -45,9 +46,7 @@ const Hero = () => {
       <h1 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">{HERO.title}</h1>
       <p className="mx-auto max-w-2xl text-lg text-slate-600">{HERO.subtitle}</p>
       <div className="flex flex-wrap justify-center gap-2">
-        <Link to="/sign-in" className={BUTTON_PRIMARY}>
-          {START_CTA}
-        </Link>
+        <SessionLink signedOutLabel={START_CTA} className={BUTTON_PRIMARY} />
         <Link to="/pricing" className={BUTTON_SECONDARY}>
           See pricing
         </Link>
