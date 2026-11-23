@@ -208,7 +208,7 @@ const EveryMessage = () => {
         reply drafted.
       </p>
       <p className="text-sm text-slate-700">
-        Free for {FREE_LEADS} messages a month, no card. Solo is {formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo for{" "}
+        Free for {FREE_LEADS} messages a month, no card. The paid plan is {formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo for{" "}
         {PLAN_LIMITS.solo.leadsPerMonth}.
       </p>
       <div className="flex flex-wrap gap-3">

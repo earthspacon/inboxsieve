@@ -36,7 +36,7 @@ Names used below:
 ## 4. Paddle (live account, after the domain review passes)
 
 1. Checkout → Website approval: submit `https://inboxsieve.com`. The landing, pricing, terms, privacy and refund pages must be live (do steps 6–7 first with the sandbox values if the review needs a live site).
-2. Catalog → Products: create **InboxSieve Solo** and **InboxSieve Agency**, each with a monthly and a yearly price (USD): Solo **$5/mo** and **$50/yr**, Agency **$15/mo** and **$150/yr**, with **no** Paddle trial period (the 14-day Solo trial is local and needs no card; a Paddle trial would add a second one). Copy the 4 `pri_…` ids into `PADDLE_PRICE_SOLO_MONTHLY`, `PADDLE_PRICE_SOLO_YEARLY`, `PADDLE_PRICE_AGENCY_MONTHLY`, `PADDLE_PRICE_AGENCY_YEARLY` in `[env.production.vars]`.
+2. Catalog → Products: create one product **InboxSieve** with one monthly price of **$4/mo** (USD), with **no** Paddle trial period (the 14-day trial is local and needs no card; a Paddle trial would add a second one). `node business/studio/.agents/paddle-provision.mjs --only inboxsieve` does this. Copy the `pri_…` id into `PADDLE_PRICE_MONTHLY` in `[env.production.vars]`.
 3. Developer tools → Authentication → client-side token: copy it into `PADDLE_CLIENT_TOKEN`.
 4. Developer tools → Authentication → API key with write access to customer portal sessions and subscriptions. Keep it for step 6.
 5. Developer tools → Notifications → New destination:
@@ -116,7 +116,7 @@ The custom-domain route in `wrangler.toml` attaches `inboxsieve.com` to the Work
 
 1. Open `https://inboxsieve.com`, then `/pricing`, `/terms`, `/privacy`, `/refunds`, `/dpa`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`. `curl -sI https://inboxsieve.com` shows `content-security-policy` and `strict-transport-security`. `curl -sI https://inboxsieve.com/foo` answers `404` with `x-robots-tag: noindex`. Submit the sitemap in Google Search Console.
 2. Sign in with your own email: the Turnstile box turns green and the magic link arrives from `login@mail.inboxsieve.com`. If step 5b is done, sign out and use **Continue with Google** with the same address: you land in the same workspace.
-3. The new account lands on Free with no card. Billing → Try Solo free for 14 days switches it to Solo. Then Upgrade to Solo with a real card (refund it afterwards in Paddle). Billing should show Active within seconds; Paddle → Notifications → the destination's log should show `200` responses.
+3. The new account lands on Free with no card. Billing → Try the paid plan free switches it to the $4/month plan. Then Upgrade for $4 / month with a real card (refund it afterwards in Paddle). Billing should show Active within seconds; Paddle → Notifications → the destination's log should show `200` responses.
 4. Onboarding → Forward email: send a message to the shown address from another mailbox. A lead appears and gets a score.
 5. Billing → Manage billing opens the Paddle portal.
 6. Make sure `DEV_ROUTES` is `"0"`: `curl -i https://inboxsieve.com/dev/outbox` must answer `404`.

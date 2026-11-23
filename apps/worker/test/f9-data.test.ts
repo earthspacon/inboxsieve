@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { admitLead } from "../src/leads/pipeline";
 import { runMaintenance } from "../src/maintenance";
-import { buildLeadInput, buildTestDeps, countRows, createMockAnalyzer, db, seedSource, uniqueEmail } from "./helpers";
+import { addBrandByHand, buildLeadInput, buildTestDeps, countRows, createMockAnalyzer, db, seedSource, uniqueEmail } from "./helpers";
 import { BASE, signInTrial } from "./session";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -82,7 +82,7 @@ describe("F9 data", () => {
 
   it("F9: delete account needs the typed confirmation, locks at once and the purge removes every row", async () => {
     const email = uniqueEmail("leaving");
-    const session = await signInTrial({ email, plan: "agency" });
+    const session = await signInTrial({ email });
     const source = await seedSource({ brandId: session.brandId, kind: "webhook" });
     await addLead({ brandId: session.brandId, sourceId: source.id, receivedAt: new Date() });
     const tables = [
@@ -187,10 +187,11 @@ describe("F9 data", () => {
   });
 
   it("F9: delete brand needs its name typed, and the last brand can't go", async () => {
-    const session = await signInTrial({ email: uniqueEmail("brands"), plan: "agency" });
-    const second = await (
-      await call({ cookie: session.cookie, path: "/api/brands", method: "POST", body: { name: "Client B" } })
-    ).json<{ id: string }>();
+    const session = await signInTrial({ email: uniqueEmail("brands") });
+    const second = await addBrandByHand({ accountId: session.accountId, name: "Client B" });
+    if (!second) {
+      throw new Error("second brand missing");
+    }
 
     const wrong = await call({
       cookie: session.cookie,

@@ -1,6 +1,7 @@
 import type { Analysis, Category } from "./analysis";
 
-export type Plan = "free" | "solo" | "agency";
+// "solo" is the internal key of the one $4 plan; the UI never shows it.
+export type Plan = "free" | "solo";
 
 // The plan stored on the account; Free isn't a subscription, it's what runs without one.
 export type PaidPlan = Exclude<Plan, "free">;
@@ -24,13 +25,6 @@ export const PLAN_LIMITS: Record<
     sources: 2,
     leadsPerMonth: 500,
     seats: 1,
-    slackAlerts: true,
-  },
-  agency: {
-    brands: 10,
-    sources: 20,
-    leadsPerMonth: 3000,
-    seats: 3,
     slackAlerts: true,
   },
 };
@@ -212,8 +206,6 @@ export type ApiError = {
   message: string;
 };
 
-export type BillingInterval = "monthly" | "yearly";
-
 export type ScheduledChange = { action: "cancel" | "pause" | "resume"; effectiveAt: string };
 
 export type BillingDto = {
@@ -231,7 +223,8 @@ export type BillingDto = {
   checkout: {
     environment: "sandbox" | "production";
     clientToken: string | null;
-    prices: Record<PaidPlan, Record<BillingInterval, string | null>>;
+    // The Paddle price of the one $4/month plan.
+    priceId: string | null;
   };
 };
 

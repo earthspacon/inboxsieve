@@ -11,7 +11,7 @@ const PRICES_CHECKED = "November 20, 2026";
 const PRICE_ROWS = [
   {
     tool: "InboxSieve",
-    price: `Free; Solo ${formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo; Agency ${formatPrice(PLAN_PRICES.agency.monthlyCents)}/mo`,
+    price: `Free, or ${formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo`,
     bestFor: "Filtering and scoring form inquiries for a 1–30 person team",
     source: "inboxsieve.com/pricing",
   },
@@ -162,7 +162,7 @@ export const ChiliPiperAlternativePage = () => {
           <p className="text-sm leading-6 text-slate-700">
             If one to three people answer the contact form, half the messages are pitches and spam, and the job is “find
             the good ones and reply fast”, InboxSieve does exactly that for $0–
-            {formatPrice(PLAN_PRICES.agency.monthlyCents)} a month, without a CRM or a sales call.
+            {formatPrice(PLAN_PRICES.solo.monthlyCents)} a month, without a CRM or a sales call.
           </p>
         </section>
 

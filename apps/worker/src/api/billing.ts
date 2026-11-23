@@ -9,7 +9,7 @@ import {
 } from "@inboxsieve/contract";
 
 import { createPortalSession, getPaddleEnvironment } from "../billing/paddle-api";
-import { buildPriceTable } from "../billing/prices";
+import { findPriceId } from "../billing/prices";
 import { nextSubscriptionStatus } from "../billing/state";
 import type { Deps } from "../deps";
 import { HttpError, json, route, type Route } from "../http";
@@ -23,7 +23,7 @@ export const billingRoutes: Route<ApiContext>[] = [
     return json(await loadBilling({ deps, accountId: account.accountId }));
   }),
 
-  // The no-card Solo trial: local only, one per account, no Paddle call.
+  // The no-card trial of the paid plan: local only, one per account, no Paddle call.
   route("POST", "/api/billing/trial", async ({ deps, account }) => {
     requireOwner(account);
     const row = await requireBillingRow({ deps, accountId: account.accountId });
@@ -98,7 +98,7 @@ async function loadBilling({ deps, accountId }: { deps: Deps; accountId: string 
     checkout: {
       environment: getPaddleEnvironment(deps.env),
       clientToken: deps.env.PADDLE_CLIENT_TOKEN || null,
-      prices: buildPriceTable(deps.env),
+      priceId: findPriceId(deps.env),
     },
   };
   return billing;

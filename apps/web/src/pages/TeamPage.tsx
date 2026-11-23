@@ -1,9 +1,9 @@
 import { PLAN_LIMITS, type SeatDto } from "@inboxsieve/contract";
 import { useGate, useUnit } from "effector-react";
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 
 import { $isOwner, $me } from "../session/model";
+import { CONTACT_EMAIL } from "../site/config";
 import {
   Banner,
   BUTTON_PRIMARY,
@@ -54,11 +54,11 @@ const SeatPrompt = () => {
   return (
     <Banner tone="warning">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span>{message}. Agency has 3 seats; for more, write to us.</span>
+        <span>{message}. Need more? Write to us and we'll set it up.</span>
         <span className="flex gap-2">
-          <Link to="/app/billing" className={BUTTON_PRIMARY}>
-            Upgrade
-          </Link>
+          <a href={`mailto:${CONTACT_EMAIL}`} className={BUTTON_PRIMARY}>
+            Write to us
+          </a>
           <button type="button" onClick={() => seatPromptClosed()} className={BUTTON_SECONDARY}>
             Not now
           </button>

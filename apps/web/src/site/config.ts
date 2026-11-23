@@ -146,7 +146,7 @@ export const FAQ = [
   {
     question: "Is there a free plan? Do I need a card?",
     answer:
-      "Yes. Free is 1 brand, 1 source and 50 analyzed leads a month, forever, with no card. You can also try Solo free for 14 days without a card; after that you're back on Free unless you upgrade.",
+      "Yes. Free is 1 brand, 1 source and 50 analyzed leads a month, forever, with no card. You can also try the $4/month plan free for 14 days without a card; after that you're back on Free unless you upgrade.",
   },
   {
     question: "Is it GDPR-ready? Do you sign a DPA?",

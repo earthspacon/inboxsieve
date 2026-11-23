@@ -2,6 +2,7 @@ import { SECURITY_HEADERS } from "@inboxsieve/contract";
 import { describe, expect, it } from "vitest";
 
 import TEMPLATE from "../../index.html?raw";
+import LLMS from "../../public/llms.txt?raw";
 import { HERO } from "../site/config";
 import { SEO_PAGES } from "../site/seo";
 import { buildPrerenderedFiles } from "./entry";
@@ -45,15 +46,14 @@ describe("prerender", () => {
     expect(html).toContain("87 Hot");
   });
 
-  it("the landing page has SoftwareApplication with Free $0, Solo $5, Agency $15 and an FAQPage", () => {
+  it("the landing page has SoftwareApplication with Free $0, the $4 plan and an FAQPage", () => {
     const graph: Array<Record<string, unknown>> = readJsonLd(readFile("index.html"))["@graph"];
     const app = graph.find((node) => node["@type"] === "SoftwareApplication");
     const faq = graph.find((node) => node["@type"] === "FAQPage");
 
     expect(app?.offers).toEqual([
       expect.objectContaining({ name: "Free", price: "0", priceCurrency: "USD" }),
-      expect.objectContaining({ name: "Solo", price: "5", priceCurrency: "USD" }),
-      expect.objectContaining({ name: "Agency", price: "15", priceCurrency: "USD" }),
+      expect.objectContaining({ name: "InboxSieve", price: "4", priceCurrency: "USD" }),
     ]);
     expect(faq?.mainEntity).toEqual(expect.arrayContaining([expect.objectContaining({ "@type": "Question" })]));
   });
@@ -99,16 +99,23 @@ describe("prerender", () => {
     expect(shell).toContain('<meta name="robots" content="noindex" />');
   });
 
-  it("the pricing page and its meta show Solo $5/mo and Agency $15/mo with the recomputed fee lines", () => {
+  it("the pricing page and its meta show one $4/month plan with the recomputed fee lines", () => {
     const html = readFile("pricing.html");
 
-    expect(html).toContain("<title>Pricing: Free, Solo $5/mo, Agency $15/mo | InboxSieve</title>");
-    expect(html).toContain("$5/mo");
-    expect(html).toContain("$15/mo");
-    expect(html).toContain("$0.75");
-    expect(html).toContain("$3.75");
-    expect(html).toContain("$11.55");
-    expect(html).not.toMatch(/\$29|\$290|\$79|\$790|\$7\.55|\$24\.85/);
+    expect(html).toContain("<title>Pricing: free, or $4 a month | InboxSieve</title>");
+    expect(html).toContain("$4 / month");
+    expect(html).toContain("cancel anytime");
+    expect(html).toContain("$0.70");
+    expect(html).toContain("$2.80");
+    expect(html).not.toMatch(/\$5\b|\$15\b|\$50\b|\$150\b|\$3\.75|\$11\.55/);
+    expect(html).not.toMatch(/\b(Solo|Agency|Starter|Growth|Yearly|yearly)\b/);
+  });
+
+  it("no public page names a tier, a yearly price or a pack", () => {
+    const pages = [...files].map(([file, content]) => [file, content]).concat([["llms.txt", LLMS]]);
+    for (const [file, content] of pages) {
+      expect(content, file).not.toMatch(/\b(Solo|Agency|Starter|Growth|Pro plan|yearly|per year|pack)\b/);
+    }
   });
 
   it("the 404 page is noindex, has no canonical and links back home", () => {

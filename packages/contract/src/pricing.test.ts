@@ -7,48 +7,30 @@ function sumLines(breakdown: PriceBreakdown) {
 }
 
 describe("plan prices", () => {
-  it("Free is $0, Solo $5/mo or $50/yr, Agency $15/mo or $150/yr (owner 2026-11-23)", () => {
+  it("one paid plan: $4 a month, Free stays $0 (owner 2026-11-23 21:41)", () => {
     expect(PLAN_PRICES).toEqual({
-      free: { monthlyCents: 0, yearlyCents: 0 },
-      solo: { monthlyCents: 500, yearlyCents: 5000 },
-      agency: { monthlyCents: 1500, yearlyCents: 15000 },
+      free: { monthlyCents: 0 },
+      solo: { monthlyCents: 400 },
     });
-  });
-
-  it("a year costs ten months on both paid plans (2 months free)", () => {
-    expect(PLAN_PRICES.solo.yearlyCents).toBe(PLAN_PRICES.solo.monthlyCents * 10);
-    expect(PLAN_PRICES.agency.yearlyCents).toBe(PLAN_PRICES.agency.monthlyCents * 10);
   });
 });
 
 describe("itemized price breakdown", () => {
-  it("Solo $5: Paddle 5% + 50¢ = $0.75, AI $0.20, hosting $0.30, our fee $3.75", () => {
+  it("$4: Paddle 5% + 50¢ = $0.70, AI $0.20, hosting $0.30, our fee $2.80", () => {
     expect(buildPriceBreakdown("solo")).toEqual({
-      priceCents: 500,
-      paymentCents: 75,
+      priceCents: 400,
+      paymentCents: 70,
       aiCents: 20,
       hostingCents: 30,
-      ourFeeCents: 375,
+      ourFeeCents: 280,
     });
   });
 
-  it("Agency $15: Paddle 5% + 50¢ = $1.25, AI $1.20, hosting $1.00, our fee $11.55", () => {
-    expect(buildPriceBreakdown("agency")).toEqual({
-      priceCents: 1500,
-      paymentCents: 125,
-      aiCents: 120,
-      hostingCents: 100,
-      ourFeeCents: 1155,
-    });
-  });
+  it("the lines of the paid plan add up to exactly its price", () => {
+    const breakdown = buildPriceBreakdown("solo");
 
-  it("the lines of every paid plan add up to exactly its price", () => {
-    for (const plan of ["solo", "agency"] as const) {
-      const breakdown = buildPriceBreakdown(plan);
-
-      expect(sumLines(breakdown)).toBe(breakdown.priceCents);
-      expect(breakdown.ourFeeCents).toBeGreaterThan(0);
-    }
+    expect(sumLines(breakdown)).toBe(breakdown.priceCents);
+    expect(breakdown.ourFeeCents).toBeGreaterThan(0);
   });
 
   it("Free has no payment fee and no fee of ours; we pay its AI and hosting", () => {

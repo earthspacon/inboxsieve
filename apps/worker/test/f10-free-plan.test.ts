@@ -1,4 +1,4 @@
-import { PLAN_LIMITS, TRIAL_DAYS, type BillingDto, type BrandDto, type MeDto } from "@inboxsieve/contract";
+import { PLAN_LIMITS, TRIAL_DAYS, type BillingDto, type MeDto } from "@inboxsieve/contract";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { queueHotLeadAlerts } from "../src/alerts/alerts";
@@ -148,7 +148,7 @@ describe("Free plan", () => {
   });
 });
 
-describe("Solo trial without a card", () => {
+describe("the paid-plan trial without a card", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -236,29 +236,20 @@ describe("Solo trial without a card", () => {
 });
 
 describe("Expired paid subscription", () => {
-  it("Expired: after period end an Agency account falls back to Free, extra brands turn read-only", async () => {
+  it("Expired: after period end a paid account falls back to Free and keeps its brand", async () => {
     const email = uniqueEmail("expired");
-    const { accountId, brandId } = await seedAccount({ email, plan: "agency", status: "no_subscription" });
+    const { accountId, brandId } = await seedAccount({ email, status: "no_subscription" });
     const periodEnd = new Date(Date.now() + DAY_MS).toISOString();
     await sendFixture({ fixture: "activated", options: { accountId, periodEnd } });
-    await sendFixture({
-      fixture: "upgrade",
-      options: { accountId, periodEnd, occurredAt: new Date(Date.now() + 500) },
-    });
     const { deps } = buildTestDeps({ analyzer: createMockAnalyzer().analyzer });
     const api = createApiClient({ deps, cookie: await signIn(email) });
-    const second = await (await api("/api/brands", { method: "POST", body: { name: "Client B" } })).json<BrandDto>();
     await sendFixture({ fixture: "canceled", options: { accountId, occurredAt: new Date(Date.now() + 1000) } });
 
     await runMaintenance({ deps, now: new Date(Date.now() + 2 * DAY_MS) });
     const me = await (await api("/api/me")).json<MeDto>();
-    const renameFirst = await api(`/api/brands/${brandId}`, { method: "PATCH", body: { name: "Main" } });
-    const renameSecond = await api(`/api/brands/${second.id}`, { method: "PATCH", body: { name: "Other" } });
+    const rename = await api(`/api/brands/${brandId}`, { method: "PATCH", body: { name: "Main" } });
 
     expect(me.account).toMatchObject({ plan: "free", subscription: "expired", access: "full" });
-    expect(me.brands.find((brand) => brand.id === second.id)?.readOnly).toBe(true);
-    expect(renameFirst.status).toBe(200);
-    expect(renameSecond.status).toBe(403);
-    expect(await renameSecond.json()).toMatchObject({ error: "read_only" });
+    expect(rename.status).toBe(200);
   });
 });

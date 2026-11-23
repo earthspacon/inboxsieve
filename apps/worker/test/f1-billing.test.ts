@@ -39,7 +39,7 @@ describe("F1 billing: Paddle webhooks", () => {
     vi.restoreAllMocks();
   });
 
-  it("F1 billing: the signed subscription.created fixture moves a new Free account to a Solo trial", async () => {
+  it("F1 billing: the signed subscription.created fixture moves a new Free account to the paid plan", async () => {
     const email = uniqueEmail("f1b");
     const cookie = await signIn(email);
     const before = await SELF.fetch(`${BASE}/api/brands`, { headers: { cookie } });
@@ -218,10 +218,7 @@ describe("F1 billing: Paddle webhooks", () => {
       subscription: "no_subscription",
       checkout: {
         environment: "sandbox",
-        prices: {
-          solo: { monthly: env.PADDLE_PRICE_SOLO_MONTHLY },
-          agency: { monthly: env.PADDLE_PRICE_AGENCY_MONTHLY },
-        },
+        priceId: env.PADDLE_PRICE_MONTHLY,
       },
     });
   });

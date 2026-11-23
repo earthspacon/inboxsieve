@@ -1,10 +1,10 @@
 import { useGate, useUnit } from "effector-react";
 import { Lock } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 
 import { $upgradePrompt, brandCreateSubmitted, BrandsGate, createBrandFx, upgradePromptClosed } from "../billing/model";
 import { $brand, $me, brandSelected } from "../session/model";
+import { CONTACT_EMAIL } from "../site/config";
 import { Banner, BUTTON_PRIMARY, BUTTON_SECONDARY, Card, INPUT, PageHeader } from "../shared/ui";
 
 export const BrandsPage = () => {
@@ -28,11 +28,11 @@ export const UpgradePrompt = () => {
   return (
     <Banner tone="warning">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span>{message}. Agency has 10 brands and 3 seats.</span>
+        <span>{message}. Need more? Write to us and we'll set it up.</span>
         <span className="flex gap-2">
-          <Link to="/app/billing" className={BUTTON_PRIMARY}>
-            Upgrade
-          </Link>
+          <a href={`mailto:${CONTACT_EMAIL}`} className={BUTTON_PRIMARY}>
+            Write to us
+          </a>
           <button type="button" onClick={() => upgradePromptClosed()} className={BUTTON_SECONDARY}>
             Not now
           </button>

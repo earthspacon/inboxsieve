@@ -13,36 +13,33 @@ type PriceLine = { label: string; amount: string };
 export type PlanCard = {
   plan: Plan;
   name: string;
-  monthly: string;
-  yearly: string;
-  yearlyNote: string;
-  limits: string[];
+  price: string;
+  priceNote: string;
+  bullets: string[];
   lines: PriceLine[];
   total: PriceLine;
 };
 
+export const PAID_PRICE = formatPrice(PLAN_PRICES.solo.monthlyCents);
+export const PAID_PRICE_LABEL = `${PAID_PRICE} / month · cancel anytime`;
 export const FREE_TAGLINE = "Free forever. No card needed.";
-export const TRIAL_CTA = `Try Solo free for ${TRIAL_DAYS} days`;
+export const TRIAL_CTA = `Try it free for ${TRIAL_DAYS} days`;
 
 const FREE = buildPriceBreakdown("free");
-const SOLO = buildPriceBreakdown("solo");
-const AGENCY = buildPriceBreakdown("agency");
+const PAID = buildPriceBreakdown("solo");
 
-// Spec §3.2, line by line: every dollar shown. The amounts come from the contract's price math.
+// Every dollar is still shown, under the card; the amounts come from the contract's price math.
 export const PLAN_CARDS: PlanCard[] = [
   {
     plan: "free",
     name: "Free",
-    monthly: "$0",
-    yearly: "$0",
-    yearlyNote: "forever",
-    limits: [
-      "1 brand",
-      "1 source",
-      `${PLAN_LIMITS.free.leadsPerMonth} leads/mo`,
-      "1 seat",
-      "email alerts (no Slack)",
-      "CSV export",
+    price: "$0",
+    priceNote: "forever, no card",
+    bullets: [
+      `${PLAN_LIMITS.free.leadsPerMonth} leads a month, scored and sorted`,
+      "1 inbox or form connected",
+      "Email alerts for hot leads",
+      "CSV export any time",
     ],
     lines: [
       {
@@ -63,74 +60,47 @@ export const PLAN_CARDS: PlanCard[] = [
       },
     ],
     total: {
-      label: "You pay. No card needed",
+      label: "You pay",
       amount: formatUsd(FREE.priceCents),
     },
   },
   {
     plan: "solo",
-    name: "Solo",
-    monthly: `${formatPrice(PLAN_PRICES.solo.monthlyCents)}/mo`,
-    yearly: `${formatPrice(PLAN_PRICES.solo.yearlyCents)}/yr`,
-    yearlyNote: "2 months free",
-    limits: ["1 brand", "2 sources", "500 leads/mo", "1 seat"],
+    name: "InboxSieve",
+    price: `${PAID_PRICE} / month`,
+    priceNote: "cancel anytime",
+    bullets: [
+      `${PLAN_LIMITS.solo.leadsPerMonth} leads a month, each with a drafted reply`,
+      `${PLAN_LIMITS.solo.sources} inboxes or forms connected`,
+      "Hot-lead alerts by email and Slack",
+      "14-day refund, no questions asked",
+    ],
     lines: [
       {
         label: "Payment processing (Paddle 5% + 50¢)",
-        amount: formatUsd(SOLO.paymentCents),
+        amount: formatUsd(PAID.paymentCents),
       },
       {
-        label: "AI scoring, 500 leads at ~$0.0004 (shown at cost)",
-        amount: `≈ ${formatUsd(SOLO.aiCents)}`,
+        label: `AI scoring, ${PLAN_LIMITS.solo.leadsPerMonth} leads at ~$0.0004 (shown at cost)`,
+        amount: `≈ ${formatUsd(PAID.aiCents)}`,
       },
       {
         label: "Hosting + email delivery (pro-rata)",
-        amount: `≈ ${formatUsd(SOLO.hostingCents)}`,
+        amount: `≈ ${formatUsd(PAID.hostingCents)}`,
       },
       {
         label: "Our fee",
-        amount: formatUsd(SOLO.ourFeeCents),
+        amount: formatUsd(PAID.ourFeeCents),
       },
     ],
     total: {
-      label: "You pay (sales tax/VAT added by Paddle at checkout where due)",
-      amount: formatUsd(SOLO.priceCents),
-    },
-  },
-  {
-    plan: "agency",
-    name: "Agency",
-    monthly: `${formatPrice(PLAN_PRICES.agency.monthlyCents)}/mo`,
-    yearly: `${formatPrice(PLAN_PRICES.agency.yearlyCents)}/yr`,
-    yearlyNote: "2 months free",
-    limits: ["10 brands (one per client)", "20 sources", "3,000 leads/mo", "3 seats"],
-    lines: [
-      {
-        label: "Payment processing (5% + 50¢)",
-        amount: formatUsd(AGENCY.paymentCents),
-      },
-      {
-        label: "AI scoring, 3,000 leads",
-        amount: `≈ ${formatUsd(AGENCY.aiCents)}`,
-      },
-      {
-        label: "Hosting + email",
-        amount: `≈ ${formatUsd(AGENCY.hostingCents)}`,
-      },
-      {
-        label: "Our fee",
-        amount: formatUsd(AGENCY.ourFeeCents),
-      },
-    ],
-    total: {
-      label: "You pay",
-      amount: formatUsd(AGENCY.priceCents),
+      label: "You pay (Paddle adds sales tax/VAT where due)",
+      amount: formatUsd(PAID.priceCents),
     },
   },
 ];
 
 export const PLAN_NAMES: Record<Plan, string> = {
   free: "Free",
-  solo: "Solo",
-  agency: "Agency",
+  solo: `${PAID_PRICE} / month`,
 };

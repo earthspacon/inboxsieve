@@ -1,43 +1,39 @@
-import { useUnit } from "effector-react";
 import { Link } from "react-router-dom";
 
 import type { Plan } from "@inboxsieve/contract";
 
-import { $interval, intervalChosen } from "../billing/model";
-import { FREE_TAGLINE, TRIAL_CTA } from "../pricing/config";
-import { IntervalToggle, PlanCards } from "../pricing/PlanCards";
-import { BUTTON_PRIMARY } from "../shared/ui";
+import { FREE_TAGLINE, PAID_PRICE_LABEL, TRIAL_CTA } from "../pricing/config";
+import { PlanCards } from "../pricing/PlanCards";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY } from "../shared/ui";
 import { NEVER_DO, START_CTA } from "./config";
 
-// Every sign-up starts on Free; the Solo trial starts from Billing once signed in.
-const PUBLIC_PLAN_CTA: Record<Plan, string> = {
-  free: START_CTA,
-  solo: TRIAL_CTA,
-  agency: START_CTA,
+// Every sign-up starts on Free; the paid trial starts from Billing once signed in.
+const PUBLIC_PLAN_CTA: Record<Plan, { label: string; className: string }> = {
+  free: {
+    label: START_CTA,
+    className: BUTTON_SECONDARY,
+  },
+  solo: {
+    label: TRIAL_CTA,
+    className: BUTTON_PRIMARY,
+  },
 };
 
 export const PricingSection = () => {
-  const { interval } = useUnit({
-    interval: $interval,
-  });
-
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Every dollar shown</h2>
-          <p className="text-sm text-slate-500">
-            {FREE_TAGLINE} {TRIAL_CTA}, also without a card. Cancel any time. 14-day refund, no questions asked.
-          </p>
-        </div>
-        <IntervalToggle interval={interval} onChange={intervalChosen} />
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">One plan, {PAID_PRICE_LABEL}</h2>
+        <p className="text-sm text-slate-600">
+          {FREE_TAGLINE} {TRIAL_CTA}, also without a card. 14-day refund, no questions asked.
+        </p>
       </div>
       <PlanCards
-        interval={interval}
         renderAction={(plan) => {
+          const cta = PUBLIC_PLAN_CTA[plan];
           return (
-            <Link to="/sign-in" className={`${BUTTON_PRIMARY} w-full`}>
-              {PUBLIC_PLAN_CTA[plan]}
+            <Link to="/sign-in" className={`${cta.className} min-h-11 w-full`}>
+              {cta.label}
             </Link>
           );
         }}

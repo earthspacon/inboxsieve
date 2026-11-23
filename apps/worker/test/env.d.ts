@@ -8,10 +8,7 @@ declare namespace Cloudflare {
     BETTER_AUTH_SECRET: string;
     PADDLE_ENV: string;
     PADDLE_CLIENT_TOKEN: string;
-    PADDLE_PRICE_SOLO_MONTHLY: string;
-    PADDLE_PRICE_SOLO_YEARLY: string;
-    PADDLE_PRICE_AGENCY_MONTHLY: string;
-    PADDLE_PRICE_AGENCY_YEARLY: string;
+    PADDLE_PRICE_MONTHLY: string;
     PADDLE_WEBHOOK_SECRET: string;
     TURNSTILE_SECRET_KEY: string;
     AUTH_LIMITER: RateLimit;

@@ -70,13 +70,12 @@ export async function createTrialAccount(email: string) {
   return response.json<{ accountId: string; brandId: string }>();
 }
 
-export async function signInTrial({ email, plan = "solo" }: { email: string; plan?: "solo" | "agency" }) {
+export async function signInTrial({ email }: { email: string }) {
   const response = await SELF.fetch(`${BASE}/dev/accounts`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       email,
-      plan,
     }),
   });
   const account = await response.json<{ accountId: string; brandId: string }>();

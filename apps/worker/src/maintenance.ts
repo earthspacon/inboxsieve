@@ -49,8 +49,8 @@ export async function runMaintenance({ deps, now }: { deps: Pick<Deps, "db" | "m
     if (await endPaidAccess({ db, accountId: trial.account_id, now, event: { type: "trial_ended" } })) {
       await deps.mailer.send({
         to: trial.email,
-        subject: "Your InboxSieve Solo trial has ended",
-        text: `Your ${TRIAL_DAYS}-day Solo trial has ended, so your workspace is on the Free plan now: ${PLAN_LIMITS.free.leadsPerMonth} analyzed leads a month and email alerts. Nothing was deleted.\nTo keep Solo, upgrade here: ${deps.env.APP_URL}/app/billing`,
+        subject: "Your InboxSieve trial has ended",
+        text: `Your ${TRIAL_DAYS}-day trial has ended, so your workspace is on the Free plan now: ${PLAN_LIMITS.free.leadsPerMonth} analyzed leads a month and email alerts. Nothing was deleted.\nTo keep the $4/month plan, upgrade here: ${deps.env.APP_URL}/app/billing`,
       });
       summary.trialsEnded += 1;
     }

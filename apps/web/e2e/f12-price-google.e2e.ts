@@ -2,7 +2,7 @@ import type { Browser, Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { E2E_URL } from "./config";
-import { createTrialAccount, launchBrowser, MOBILE, openSession, signInWithUi, uniqueEmail } from "./helpers";
+import { addSeatByHand, createTrialAccount, launchBrowser, MOBILE, openSession, signInWithUi, uniqueEmail } from "./helpers";
 import { startWorker, type RunningWorker } from "./worker";
 
 const GOOGLE_PORT = 8791;
@@ -67,21 +67,15 @@ describe("F12 prices, Google sign-in, 404, invited teammate", () => {
     expect(new Set(params.get("scope")?.split(" "))).toEqual(new Set(["openid", "email", "profile"]));
   });
 
-  it("F12: the pricing page shows Solo $5/mo and Agency $15/mo with the recomputed lines", async () => {
+  it("F12: the pricing page shows one $4 a month plan with the recomputed lines", async () => {
     const { page } = await openSession({ browser });
     await page.goto("/pricing");
-    await page.getByText("$3.75").waitFor();
-    const monthly = await page.locator("main").innerText();
-    await page.getByRole("button", { name: "Yearly (2 months free)" }).first().click();
-    await page.getByText("$50/yr").waitFor();
-    const yearly = await page.locator("main").innerText();
+    await page.getByText("cancel anytime").first().waitFor();
+    const text = await page.locator("main").innerText();
 
-    expect(monthly).toContain("$5/mo");
-    expect(monthly).toContain("$15/mo");
-    expect(monthly).toContain("$0.75");
-    expect(monthly).toContain("$11.55");
-    expect(yearly).toContain("$150/yr");
-    expect(`${monthly}${yearly}`).not.toMatch(/\$29|\$290|\$79|\$790|\$7\.55|\$24\.85/);
+    expect(text).toContain("$4 / month");
+    expect(text).not.toMatch(/\$5\b|\$15\b|\$50\b|\$150\b|Solo|Agency|Yearly/);
+    expect(await page.getByRole("button", { name: /Yearly|Monthly/ }).count()).toBe(0);
   });
 
   it("F12: an unknown public path gets a real 404 page with noindex, known pages stay 200", async () => {
@@ -103,14 +97,8 @@ describe("F12 prices, Google sign-in, 404, invited teammate", () => {
   it("F12: an invited teammate who signs in on the public page lands in the inbox, not onboarding", async () => {
     const ownerEmail = uniqueEmail("f12-owner");
     const memberEmail = uniqueEmail("f12-member");
-    await createTrialAccount({ email: ownerEmail, plan: "agency" });
-    const owner = await openSession({ browser });
-    await signInWithUi({ page: owner.page, email: ownerEmail });
-    await owner.page.getByRole("heading", { name: "Inbox" }).waitFor();
-    await owner.page.goto("/app/team");
-    await owner.page.getByLabel("Teammate email").fill(memberEmail);
-    await owner.page.getByRole("button", { name: "Send invite" }).click();
-    await owner.page.getByText(`Invite sent to ${memberEmail}`).waitFor();
+    const { accountId } = await createTrialAccount({ email: ownerEmail });
+    await addSeatByHand({ accountId, email: memberEmail });
 
     const member = await openSession({ browser });
     await signInWithUi({ page: member.page, email: memberEmail });

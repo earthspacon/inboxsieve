@@ -5,7 +5,6 @@ import {
   apiJson,
   launchBrowser,
   openSession,
-  runMaintenanceAt,
   sendPaddleFixture,
   signInWithUi,
   uniqueEmail,
@@ -40,63 +39,14 @@ describe("F7 billing", () => {
     await browser.close();
   });
 
-  it("F7: on Solo a second brand is blocked with an upgrade prompt", async () => {
+  it("F7: on the paid plan a second brand is blocked with a write-to-us prompt", async () => {
     const { page } = session;
     await page.goto("/app/brands");
     await page.getByLabel("New brand").fill("Client B");
     await page.getByRole("button", { name: "Add brand" }).click();
     await page.getByText(/Your plan has no room for another brand/).waitFor();
 
-    expect(await page.getByRole("link", { name: "Upgrade" }).first().isVisible()).toBe(true);
-  });
-
-  it("F7: the upgrade to Agency unlocks the 2nd brand", async () => {
-    const { page } = session;
-    const result = await sendPaddleFixture({
-      fixture: "subscription.updated-upgrade",
-      accountId,
-      periodEnd,
-      occurredAt: nextEventTime(),
-    });
-    await page.reload();
-    await page.getByLabel("New brand").fill("Client B");
-    await page.getByRole("button", { name: "Add brand" }).click();
-    await page.locator("main").getByText("Client B").waitFor();
-
-    expect(result.body.outcome).toBe("applied");
-    expect((await apiJson<unknown[]>({ page, path: "/api/brands" })).body).toHaveLength(2);
-  });
-
-  it("F7: a downgrade makes the extra brand read-only at current_period_end", async () => {
-    const { page } = session;
-    await sendPaddleFixture({
-      fixture: "subscription.updated-downgrade",
-      accountId,
-      periodEnd,
-      occurredAt: nextEventTime(),
-    });
-    await page.goto("/app/billing");
-    await page.getByText(/You move to Solo on/).waitFor();
-    await page.goto("/app/brands");
-    const beforeEnd = await page.getByText("Read-only on your plan").count();
-
-    await runMaintenanceAt(new Date(Date.parse(periodEnd) + 60_000));
-    await page.reload();
-    await page.getByText("Read-only on your plan").waitFor();
-    const brands = (
-      await apiJson<Array<{ id: string; name: string; readOnly: boolean }>>({ page, path: "/api/brands" })
-    ).body;
-    const extra = brands.find((brand) => brand.name === "Client B");
-    const write = await apiJson({
-      page,
-      path: `/api/brands/${extra?.id}`,
-      method: "PATCH",
-      body: { name: "Client C" },
-    });
-
-    expect(beforeEnd).toBe(0);
-    expect(brands.map((brand) => brand.readOnly)).toEqual([false, true]);
-    expect(write.status).toBe(403);
+    expect(await page.getByRole("link", { name: "Write to us" }).first().isVisible()).toBe(true);
   });
 
   it("F7: Manage billing is offered to the owner", async () => {

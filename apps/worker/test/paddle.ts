@@ -5,9 +5,7 @@ import canceled from "../fixtures/paddle/subscription.canceled.json?raw";
 import created from "../fixtures/paddle/subscription.created.json?raw";
 import pastDue from "../fixtures/paddle/subscription.past_due.json?raw";
 import trialing from "../fixtures/paddle/subscription.trialing.json?raw";
-import downgrade from "../fixtures/paddle/subscription.updated-downgrade.json?raw";
 import scheduledCancel from "../fixtures/paddle/subscription.updated-scheduled-cancel.json?raw";
-import upgrade from "../fixtures/paddle/subscription.updated-upgrade.json?raw";
 import transactionCompleted from "../fixtures/paddle/transaction.completed.json?raw";
 import { signPaddlePayload } from "../src/billing/signature";
 import { BASE } from "./session";
@@ -16,8 +14,6 @@ export const PADDLE_FIXTURES = {
   created,
   trialing,
   activated,
-  upgrade,
-  downgrade,
   scheduledCancel,
   pastDue,
   canceled,

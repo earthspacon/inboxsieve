@@ -4,19 +4,17 @@ import { Loader2 } from "lucide-react";
 
 import {
   $checkoutError,
-  $interval,
   $isWaitingForActivation,
   BillingGate,
   billingRemote,
   checkoutClicked,
-  intervalChosen,
   manageBillingClicked,
   portalFx,
   startTrialFx,
   trialStartClicked,
 } from "../billing/model";
-import { FREE_TAGLINE, PLAN_NAMES, TRIAL_CTA } from "../pricing/config";
-import { IntervalToggle, PlanCards } from "../pricing/PlanCards";
+import { FREE_TAGLINE, PAID_PRICE_LABEL, PLAN_NAMES, TRIAL_CTA } from "../pricing/config";
+import { PlanCards } from "../pricing/PlanCards";
 import { $isOwner } from "../session/model";
 import {
   Banner,
@@ -41,8 +39,7 @@ const STATUS_TEXT: Record<BillingDto["subscription"], string> = {
 
 const CURRENT_PLAN_TEXT: Record<Plan, string> = {
   free: "You're on the Free plan",
-  solo: "You're on Solo",
-  agency: "You're on Agency",
+  solo: `You're on the ${PAID_PRICE_LABEL} plan`,
 };
 
 export const BillingPage = () => {
@@ -86,14 +83,8 @@ const BillingNotices = ({ billing }: { billing: BillingDto }) => {
     <>
       {billing.trialEndsAt && (
         <Banner tone="info">
-          Your Solo trial ends on {formatDay(billing.trialEndsAt)}. There's no card on file, so nothing is charged;
+          Your free trial ends on {formatDay(billing.trialEndsAt)}. There's no card on file, so nothing is charged;
           after that you're back on Free unless you upgrade.
-        </Banner>
-      )}
-      {billing.pendingPlan && billing.currentPeriodEnd && (
-        <Banner tone="info">
-          You move to {PLAN_NAMES[billing.pendingPlan]} on {formatDay(billing.currentPeriodEnd)}. Brands over its limit
-          turn read-only then.
         </Banner>
       )}
       {billing.scheduledChange?.action === "cancel" && (
@@ -138,8 +129,8 @@ const CurrentPlan = ({ billing, isOwner }: { billing: BillingDto; isOwner: boole
             Manage billing
           </button>
           <p className="text-xs text-slate-500">
-            Change plan, update your card or cancel in the Paddle portal. Upgrades apply at once with proration; a
-            downgrade applies at the end of the paid period.
+            Update your card, download invoices or cancel in the Paddle portal. A cancel applies at the end of the
+            paid month.
           </p>
         </div>
       )}
@@ -148,8 +139,7 @@ const CurrentPlan = ({ billing, isOwner }: { billing: BillingDto; isOwner: boole
 };
 
 const Upgrade = ({ billing }: { billing: BillingDto }) => {
-  const { interval, checkoutError, isWaiting } = useUnit({
-    interval: $interval,
+  const { checkoutError, isWaiting } = useUnit({
     checkoutError: $checkoutError,
     isWaiting: $isWaitingForActivation,
   });
@@ -160,28 +150,24 @@ const Upgrade = ({ billing }: { billing: BillingDto }) => {
   return (
     <section className="space-y-4">
       {billing.canStartTrial && <TrialOffer />}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">Upgrade</h2>
-          <p className="text-sm text-slate-500">
-            Paddle is the merchant of record and adds sales tax or VAT where due. {FREE_TAGLINE}
-          </p>
-        </div>
-        <IntervalToggle interval={interval} onChange={intervalChosen} />
+      <div>
+        <h2 className="text-lg font-semibold">Upgrade: {PAID_PRICE_LABEL}</h2>
+        <p className="text-sm text-slate-500">
+          Paddle is the merchant of record and adds sales tax or VAT where due. {FREE_TAGLINE}
+        </p>
       </div>
       {checkoutError && <Banner tone="danger">{checkoutError}</Banner>}
       {!billing.checkout.clientToken && (
         <Banner tone="warning">Checkout isn't configured on this server yet (no Paddle client token).</Banner>
       )}
       <PlanCards
-        interval={interval}
         renderAction={(plan) => {
           if (plan === "free") {
             return null;
           }
           return (
-            <button type="button" onClick={() => checkoutClicked(plan)} className={`${BUTTON_PRIMARY} w-full`}>
-              Upgrade to {PLAN_NAMES[plan]}
+            <button type="button" onClick={() => checkoutClicked()} className={`${BUTTON_PRIMARY} min-h-11 w-full`}>
+              Upgrade for {PLAN_NAMES[plan]}
             </button>
           );
         }}
@@ -196,7 +182,7 @@ const TrialOffer = () => {
   return (
     <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
       <div>
-        <h2 className="text-lg font-semibold">Try Solo free</h2>
+        <h2 className="text-lg font-semibold">Try the paid plan free</h2>
         <p className="text-sm text-slate-600">
           {PLAN_LIMITS.solo.sources} sources, {PLAN_LIMITS.solo.leadsPerMonth} leads a month and Slack alerts. No card
           needed, one trial per workspace.

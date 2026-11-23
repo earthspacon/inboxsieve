@@ -2,11 +2,11 @@ import type { Browser } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
+  addSeatByHand,
   apiJson,
   createTrialAccount,
   launchBrowser,
   openSession,
-  readMagicLink,
   signInWithUi,
   uniqueEmail,
   type Session,
@@ -21,7 +21,8 @@ describe("F8 team", () => {
   beforeAll(async () => {
     browser = await launchBrowser();
     const ownerEmail = uniqueEmail("f8-owner");
-    await createTrialAccount({ email: ownerEmail, plan: "agency" });
+    const { accountId } = await createTrialAccount({ email: ownerEmail });
+    await addSeatByHand({ accountId, email: memberEmail });
     owner = await openSession({ browser });
     await signInWithUi({ page: owner.page, email: ownerEmail });
     await owner.page.getByRole("heading", { name: "Inbox" }).waitFor();
@@ -32,15 +33,19 @@ describe("F8 team", () => {
     await browser.close();
   });
 
-  it("F8: an invite sends a magic link and the seat turns active when the teammate signs in", async () => {
+  it("F8: the one plan has one seat, so an invite shows the write-to-us prompt", async () => {
     const { page } = owner;
     await page.goto("/app/team");
-    await page.getByLabel("Teammate email").fill(memberEmail);
+    await page.getByLabel("Teammate email").fill(uniqueEmail("f8-extra"));
     await page.getByRole("button", { name: "Send invite" }).click();
-    await page.getByText(`Invite sent to ${memberEmail}`).waitFor();
-    await seatRow(memberEmail).getByText("Invited").waitFor();
+    await page.getByText(/Your plan has no room for another seat/).waitFor();
 
-    await member.page.goto(await readMagicLink(memberEmail));
+    expect(await page.getByRole("link", { name: "Write to us" }).isVisible()).toBe(true);
+  });
+
+  it("F8: a seat added by hand turns active when the teammate signs in", async () => {
+    const { page } = owner;
+    await signInWithUi({ page: member.page, email: memberEmail });
     await member.page.getByRole("heading", { name: "Inbox" }).waitFor();
     await page.reload();
     await seatRow(memberEmail).getByText("Active").waitFor();
@@ -49,20 +54,6 @@ describe("F8 team", () => {
     const ownerMe = await apiJson<{ account: { id: string } }>({ page, path: "/api/me" });
     expect(me.body.role).toBe("member");
     expect(me.body.account.id).toBe(ownerMe.body.account.id);
-  });
-
-  it("F8: the 4th seat on Agency shows the upgrade prompt", async () => {
-    const { page } = owner;
-    await page.getByLabel("Teammate email").fill(uniqueEmail("f8-third"));
-    await page.getByRole("button", { name: "Send invite" }).click();
-    await page.getByText("3 of 3 seats used").waitFor();
-
-    await page.getByLabel("Teammate email").fill(uniqueEmail("f8-fourth"));
-    await page.getByRole("button", { name: "Send invite" }).click();
-    await page.getByText(/Your plan has no room for another seat/).waitFor();
-
-    expect(await page.getByRole("link", { name: "Upgrade" }).isVisible()).toBe(true);
-    expect(await page.getByText("3 of 3 seats used").isVisible()).toBe(true);
   });
 
   it("F8: a revoked seat's session gets 401 and the app sends them to sign-in", async () => {

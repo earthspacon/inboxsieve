@@ -61,16 +61,21 @@ export async function openSession({
   return session;
 }
 
-export async function createTrialAccount({ email, plan = "solo" }: { email: string; plan?: "solo" | "agency" }) {
+export async function createTrialAccount({ email }: { email: string }) {
   const response = await fetch(`${E2E_URL}/dev/accounts`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      email,
-      plan,
-    }),
+    body: JSON.stringify({ email }),
   });
   return (await response.json()) as { accountId: string; brandId: string; userId: string };
+}
+
+export async function addSeatByHand({ accountId, email }: { accountId: string; email: string }) {
+  await fetch(`${E2E_URL}/dev/seats`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ accountId, email }),
+  });
 }
 
 export async function readMagicLink(email: string) {

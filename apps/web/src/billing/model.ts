@@ -1,4 +1,4 @@
-import type { BillingDto, BillingInterval, BrandDto, PaidPlan } from "@inboxsieve/contract";
+import type { BillingDto, BrandDto } from "@inboxsieve/contract";
 import { attach, createEffect, createEvent, createStore, sample } from "effector";
 import { createGate } from "effector-react";
 
@@ -6,15 +6,14 @@ import { $me, meRefreshRequested } from "../session/model";
 import { apiRequest, ApiRequestError } from "../shared/api";
 import { createRemote } from "../shared/remote";
 import { toastShown } from "../shared/toast-model";
-import { findPriceId, loadPaddle, openPaddleCheckout } from "./paddle";
+import { loadPaddle, openPaddleCheckout } from "./paddle";
 
 const ACTIVATION_POLL_MS = 2000;
 
 export const BillingGate = createGate();
 export const BrandsGate = createGate();
 
-export const intervalChosen = createEvent<BillingInterval>();
-export const checkoutClicked = createEvent<PaidPlan>();
+export const checkoutClicked = createEvent();
 export const trialStartClicked = createEvent();
 export const manageBillingClicked = createEvent();
 export const brandCreateSubmitted = createEvent<string>();
@@ -28,7 +27,6 @@ export const billingRemote = createRemote<void, BillingDto | null>({
   initial: null,
 });
 
-export const $interval = createStore<BillingInterval>("monthly");
 export const $isWaitingForActivation = createStore(false);
 export const $checkoutError = createStore("");
 export const $upgradePrompt = createStore("");
@@ -37,15 +35,14 @@ const openCheckoutFx = attach({
   source: {
     billing: billingRemote.$data,
     me: $me,
-    interval: $interval,
   },
-  effect: async ({ billing, me, interval }, plan: PaidPlan) => {
+  effect: async ({ billing, me }) => {
     if (!billing || !me) {
       throw new Error("Billing isn't loaded yet");
     }
-    const priceId = findPriceId({ checkout: billing.checkout, plan, interval });
+    const { priceId } = billing.checkout;
     if (!priceId) {
-      throw new Error("This plan isn't on sale yet");
+      throw new Error("Checkout isn't open yet. Try again in a day or write to us.");
     }
     const paddle = await loadPaddle({
       checkout: billing.checkout,
@@ -91,11 +88,6 @@ sample({
 // #endregion
 
 // #region checkout
-sample({
-  clock: intervalChosen,
-  target: $interval,
-});
-
 sample({
   clock: checkoutClicked,
   target: [openCheckoutFx, $checkoutError.reinit],

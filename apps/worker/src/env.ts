@@ -7,10 +7,7 @@ export type Env = {
   DEV_ROUTES: string;
   PADDLE_ENV: string;
   PADDLE_CLIENT_TOKEN?: string;
-  PADDLE_PRICE_SOLO_MONTHLY?: string;
-  PADDLE_PRICE_SOLO_YEARLY?: string;
-  PADDLE_PRICE_AGENCY_MONTHLY?: string;
-  PADDLE_PRICE_AGENCY_YEARLY?: string;
+  PADDLE_PRICE_MONTHLY?: string;
   BETTER_AUTH_SECRET: string;
   GROQ_API_KEY?: string;
   BREVO_API_KEY?: string;

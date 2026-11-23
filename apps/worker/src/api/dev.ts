@@ -5,6 +5,7 @@ import { newId } from "../ids";
 import { runQueues } from "../leads/jobs";
 import { runMaintenance } from "../maintenance";
 import { createAccount, getAccountContext, setSubscription } from "../repo";
+import { inviteSeat } from "../repo/seats";
 import type { PublicContext } from "./context";
 
 const EMAIL_MAX_LENGTH = 254;
@@ -17,7 +18,7 @@ export const devRoutes: Route<PublicContext>[] = [
   route("POST", "/dev/accounts", async ({ deps, request }) => {
     const data = await readJson(request);
     const email = readString({ data, key: "email", maxLength: EMAIL_MAX_LENGTH }).trim().toLowerCase();
-    const plan: PaidPlan = data.plan === "agency" ? "agency" : "solo";
+    const plan: PaidPlan = "solo";
     const now = deps.now();
 
     if (!email.includes("@")) {
@@ -56,6 +57,15 @@ export const devRoutes: Route<PublicContext>[] = [
       },
       201,
     );
+  }),
+
+  // The one plan has 1 seat; extra seats are added by hand, like this.
+  route("POST", "/dev/seats", async ({ deps, request }) => {
+    const data = await readJson(request);
+    const accountId = readString({ data, key: "accountId", maxLength: ID_MAX_LENGTH });
+    const email = readString({ data, key: "email", maxLength: EMAIL_MAX_LENGTH }).trim().toLowerCase();
+    await inviteSeat({ db: deps.db, accountId, email, now: deps.now() });
+    return json({ ok: true }, 201);
   }),
 
   route("GET", "/dev/outbox", async ({ deps, request }) => {

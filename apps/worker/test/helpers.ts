@@ -7,6 +7,8 @@ import type { InboundEmail } from "../src/ingest/email";
 import { createSlackPoster } from "../src/alerts/slack";
 import { createLogMailer } from "../src/mailer";
 import { createAccount, createSource } from "../src/repo";
+import { createBrand } from "../src/repo/brands";
+import { inviteSeat } from "../src/repo/seats";
 
 export const db = env.DB;
 
@@ -21,6 +23,15 @@ export const VALID_ANALYSIS: Analysis = {
   reasons: ["Budget fits", "Clear timeline"],
   draftReply: "Hi there,\n\nThanks for reaching out.\n\nBest regards",
 };
+
+// One paid plan has 1 brand and 1 seat; more are set up by hand when a customer writes to us.
+export async function addSeatByHand({ accountId, email }: { accountId: string; email: string }) {
+  return inviteSeat({ db, accountId, email, now: new Date() });
+}
+
+export async function addBrandByHand({ accountId, name }: { accountId: string; name: string }) {
+  return createBrand({ db, accountId, name, now: new Date() });
+}
 
 export function uniqueEmail(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}@agency.example`;

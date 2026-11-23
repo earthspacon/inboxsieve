@@ -15,8 +15,8 @@ import {
 } from "./helpers";
 import { BASE, signInTrial } from "./session";
 
-async function setUp({ plan = "solo" }: { plan?: "solo" | "agency" } = {}) {
-  const session = await signInTrial({ email: uniqueEmail("api"), plan });
+async function setUp() {
+  const session = await signInTrial({ email: uniqueEmail("api") });
   const mock = createMockAnalyzer((request) => {
     if (request.lead.subject === "Cold one") {
       return { ...VALID_ANALYSIS, score: 30, category: "cold" };
@@ -259,7 +259,7 @@ describe("API: leads", () => {
 
 describe("API: sources", () => {
   it("creates an email source with a forwarding address and a webhook source with a URL", async () => {
-    const { api, brandId } = await setUp({ plan: "agency" });
+    const { api, brandId } = await setUp();
 
     const email = await createSource({ api, brandId, kind: "email" });
     const webhook = await createSource({ api, brandId, kind: "webhook" });
@@ -325,7 +325,7 @@ describe("API: sources", () => {
     expect(list).toEqual([]);
   });
 
-  it("Solo stops at 2 sources with plan_limit", async () => {
+  it("the paid plan stops at 2 sources with plan_limit", async () => {
     const { api, brandId } = await setUp();
 
     await createSource({ api, brandId, kind: "email" });
@@ -337,15 +337,13 @@ describe("API: sources", () => {
 });
 
 describe("API: account, brands, usage and access", () => {
-  it("Solo cannot add a second brand, Agency can", async () => {
-    const solo = await setUp();
-    const agency = await setUp({ plan: "agency" });
+  it("the paid plan has one brand, so a second one is a plan_limit", async () => {
+    const paid = await setUp();
 
-    const soloBrand = await solo.api("/api/brands", { method: "POST", body: { name: "Client B" } });
-    const agencyBrand = await agency.api("/api/brands", { method: "POST", body: { name: "Client B" } });
+    const second = await paid.api("/api/brands", { method: "POST", body: { name: "Client B" } });
 
-    expect(soloBrand.status).toBe(403);
-    expect(agencyBrand.status).toBe(201);
+    expect(second.status).toBe(403);
+    expect(await second.json()).toMatchObject({ error: "plan_limit" });
   });
 
   it("renames a brand during onboarding and rejects an empty name", async () => {

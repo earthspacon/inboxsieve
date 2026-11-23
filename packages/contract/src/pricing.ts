@@ -1,18 +1,12 @@
 import { PLAN_LIMITS, type Plan } from "./domain";
 
-// Owner 2026-11-23: prices cut again, about half of the closest competitor. A year costs ten months.
-export const PLAN_PRICES: Record<Plan, { monthlyCents: number; yearlyCents: number }> = {
+// Owner 2026-11-23 21:41: one paid plan at $4 a month, no tiers, no yearly price.
+export const PLAN_PRICES: Record<Plan, { monthlyCents: number }> = {
   free: {
     monthlyCents: 0,
-    yearlyCents: 0,
   },
   solo: {
-    monthlyCents: 500,
-    yearlyCents: 5000,
-  },
-  agency: {
-    monthlyCents: 1500,
-    yearlyCents: 15000,
+    monthlyCents: 400,
   },
 };
 
@@ -27,7 +21,6 @@ export const AI_COST_PER_LEAD_USD = 0.0004;
 const HOSTING_CENTS: Record<Plan, number> = {
   free: 3,
   solo: 30,
-  agency: 100,
 };
 
 export type PriceBreakdown = {

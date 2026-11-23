@@ -9,8 +9,8 @@ import { runQueues } from "../src/leads/jobs";
 import { createLogMailer } from "../src/mailer";
 import { consumeRateLimit } from "../src/repo/shield";
 import { MAGIC_LINK_LIMITS } from "../src/shield/auth-guard";
-import { buildLeadInput, buildTestDeps, countRows, createMockAnalyzer, db, seedSource, uniqueEmail } from "./helpers";
-import { BASE, followMagicLink, readMagicLink, readSessionCookie, requestMagicLink, signInTrial } from "./session";
+import { addSeatByHand, buildLeadInput, buildTestDeps, countRows, createMockAnalyzer, db, seedSource, uniqueEmail } from "./helpers";
+import { BASE, followMagicLink, readMagicLink, readSessionCookie, requestMagicLink, signIn, signInTrial } from "./session";
 import { siteverifyRequests } from "./turnstile";
 
 const ONE_DAY_MS = 24 * 60 * 60_000;
@@ -287,11 +287,11 @@ describe("Abuse shield: daily LLM budget", () => {
 
 describe("Security review", () => {
   it("Security: every /api route with an id returns 404 for another account's id", async () => {
-    const attacker = await signInTrial({ email: uniqueEmail("attacker"), plan: "agency" });
-    const victim = await signInTrial({ email: uniqueEmail("victim"), plan: "agency" });
+    const attacker = await signInTrial({ email: uniqueEmail("attacker") });
+    const victim = await signInTrial({ email: uniqueEmail("victim") });
     const source = await seedSource({ brandId: victim.brandId, kind: "webhook" });
     const leadId = await addLead({ brandId: victim.brandId, sourceId: source.id, message: "Victim lead" });
-    await call({ cookie: victim.cookie, path: "/api/seats", method: "POST", body: { email: uniqueEmail("vm") } });
+    await addSeatByHand({ accountId: victim.accountId, email: uniqueEmail("vm") });
     const seat = await db
       .prepare("SELECT id FROM seats WHERE account_id = ? AND role = 'member'")
       .bind(victim.accountId)
@@ -320,10 +320,10 @@ describe("Security review", () => {
   });
 
   it("Security: a member gets 403 on every owner-only action and nothing changes", async () => {
-    const owner = await signInTrial({ email: uniqueEmail("seat-owner"), plan: "agency" });
+    const owner = await signInTrial({ email: uniqueEmail("seat-owner") });
     const memberEmail = uniqueEmail("seat-member");
-    await call({ cookie: owner.cookie, path: "/api/seats", method: "POST", body: { email: memberEmail } });
-    const member = readSessionCookie(await followMagicLink(await readMagicLink(memberEmail))).pair;
+    await addSeatByHand({ accountId: owner.accountId, email: memberEmail });
+    const member = await signIn(memberEmail);
     const ownerSeat = await db
       .prepare("SELECT id FROM seats WHERE account_id = ? AND role = 'owner'")
       .bind(owner.accountId)

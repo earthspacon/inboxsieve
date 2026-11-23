@@ -85,11 +85,9 @@ describe("screenshots", () => {
 
   it.each(VIEWPORTS)("public, team and billing pages ($label)", async ({ label, size }) => {
     const visitor = await openSession({ browser, viewport: size });
-    const agency = await prepareAccount({ browser, viewport: size, plan: "agency" });
-    await agency.session.page.goto("/app/team");
-    await agency.session.page.getByLabel("Teammate email").fill(uniqueEmail("teammate"));
-    await agency.session.page.getByRole("button", { name: "Send invite" }).click();
-    await agency.session.page.getByText("2 of 3 seats used").waitFor();
+    const paid = await prepareAccount({ browser, viewport: size });
+    await paid.session.page.goto("/app/team");
+    await paid.session.page.getByRole("heading", { name: "Team" }).waitFor();
     const free = await openSession({ browser, viewport: size });
     await signInWithUi({ page: free.page, email: uniqueEmail("free") });
     await free.page.getByRole("heading", { name: "What's the business called?" }).waitFor();
@@ -98,8 +96,8 @@ describe("screenshots", () => {
     await capture({ session: visitor, label, shot: PRICING });
     await capture({ session: visitor, label, shot: SPAM_FILTER });
     await capture({ session: visitor, label, shot: CHILI_PIPER_ALTERNATIVE });
-    await capture({ session: agency.session, label, shot: TEAM });
-    await capture({ session: agency.session, label, shot: BILLING });
+    await capture({ session: paid.session, label, shot: TEAM });
+    await capture({ session: paid.session, label, shot: BILLING });
     await capture({ session: free, label, shot: BILLING_FREE });
     await capture({ session: free, label, shot: BILLING_TRIAL });
 
@@ -176,8 +174,8 @@ const BILLING_FREE: Shot = {
 const BILLING_TRIAL: Shot = {
   name: "billing-trial",
   open: async (page) => {
-    await page.getByRole("button", { name: "Try Solo free for 14 days" }).click();
-    await page.getByText(/Your Solo trial ends on/).waitFor();
+    await page.getByRole("button", { name: "Try it free for 14 days" }).click();
+    await page.getByText(/Your free trial ends on/).waitFor();
   },
 };
 
@@ -270,14 +268,12 @@ async function capture({ session, label, shot }: { session: Session; label: stri
 async function prepareAccount({
   browser,
   viewport,
-  plan = "solo",
 }: {
   browser: Browser;
   viewport: typeof DESKTOP;
-  plan?: "solo" | "agency";
 }) {
   const email = uniqueEmail("shots");
-  const { brandId } = await createTrialAccount({ email, plan });
+  const { brandId } = await createTrialAccount({ email });
   const session = await openSession({ browser, viewport });
   await signInWithUi({ page: session.page, email });
   await session.page.getByRole("heading", { name: "Inbox" }).waitFor();

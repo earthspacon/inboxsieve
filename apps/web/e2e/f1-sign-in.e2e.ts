@@ -51,12 +51,12 @@ describe("F1 sign-in", () => {
     expect(me.body.account.plan).toBe("free");
   });
 
-  it("F1: the signed subscription.created webhook moves the account onto Solo", async () => {
+  it("F1: the signed subscription.created webhook moves the account onto the paid plan", async () => {
     const { page } = session;
 
     const result = await sendPaddleFixture({ fixture: "subscription.created", accountId });
     await page.goto("/app/billing");
-    await page.getByRole("heading", { name: "You're on Solo" }).waitFor();
+    await page.getByRole("heading", { name: "You're on the $4 / month · cancel anytime plan" }).waitFor();
 
     expect(result.body.outcome).toBe("applied");
   });

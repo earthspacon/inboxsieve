@@ -43,7 +43,7 @@
         "next_billed_at": "2026-12-27T10:00:00.000Z",
         "trial_dates": null,
         "price": {
-          "id": "pri_solo_monthly_example",
+          "id": "pri_monthly_example",
           "product_id": "pro_01jexampleproduct00000000",
           "description": "Solo monthly",
           "type": "standard",

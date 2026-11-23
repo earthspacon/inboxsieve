@@ -42,7 +42,7 @@
           "ends_at": "2026-11-27T10:00:00.000Z"
         },
         "price": {
-          "id": "pri_solo_monthly_example",
+          "id": "pri_monthly_example",
           "product_id": "pro_01jexampleproduct00000000",
           "description": "Solo monthly",
           "type": "standard",

@@ -3,6 +3,7 @@ import { useGate, useUnit } from "effector-react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 
+import { PAID_PRICE_LABEL } from "../pricing/config";
 import { $alertForm, alertFormChanged, alertsSaveClicked, AlertsGate, saveAlertsFx } from "../alerts/model";
 import { $brand, $plan } from "../session/model";
 import { Banner, BUTTON_PRIMARY, Card, INPUT, PageHeader } from "../shared/ui";
@@ -87,7 +88,7 @@ const SlackFields = () => {
   if (!plan || !PLAN_LIMITS[plan].slackAlerts) {
     return (
       <p className="text-sm text-slate-600">
-        Slack alerts come with Solo and Agency.{" "}
+        Slack alerts come with the {PAID_PRICE_LABEL} plan.{" "}
         <Link to="/app/billing" className="font-semibold text-brand-ink underline">
           Upgrade
         </Link>

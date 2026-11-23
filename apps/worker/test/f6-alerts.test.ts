@@ -44,7 +44,7 @@ function stubNetwork({ slackStatus = 200 }: { slackStatus?: number } = {}) {
 }
 
 async function setUpBrand() {
-  const owner = await seedAccount({ plan: "agency" });
+  const owner = await seedAccount();
   await db
     .prepare(
       `INSERT INTO seats (id, account_id, user_id, email, role, status, created_at) VALUES (?, ?, NULL, ?, 'member', 'active', ?)`,
