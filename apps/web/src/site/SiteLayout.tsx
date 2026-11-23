@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { Logo } from "../app/AppShell";
 import { ThemeToggle } from "../shared/ThemeToggle";
-import { BUTTON_PRIMARY } from "../shared/ui";
+import { BUTTON_PRIMARY, TAP_TARGET } from "../shared/ui";
 import { CONTACT_EMAIL, FOOTER_LINKS, SELLER_LEGAL_NAME, START_CTA } from "./config";
 import { findSeoPage } from "./seo";
 
@@ -24,10 +24,10 @@ export const SiteLayout = ({ children }: { children: ReactNode }) => {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <Logo to="/" />
           <nav className="flex items-center gap-4 text-sm">
-            <Link to="/pricing" className="text-slate-600 hover:text-slate-900">
+            <Link to="/pricing" className={`${TAP_TARGET} text-slate-600 hover:text-slate-900`}>
               Pricing
             </Link>
-            <Link to="/sign-in" className="text-slate-600 hover:text-slate-900 max-sm:hidden">
+            <Link to="/sign-in" className={`${TAP_TARGET} text-slate-600 hover:text-slate-900 max-sm:hidden`}>
               Sign in
             </Link>
             <ThemeToggle />
@@ -43,10 +43,10 @@ export const SiteLayout = ({ children }: { children: ReactNode }) => {
           <span>
             © {SELLER_LEGAL_NAME} · {CONTACT_EMAIL}
           </span>
-          <nav className="flex flex-wrap gap-4">
+          <nav className="flex flex-wrap gap-x-4">
             {FOOTER_LINKS.map((link) => {
               return (
-                <Link key={link.to} to={link.to} className="hover:text-slate-900">
+                <Link key={link.to} to={link.to} className={`${TAP_TARGET} hover:text-slate-900`}>
                   {link.label}
                 </Link>
               );

@@ -28,6 +28,7 @@ import {
   PageHeader,
   ScoreBadge,
   StagePill,
+  TAP_TARGET,
 } from "../shared/ui";
 
 const PENDING_STATUSES = new Set(["received", "parsed", "queued", "analyzing"]);
@@ -129,7 +130,7 @@ const Chip = ({
       type="button"
       aria-pressed={isActive}
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-xs font-medium ${isActive ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 bg-surface text-slate-600 hover:border-slate-300"}`}
+      className={`${TAP_TARGET} rounded-full border px-3 text-xs font-medium ${isActive ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 bg-surface text-slate-600 hover:border-slate-300"}`}
     >
       {label}
       {typeof count === "number" && (

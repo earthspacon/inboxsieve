@@ -32,6 +32,7 @@ import {
   LoadingState,
   ScoreBadge,
   StagePill,
+  TAP_TARGET,
 } from "../shared/ui";
 
 const PENDING_STATUSES = new Set(["received", "parsed", "queued", "analyzing"]);
@@ -43,7 +44,7 @@ export const LeadPage = () => {
 
   return (
     <div className="space-y-4">
-      <Link to="/app" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
+      <Link to="/app" className={`${TAP_TARGET} gap-1 text-sm text-slate-500 hover:text-slate-900`}>
         <ArrowLeft className="size-4" />
         Inbox
       </Link>
@@ -166,7 +167,7 @@ const MessageCard = ({ lead, brandId }: { lead: LeadDetailDto; brandId: string }
             href={buildOriginalUrl({ lead, brandId })}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
+            className={`${TAP_TARGET} gap-1 text-xs text-slate-500 hover:text-slate-900`}
           >
             View original
             <ExternalLink className="size-3" />

@@ -16,6 +16,7 @@ import {
   type Session,
 } from "./helpers";
 
+const MIN_TOUCH_PX = 32;
 const MAX_HEADER_PX = 64;
 const SAME_ROW_TOLERANCE_PX = 4;
 
@@ -32,6 +33,19 @@ async function measureHeader(page: Page) {
       rowSpread: centers.length ? Math.max(...centers) - Math.min(...centers) : 0,
     };
   });
+}
+
+async function listSmallTargets(page: Page, minPx: number) {
+  return page.evaluate((limit) => {
+    const targets = Array.from(document.querySelectorAll("a, button, input, select, textarea, [role=button]"));
+    return targets
+      .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+      .filter(({ rect }) => rect.width > 0 && rect.height > 0 && (rect.height < limit || rect.width < limit))
+      .map(({ element, rect }) => {
+        const text = element.textContent || element.getAttribute("aria-label") || "";
+        return `${element.tagName.toLowerCase()}:${text.trim().slice(0, 24)}:${Math.round(rect.width)}x${Math.round(rect.height)}`;
+      });
+  }, minPx);
 }
 
 describe("Layout at 390", () => {
@@ -84,6 +98,18 @@ describe("Layout at 390", () => {
       expect(header.height, `${path} header height`).toBeLessThanOrEqual(MAX_HEADER_PX);
       expect(header.rowSpread, `${path} header row spread`).toBeLessThanOrEqual(SAME_ROW_TOLERANCE_PX);
     }
+  });
+
+  it("every tap target on the landing, inbox and lead pages is at least 32 px", async () => {
+    const { page } = session;
+    const small: Record<string, string[]> = {};
+    for (const path of ["/", "/app", `/app/leads/${leadId}`]) {
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+      small[path.replace(leadId, ":id")] = await listSmallTargets(page, MIN_TOUCH_PX);
+    }
+
+    expect(small).toEqual({ "/": [], "/app": [], "/app/leads/:id": [] });
   });
 
   it("the reply-draft buttons are not covered by the bottom nav", async () => {

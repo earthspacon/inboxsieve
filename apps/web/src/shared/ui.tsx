@@ -4,6 +4,9 @@ import type { ReactNode } from "react";
 
 import { CATEGORY_CONFIG, STAGE_CONFIG } from "../leads/config";
 
+// Keeps small links and chips at the 32 px minimum tap size on phones.
+export const TAP_TARGET = "inline-flex min-h-8 min-w-8 items-center justify-center";
+
 export const BUTTON_PRIMARY =
   "inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:opacity-50";
 export const BUTTON_SECONDARY =

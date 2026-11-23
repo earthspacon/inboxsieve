@@ -1,7 +1,7 @@
 import type { BillingInterval, Plan } from "@inboxsieve/contract";
 import type { ReactNode } from "react";
 
-import { Card } from "../shared/ui";
+import { Card, TAP_TARGET } from "../shared/ui";
 import { PLAN_CARDS, type PlanCard } from "./config";
 
 export const IntervalToggle = ({
@@ -24,7 +24,7 @@ export const IntervalToggle = ({
             type="button"
             aria-pressed={interval === option}
             onClick={() => onChange(option)}
-            className={`rounded-md px-3 py-1 font-medium ${interval === option ? "bg-brand-600 text-white" : "text-slate-600"}`}
+            className={`${TAP_TARGET} rounded-md px-3 font-medium ${interval === option ? "bg-brand-600 text-white" : "text-slate-600"}`}
           >
             {option === "monthly" ? "Monthly" : "Yearly (2 months free)"}
           </button>
