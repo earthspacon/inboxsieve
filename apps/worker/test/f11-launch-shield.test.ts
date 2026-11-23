@@ -383,6 +383,8 @@ describe("Security review", () => {
     }
     const csp = responses[0].headers.get("content-security-policy") ?? "";
     expect(csp).toContain("script-src 'self' https://challenges.cloudflare.com https://cdn.paddle.com");
+    expect(csp).toContain("https://static.cloudflareinsights.com");
+    expect(csp).toContain("connect-src 'self' https://*.paddle.com https://cloudflareinsights.com");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(responses[0].headers.get("strict-transport-security")).toMatch(/max-age=\d{8}/);
   });

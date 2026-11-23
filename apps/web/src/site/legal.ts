@@ -90,6 +90,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
           "Account: email address, sign-in sessions, plan and subscription status.",
           "Leads: sender name, email, company, message, the parsed fields and our AI analysis.",
           "We don't use advertising trackers in the app.",
+          "We count page views on this site with Cloudflare Web Analytics, which sets no cookies and collects no personal data.",
         ],
       },
       {
