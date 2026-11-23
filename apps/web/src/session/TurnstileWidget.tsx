@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { loadTurnstile, TURNSTILE_SITE_KEY } from "./turnstile";
+import { getTurnstileTheme, loadTurnstile, TURNSTILE_SITE_KEY } from "./turnstile";
 
 type Props = {
   onSolved: (token: string) => void;
@@ -23,6 +23,7 @@ export const TurnstileWidget = ({ onSolved, onExpired }: Props) => {
         widgetId = turnstile.render(container.current, {
           sitekey: TURNSTILE_SITE_KEY,
           size: "flexible",
+          theme: getTurnstileTheme(),
           callback: onSolved,
           "expired-callback": onExpired,
           "error-callback": onExpired,
