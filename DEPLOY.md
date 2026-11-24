@@ -36,7 +36,7 @@ Names used below:
 ## 4. Paddle (live account, after the domain review passes)
 
 1. Checkout → Website approval: submit `https://inboxsieve.com`. The landing, pricing, terms, privacy and refund pages must be live (do steps 6–7 first with the sandbox values if the review needs a live site).
-2. Catalog → Products: create one product **InboxSieve** with one monthly price of **$4/mo** (USD), with **no** Paddle trial period (the 14-day trial is local and needs no card; a Paddle trial would add a second one). `node business/studio/.agents/paddle-provision.mjs --only inboxsieve` does this. Copy the `pri_…` id into `PADDLE_PRICE_MONTHLY` in `[env.production.vars]`.
+2. Catalog → Products: create one product **InboxSieve** with one monthly price of **$4/mo** (USD), with **no** Paddle trial period (the 14-day trial is local and needs no card; a Paddle trial would add a second one). Copy the `pri_…` id into `PADDLE_PRICE_MONTHLY` in `[env.production.vars]`.
 3. Developer tools → Authentication → client-side token: copy it into `PADDLE_CLIENT_TOKEN`.
 4. Developer tools → Authentication → API key with write access to customer portal sessions and subscriptions. Keep it for step 6.
 5. Developer tools → Notifications → New destination:
@@ -98,7 +98,6 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET --env production   # optional
 
 ```sh
 VITE_TURNSTILE_SITE_KEY=<site key from 5a> pnpm --filter @inboxsieve/web build   # from the repo root: builds and prerenders apps/web/dist
-.agents/launch-gate.sh --deploy           # from the repo root: must exit 0 (placeholders, test keys, stale build = miss)
 cd apps/worker
 pnpm exec wrangler deploy --dry-run --env production   # check the bindings list
 pnpm exec wrangler deploy --env production

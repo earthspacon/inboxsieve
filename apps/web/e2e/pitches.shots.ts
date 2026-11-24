@@ -4,6 +4,7 @@ import path from "node:path";
 import type { Browser } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { SHOTS_DIR as BASE_SHOTS_DIR } from "./config";
 import {
   createSource,
   createTrialAccount,
@@ -20,8 +21,7 @@ import {
 } from "./helpers";
 
 // Run with `SHOTS=1 vitest run --config vitest.e2e.config.ts pitches`.
-const SHOTS_DIR =
-  process.env.PITCHES_SHOTS_DIR ?? "/tmp/shots/pitches";
+const SHOTS_DIR = process.env.PITCHES_SHOTS_DIR ?? path.join(BASE_SHOTS_DIR, "pitches");
 
 const AGENCY_PITCH = {
   name: "Lena Brooks",
@@ -69,7 +69,7 @@ describe("pitches screenshots", () => {
     await page.getByRole("button", { name: "Pitches", exact: true }).click();
     await page.getByText(HOT_LEAD.subject).waitFor({ state: "detached" });
     await page.getByText(AGENCY_PITCH.subject).waitFor();
-    await page.screenshot({ path: path.join(SHOTS_DIR, `pitches-${label}.png`), fullPage: true });
+    await page.screenshot({ path: path.join(BASE_SHOTS_DIR, `pitches-${label}.png`), fullPage: true });
 
     expect(consoleErrors).toEqual([]);
   });

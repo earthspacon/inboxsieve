@@ -5,7 +5,7 @@ import path from "node:path";
 import type { LeadDetailDto, SourceDto } from "@inboxsieve/contract";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
-import { CHROME_PATH, E2E_URL, PADDLE_TEST_SECRET } from "./config";
+import { findChromePath, E2E_URL, PADDLE_TEST_SECRET } from "./config";
 
 export const DESKTOP = { width: 1440, height: 900 };
 export const MOBILE = { width: 390, height: 844 };
@@ -26,7 +26,7 @@ export function uniqueEmail(prefix: string) {
 }
 
 export async function launchBrowser() {
-  return chromium.launch({ executablePath: CHROME_PATH });
+  return chromium.launch({ executablePath: findChromePath() });
 }
 
 export async function openSession({
