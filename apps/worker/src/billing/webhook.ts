@@ -125,6 +125,11 @@ async function applyPaddleEvent({ deps, event }: { deps: Deps; event: PaddleEven
   if (row.last_event_at && event.occurredAt < row.last_event_at) {
     return "stale";
   }
+  const pricePlan = findPlanByPrice({ env: deps.env, priceId: data.priceId });
+  // A new subscription to a price that isn't ours never unlocks the plan; one we already track keeps syncing.
+  if (data.priceId && !pricePlan && row.paddle_subscription_id !== data.id) {
+    return "unknown_price";
+  }
 
   const transition = nextSubscriptionStatus({
     current: row.status,
@@ -136,7 +141,7 @@ async function applyPaddleEvent({ deps, event }: { deps: Deps; event: PaddleEven
 
   const planChange = decidePlanChange({
     row,
-    newPlan: findPlanByPrice({ env: deps.env, priceId: data.priceId }) ?? row.plan,
+    newPlan: pricePlan ?? row.plan,
     periodEnd: data.periodEnd ?? row.current_period_end,
     now: deps.now(),
   });

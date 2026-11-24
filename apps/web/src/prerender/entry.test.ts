@@ -46,14 +46,15 @@ describe("prerender", () => {
     expect(html).toContain("87 Hot");
   });
 
-  it("the landing page has SoftwareApplication with Free $0, the $4 plan and an FAQPage", () => {
+  it("the landing page has SoftwareApplication with Free $0, the $4 monthly and $40 yearly offers and an FAQPage", () => {
     const graph: Array<Record<string, unknown>> = readJsonLd(readFile("index.html"))["@graph"];
     const app = graph.find((node) => node["@type"] === "SoftwareApplication");
     const faq = graph.find((node) => node["@type"] === "FAQPage");
 
     expect(app?.offers).toEqual([
       expect.objectContaining({ name: "Free", price: "0", priceCurrency: "USD" }),
-      expect.objectContaining({ name: "InboxSieve", price: "4", priceCurrency: "USD" }),
+      expect.objectContaining({ name: "InboxSieve, monthly", price: "4", priceCurrency: "USD" }),
+      expect.objectContaining({ name: "InboxSieve, yearly", price: "40", priceCurrency: "USD" }),
     ]);
     expect(faq?.mainEntity).toEqual(expect.arrayContaining([expect.objectContaining({ "@type": "Question" })]));
   });
@@ -62,7 +63,8 @@ describe("prerender", () => {
     for (const page of SEO_PAGES) {
       const html = readFile(page.path === "/" ? "index.html" : `${page.path.slice(1)}.html`);
       const header = /<header.*?<\/header>/s.exec(html)?.[0] ?? "";
-      const signIn = /<a [^>]*href="\/sign-in"[^>]*>(?:(?!<\/a>).)*Sign in(?:(?!<\/a>).)*<\/a>/s.exec(header)?.[0] ?? "";
+      const signIn =
+        /<a [^>]*href="\/sign-in"[^>]*>(?:(?!<\/a>).)*Sign in(?:(?!<\/a>).)*<\/a>/s.exec(header)?.[0] ?? "";
 
       expect(signIn, page.path).toContain("Open dashboard");
       expect(signIn, page.path).not.toMatch(/max-(sm|md):hidden|class="hidden/);
@@ -119,13 +121,22 @@ describe("prerender", () => {
     expect(html).toContain("$0.70");
     expect(html).toContain("$2.80");
     expect(html).not.toMatch(/\$5\b|\$15\b|\$50\b|\$150\b|\$3\.75|\$11\.55/);
-    expect(html).not.toMatch(/\b(Solo|Agency|Starter|Growth|Yearly|yearly)\b/);
+    expect(html).not.toMatch(/\b(Solo|Agency|Starter|Growth)\b/);
   });
 
-  it("no public page names a tier, a yearly price or a pack", () => {
+  it("the prerendered pricing page shows Monthly and keeps the hidden $40 yearly price and its JSON-LD offer", () => {
+    const html = readFile("pricing.html");
+
+    expect(html).toMatch(/<button[^>]*aria-pressed="true"[^>]*>Monthly<\/button>/);
+    expect(html).toMatch(/<p hidden=""[^>]*>\$40 \/ year<span[^>]*>· <!-- -->2 months free<\/span>/);
+    expect(html).toContain("$31.50");
+    expect(html).toContain('"price":"40"');
+  });
+
+  it("no public page names a tier or a pack", () => {
     const pages = [...files].map(([file, content]) => [file, content]).concat([["llms.txt", LLMS]]);
     for (const [file, content] of pages) {
-      expect(content, file).not.toMatch(/\b(Solo|Agency|Starter|Growth|Pro plan|yearly|per year|pack)\b/);
+      expect(content, file).not.toMatch(/\b(Solo|Agency|Starter|Growth|Pro plan|pack)\b/);
     }
   });
 

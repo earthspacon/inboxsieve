@@ -8,6 +8,7 @@ export type Env = {
   PADDLE_ENV: string;
   PADDLE_CLIENT_TOKEN?: string;
   PADDLE_PRICE_MONTHLY?: string;
+  PADDLE_PRICE_YEARLY?: string;
   BETTER_AUTH_SECRET: string;
   GROQ_API_KEY?: string;
   BREVO_API_KEY?: string;

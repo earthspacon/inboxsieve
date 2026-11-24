@@ -1,4 +1,5 @@
 import type { Analysis, Category } from "./analysis";
+import type { BillingPeriod } from "./pricing";
 
 // "solo" is the internal key of the one $4 plan; the UI never shows it.
 export type Plan = "free" | "solo";
@@ -216,6 +217,8 @@ export type BillingDto = {
   trialEndsAt: string | null;
   canStartTrial: boolean;
   hasPaidSubscription: boolean;
+  // Which price the Paddle subscription is on; monthly when there is none yet.
+  billingPeriod: BillingPeriod;
   scheduledChange: ScheduledChange | null;
   pastDueSince: string | null;
   isAnalysisPaused: boolean;
@@ -223,8 +226,8 @@ export type BillingDto = {
   checkout: {
     environment: "sandbox" | "production";
     clientToken: string | null;
-    // The Paddle price of the one $4/month plan.
-    priceId: string | null;
+    // The Paddle prices of the one paid plan: $4 a month and $40 a year.
+    priceIds: Record<BillingPeriod, string | null>;
   };
 };
 

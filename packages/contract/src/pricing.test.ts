@@ -7,11 +7,15 @@ function sumLines(breakdown: PriceBreakdown) {
 }
 
 describe("plan prices", () => {
-  it("one paid plan: $4 a month, Free stays $0 (owner 2026-11-23 21:41)", () => {
+  it("one paid plan: $4 a month or $40 a year, Free stays $0 (owner 2026-11-24 10:20)", () => {
     expect(PLAN_PRICES).toEqual({
-      free: { monthlyCents: 0 },
-      solo: { monthlyCents: 400 },
+      free: { monthlyCents: 0, yearlyCents: 0 },
+      solo: { monthlyCents: 400, yearlyCents: 4000 },
     });
+  });
+
+  it("the yearly price is 10 monthly prices, so 2 months are free", () => {
+    expect(PLAN_PRICES.solo.yearlyCents).toBe(PLAN_PRICES.solo.monthlyCents * 10);
   });
 });
 
@@ -23,6 +27,16 @@ describe("itemized price breakdown", () => {
       aiCents: 20,
       hostingCents: 30,
       ourFeeCents: 280,
+    });
+  });
+
+  it("$40 a year: Paddle $2.50 once, AI $2.40 and hosting $3.60 for 12 months, our fee $31.50", () => {
+    expect(buildPriceBreakdown("solo", { period: "yearly" })).toEqual({
+      priceCents: 4000,
+      paymentCents: 250,
+      aiCents: 240,
+      hostingCents: 360,
+      ourFeeCents: 3150,
     });
   });
 

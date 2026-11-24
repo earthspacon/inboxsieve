@@ -9,7 +9,7 @@ import {
 } from "@inboxsieve/contract";
 
 import { createPortalSession, getPaddleEnvironment } from "../billing/paddle-api";
-import { findPriceId } from "../billing/prices";
+import { findPriceIds } from "../billing/prices";
 import { nextSubscriptionStatus } from "../billing/state";
 import type { Deps } from "../deps";
 import { HttpError, json, route, type Route } from "../http";
@@ -82,6 +82,7 @@ async function loadBilling({ deps, accountId }: { deps: Deps; accountId: string 
   const graceStart = new Date(deps.now().getTime() - PAST_DUE_GRACE_DAYS * DAY_MS).toISOString();
   const scheduledChange: ScheduledChange | null = row.scheduled_change ? JSON.parse(row.scheduled_change) : null;
   const isFree = SUBSCRIPTION_RULES[row.status].isFree;
+  const priceIds = findPriceIds(deps.env);
   const isLocalTrial = row.status === "trialing" && row.paddle_subscription_id === null;
   const billing: BillingDto = {
     plan: getEffectivePlan({ paidPlan: row.plan, subscription: row.status }),
@@ -91,6 +92,7 @@ async function loadBilling({ deps, accountId }: { deps: Deps; accountId: string 
     trialEndsAt: isLocalTrial ? row.trial_ends_at : null,
     canStartTrial: isFree && row.trial_ends_at === null,
     hasPaidSubscription: !isFree && row.paddle_subscription_id !== null,
+    billingPeriod: row.paddle_price_id && row.paddle_price_id === priceIds.yearly ? "yearly" : "monthly",
     scheduledChange,
     pastDueSince: row.past_due_since,
     isAnalysisPaused: row.status === "past_due" && row.past_due_since !== null && row.past_due_since <= graceStart,
@@ -98,7 +100,7 @@ async function loadBilling({ deps, accountId }: { deps: Deps; accountId: string 
     checkout: {
       environment: getPaddleEnvironment(deps.env),
       clientToken: deps.env.PADDLE_CLIENT_TOKEN || null,
-      priceId: findPriceId(deps.env),
+      priceIds,
     },
   };
   return billing;

@@ -12,7 +12,7 @@
 
 ## Pricing (USD, sales tax/VAT added by Paddle where due)
 - Free: $0, forever, no card needed. 1 brand, 1 source, 50 analyzed leads/month, 1 seat, email alerts (no Slack), CSV export.
-- Paid: $4/month, one plan, cancel anytime. 1 brand, 2 sources, 500 analyzed leads/month, 1 seat, Slack alerts.
+- Paid: $4/month or $40/year (2 months free), one plan, cancel anytime. 1 brand, 2 sources, 500 analyzed leads/month, 1 seat, Slack alerts.
 - Sign-up starts on Free. The paid plan can be tried free for 14 days, no card needed; afterwards the workspace returns to Free unless you subscribe. Cancel any time. 14-day refund, no questions asked.
 - A canceled subscription falls back to Free at the end of the paid period. Extra brands become read-only; nothing is deleted.
 - Over the limit, leads are stored but not analyzed. Nothing is lost.

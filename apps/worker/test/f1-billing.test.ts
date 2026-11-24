@@ -15,7 +15,7 @@ import {
   seedSource,
   uniqueEmail,
 } from "./helpers";
-import { buildPaddleEvent, postPaddleEvent, sendFixture } from "./paddle";
+import { buildPaddleEvent, postPaddleEvent, sendFixture, type PaddleFixture } from "./paddle";
 import { BASE, signIn } from "./session";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -28,6 +28,23 @@ async function readStatus(accountId: string) {
     .bind(accountId)
     .first<{ status: string; plan: string }>();
   return row;
+}
+
+function buildPaddleEventWithPrice({
+  fixture,
+  accountId,
+  priceId,
+  eventType,
+}: {
+  fixture: PaddleFixture;
+  accountId: string;
+  priceId: string;
+  eventType?: string;
+}) {
+  const event = JSON.parse(buildPaddleEvent({ fixture, options: { accountId } }));
+  event.data.items[0].price.id = priceId;
+  event.event_type = eventType ?? event.event_type;
+  return JSON.stringify(event);
 }
 
 async function seedFreeAccount() {
@@ -52,6 +69,63 @@ describe("F1 billing: Paddle webhooks", () => {
     expect(result).toEqual({ status: 200, body: { received: true, outcome: "applied" } });
     expect(await readStatus(me.account.id)).toEqual({ status: "trialing", plan: "solo" });
     expect(after.status).toBe(200);
+  });
+
+  it("F1 billing: a subscription to the $40 yearly price moves a Free account to the paid plan", async () => {
+    const { accountId } = await seedFreeAccount();
+
+    const result = await postPaddleEvent({
+      body: buildPaddleEventWithPrice({ fixture: "created", accountId, priceId: env.PADDLE_PRICE_YEARLY }),
+    });
+
+    expect(await result.json()).toEqual({ received: true, outcome: "applied" });
+    expect(await readStatus(accountId)).toEqual({ status: "trialing", plan: "solo" });
+  });
+
+  it("F1 billing: GET /api/billing tells a yearly subscriber they are on the yearly price", async () => {
+    const cookie = await signIn(uniqueEmail("f1year"));
+    const me = await (await SELF.fetch(`${BASE}/api/me`, { headers: { cookie } })).json<{ account: { id: string } }>();
+    await postPaddleEvent({
+      body: buildPaddleEventWithPrice({
+        fixture: "activated",
+        accountId: me.account.id,
+        priceId: env.PADDLE_PRICE_YEARLY,
+      }),
+    });
+
+    const response = await SELF.fetch(`${BASE}/api/billing`, { headers: { cookie } });
+
+    expect(await response.json()).toMatchObject({
+      plan: "solo",
+      hasPaidSubscription: true,
+      billingPeriod: "yearly",
+    });
+  });
+
+  it("F1 billing: a yearly subscription.updated to active keeps the paid plan", async () => {
+    const { accountId } = await seedFreeAccount();
+    const body = buildPaddleEventWithPrice({
+      fixture: "activated",
+      accountId,
+      priceId: env.PADDLE_PRICE_YEARLY,
+      eventType: "subscription.updated",
+    });
+
+    const result = await postPaddleEvent({ body });
+
+    expect(await result.json()).toEqual({ received: true, outcome: "applied" });
+    expect(await readStatus(accountId)).toEqual({ status: "active", plan: "solo" });
+  });
+
+  it("F1 billing: a new subscription to a price that isn't ours leaves the account on Free", async () => {
+    const { accountId } = await seedFreeAccount();
+
+    const result = await postPaddleEvent({
+      body: buildPaddleEventWithPrice({ fixture: "activated", accountId, priceId: "pri_someone_elses" }),
+    });
+
+    expect(await result.json()).toEqual({ received: true, outcome: "unknown_price" });
+    expect((await readStatus(accountId))?.status).toBe("no_subscription");
   });
 
   it("F1 billing: .updated, .past_due and .canceled fixtures move the account to the matching state", async () => {
@@ -216,9 +290,13 @@ describe("F1 billing: Paddle webhooks", () => {
     expect(await response.json()).toMatchObject({
       plan: "free",
       subscription: "no_subscription",
+      billingPeriod: "monthly",
       checkout: {
         environment: "sandbox",
-        priceId: env.PADDLE_PRICE_MONTHLY,
+        priceIds: {
+          monthly: env.PADDLE_PRICE_MONTHLY,
+          yearly: env.PADDLE_PRICE_YEARLY,
+        },
       },
     });
   });

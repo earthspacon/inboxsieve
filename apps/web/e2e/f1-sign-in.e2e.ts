@@ -56,7 +56,7 @@ describe("F1 sign-in", () => {
 
     const result = await sendPaddleFixture({ fixture: "subscription.created", accountId });
     await page.goto("/app/billing");
-    await page.getByRole("heading", { name: "You're on the $4 / month · cancel anytime plan" }).waitFor();
+    await page.getByRole("heading", { name: "You're on the $4 / month plan" }).waitFor();
 
     expect(result.body.outcome).toBe("applied");
   });

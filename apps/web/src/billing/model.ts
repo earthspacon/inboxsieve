@@ -4,6 +4,7 @@ import { createGate } from "effector-react";
 
 import { $me, meRefreshRequested } from "../session/model";
 import { apiRequest, ApiRequestError } from "../shared/api";
+import { $period } from "../pricing/model";
 import { createRemote } from "../shared/remote";
 import { toastShown } from "../shared/toast-model";
 import { loadPaddle, openPaddleCheckout } from "./paddle";
@@ -35,12 +36,13 @@ const openCheckoutFx = attach({
   source: {
     billing: billingRemote.$data,
     me: $me,
+    period: $period,
   },
-  effect: async ({ billing, me }) => {
+  effect: async ({ billing, me, period }) => {
     if (!billing || !me) {
       throw new Error("Billing isn't loaded yet");
     }
-    const { priceId } = billing.checkout;
+    const priceId = billing.checkout.priceIds[period];
     if (!priceId) {
       throw new Error("Checkout isn't open yet. Try again in a day or write to us.");
     }

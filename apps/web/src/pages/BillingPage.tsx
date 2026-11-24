@@ -1,4 +1,4 @@
-import { PLAN_LIMITS, type BillingDto, type Plan } from "@inboxsieve/contract";
+import { PLAN_LIMITS, type BillingDto } from "@inboxsieve/contract";
 import { useGate, useUnit } from "effector-react";
 import { Loader2 } from "lucide-react";
 
@@ -13,7 +13,8 @@ import {
   startTrialFx,
   trialStartClicked,
 } from "../billing/model";
-import { FREE_TAGLINE, PAID_PRICE_LABEL, PLAN_NAMES, TRIAL_CTA } from "../pricing/config";
+import { FREE_TAGLINE, PAID_PRICE_LABEL, PERIOD_PRICE_LABELS, TRIAL_CTA } from "../pricing/config";
+import { $period } from "../pricing/model";
 import { PlanCards } from "../pricing/PlanCards";
 import { $isOwner } from "../session/model";
 import {
@@ -35,11 +36,6 @@ const STATUS_TEXT: Record<BillingDto["subscription"], string> = {
   paused: "Paused",
   canceled: "Canceled",
   expired: "Ended, on Free",
-};
-
-const CURRENT_PLAN_TEXT: Record<Plan, string> = {
-  free: "You're on the Free plan",
-  solo: `You're on the ${PAID_PRICE_LABEL} plan`,
 };
 
 export const BillingPage = () => {
@@ -105,12 +101,13 @@ const BillingNotices = ({ billing }: { billing: BillingDto }) => {
 
 const CurrentPlan = ({ billing, isOwner }: { billing: BillingDto; isOwner: boolean }) => {
   const { isOpening } = useUnit({ isOpening: portalFx.pending });
+  const planName = billing.plan === "free" ? "Free" : PERIOD_PRICE_LABELS[billing.billingPeriod];
 
   return (
     <Card className="space-y-3 p-5">
-      <h2 className="text-lg font-semibold">{CURRENT_PLAN_TEXT[billing.plan]}</h2>
+      <h2 className="text-lg font-semibold">You're on the {planName} plan</h2>
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
-        <Fact label="Plan" value={PLAN_NAMES[billing.plan]} />
+        <Fact label="Plan" value={planName} />
         <Fact label="Status" value={STATUS_TEXT[billing.subscription]} />
         <Fact
           label="Current period ends"
@@ -129,8 +126,8 @@ const CurrentPlan = ({ billing, isOwner }: { billing: BillingDto; isOwner: boole
             Manage billing
           </button>
           <p className="text-xs text-slate-500">
-            Update your card, download invoices or cancel in the Paddle portal. A cancel applies at the end of the
-            paid month.
+            Update your card, download invoices or cancel in the Paddle portal. A cancel applies at the end of the paid
+            period.
           </p>
         </div>
       )}
@@ -165,14 +162,22 @@ const Upgrade = ({ billing }: { billing: BillingDto }) => {
           if (plan === "free") {
             return null;
           }
-          return (
-            <button type="button" onClick={() => checkoutClicked()} className={`${BUTTON_PRIMARY} min-h-11 w-full`}>
-              Upgrade for {PLAN_NAMES[plan]}
-            </button>
-          );
+          return <UpgradeButton />;
         }}
       />
     </section>
+  );
+};
+
+const UpgradeButton = () => {
+  const { period } = useUnit({
+    period: $period,
+  });
+
+  return (
+    <button type="button" onClick={() => checkoutClicked()} className={`${BUTTON_PRIMARY} min-h-11 w-full`}>
+      Upgrade for {PERIOD_PRICE_LABELS[period]}
+    </button>
   );
 };
 

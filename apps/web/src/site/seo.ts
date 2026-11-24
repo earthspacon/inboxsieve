@@ -86,7 +86,8 @@ export function buildJsonLd(page: SeoPage) {
       operatingSystem: "Web",
       offers: [
         buildOffer({ name: "Free", price: "0" }),
-        buildOffer({ name: "InboxSieve", price: String(PLAN_PRICES.solo.monthlyCents / 100) }),
+        buildOffer({ name: "InboxSieve, monthly", price: String(PLAN_PRICES.solo.monthlyCents / 100) }),
+        buildOffer({ name: "InboxSieve, yearly", price: String(PLAN_PRICES.solo.yearlyCents / 100) }),
       ],
     },
   ];

@@ -44,7 +44,7 @@ describe("Free plan and the no-card trial", () => {
   it("Trial: one click starts the paid plan for 14 days and the trial button goes away", async () => {
     const { page } = session;
     await page.getByRole("button", { name: TRIAL_BUTTON }).click();
-    await page.getByRole("heading", { name: "You're on the $4 / month · cancel anytime plan" }).waitFor();
+    await page.getByRole("heading", { name: "You're on the $4 / month plan" }).waitFor();
     const billing = await apiJson<{ subscription: string; trialEndsAt: string }>({ page, path: "/api/billing" });
 
     expect(await page.getByText(/Your free trial ends on/).isVisible()).toBe(true);

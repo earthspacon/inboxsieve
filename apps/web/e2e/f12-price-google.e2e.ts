@@ -2,7 +2,15 @@ import type { Browser, Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { E2E_URL } from "./config";
-import { addSeatByHand, createTrialAccount, launchBrowser, MOBILE, openSession, signInWithUi, uniqueEmail } from "./helpers";
+import {
+  addSeatByHand,
+  createTrialAccount,
+  launchBrowser,
+  MOBILE,
+  openSession,
+  signInWithUi,
+  uniqueEmail,
+} from "./helpers";
 import { startWorker, type RunningWorker } from "./worker";
 
 const GOOGLE_PORT = 8791;
@@ -74,8 +82,23 @@ describe("F12 prices, Google sign-in, 404, invited teammate", () => {
     const text = await page.locator("main").innerText();
 
     expect(text).toContain("$4 / month");
-    expect(text).not.toMatch(/\$5\b|\$15\b|\$50\b|\$150\b|Solo|Agency|Yearly/);
-    expect(await page.getByRole("button", { name: /Yearly|Monthly/ }).count()).toBe(0);
+    expect(text).not.toContain("$40 / year");
+    expect(text).not.toMatch(/\$5\b|\$15\b|\$50\b|\$150\b|Solo|Agency/);
+  });
+
+  it("F12: the Yearly switch shows $40 a year with 2 months free, and Monthly brings $4 back", async () => {
+    const { page } = await openSession({ browser });
+    await page.goto("/pricing");
+    await page.getByRole("button", { name: "Yearly" }).click();
+    const yearly = await page.locator("main").innerText();
+    await page.getByRole("button", { name: "Monthly" }).click();
+    const monthly = await page.locator("main").innerText();
+
+    expect(yearly).toContain("$40 / year");
+    expect(yearly).toContain("2 months free");
+    expect(yearly).not.toContain("$4 / month");
+    expect(monthly).toContain("$4 / month");
+    expect(monthly).not.toContain("$40 / year");
   });
 
   it("F12: an unknown public path gets a real 404 page with noindex, known pages stay 200", async () => {
