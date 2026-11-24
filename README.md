@@ -2,6 +2,8 @@
 
 InboxSieve scores every inquiry, filters out spam, drafts a reply and pings you when a lead is hot. Forward your contact-form email to it or point a form webhook at it. It's the hosted version of the AI Lead Agent demo.
 
+Live at [inboxsieve.com](https://inboxsieve.com). TypeScript end to end: a React + Effector + Tailwind SPA, a Cloudflare Worker on D1, Groq for the lead analysis, Brevo for mail and Paddle for billing. Tested with Vitest (the worker tests run inside workerd) and Playwright flows against a real build.
+
 ## Layout
 
 | Path                | What                                                                                                                                                                        |
@@ -88,3 +90,7 @@ Secrets are set with `wrangler secret put`, or in `.dev.vars` locally:
 
 - Logs carry no message bodies or addresses: a failed request logs only the error class.
 - Raw messages are kept for "View original", capped at 1 MB per lead. The 90-day purge comes with the data slice.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
