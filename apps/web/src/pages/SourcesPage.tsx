@@ -133,7 +133,12 @@ const SourceList = ({ brandId }: { brandId: string }) => {
     <div className="grid gap-3 lg:grid-cols-2">
       {sources.map((source) => {
         return (
-          <div key={source.id} id={`source-${source.id}`} data-source-kind={source.kind} className="scroll-mt-4">
+          <div
+            key={source.id}
+            id={`source-${source.id}`}
+            data-source-kind={source.kind}
+            className="min-w-0 scroll-mt-4"
+          >
             <SourceCard source={source} />
           </div>
         );

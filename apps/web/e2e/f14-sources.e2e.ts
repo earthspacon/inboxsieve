@@ -56,6 +56,17 @@ describe("Adding sources shows what happened, and the plan limit up front", () =
     expect(await isInViewport(page, card)).toBe(true);
   });
 
+  it("Sources: two cards with a long webhook URL still fit the phone width", async () => {
+    const { page } = trial;
+    const overflow = await page.evaluate(() => {
+      return document.documentElement.scrollWidth - window.innerWidth;
+    });
+    const card = await page.locator("[data-source-kind=webhook] section").boundingBox();
+
+    expect(overflow).toBeLessThanOrEqual(0);
+    expect((card?.x ?? 0) + (card?.width ?? Infinity)).toBeLessThanOrEqual(MOBILE.width);
+  });
+
   it("Sources: at the limit both add buttons are off and the page says why, with no error toast", async () => {
     const { page } = trial;
     await page.getByText("2 of 2 sources used").waitFor();
