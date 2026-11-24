@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Logo } from "../app/AppShell";
 import { ThemeToggle } from "../shared/ThemeToggle";
 import { BUTTON_PRIMARY, PHONE_TAP, TAP_TARGET } from "../shared/ui";
-import { CONTACT_EMAIL, FOOTER_LINKS, SELLER_LEGAL_NAME, START_CTA } from "./config";
+import { CONTACT_EMAIL, FOOTER_LINKS, SELLER_LEGAL_NAME, START_CTA, STUDIO_URL } from "./config";
 import { findSeoPage } from "./seo";
 import { SessionLink } from "./SessionLink";
 
@@ -47,7 +47,14 @@ export const SiteLayout = ({ children }: { children: ReactNode }) => {
       <footer className="border-t border-slate-200 bg-surface">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500">
           <span>
-            © {SELLER_LEGAL_NAME} · {CONTACT_EMAIL}
+            ©{" "}
+            <a
+              href={STUDIO_URL}
+              className={`${TAP_TARGET} ${PHONE_TAP} underline underline-offset-2 hover:text-slate-900`}
+            >
+              {SELLER_LEGAL_NAME}
+            </a>{" "}
+            · {CONTACT_EMAIL}
           </span>
           <nav className="flex flex-wrap items-center gap-x-4">
             {FOOTER_LINKS.map((link) => {

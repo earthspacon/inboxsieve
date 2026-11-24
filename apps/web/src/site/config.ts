@@ -2,6 +2,7 @@ import { formatPrice, PLAN_PRICES, SPAM_CHECKER_PAGE_PATH } from "@inboxsieve/co
 
 // Every public page reads the seller name and contact from here.
 export const SELLER_LEGAL_NAME = "Spaceson Labs";
+export const STUDIO_URL = "https://spacesonlabs.com";
 export const CONTACT_EMAIL = "support@inboxsieve.com";
 
 export const LEGAL_UPDATED = "November 20, 2026";
