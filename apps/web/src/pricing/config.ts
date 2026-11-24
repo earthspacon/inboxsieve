@@ -97,7 +97,7 @@ export const PLAN_CARDS: PlanCard[] = [
     name: "InboxSieve",
     bullets: [
       `${PLAN_LIMITS.solo.leadsPerMonth} leads a month, each with a drafted reply`,
-      `${PLAN_LIMITS.solo.sources} inboxes or forms connected`,
+      "Unlimited inboxes and forms connected",
       "Hot-lead alerts by email and Slack",
       "14-day refund, no questions asked",
     ],

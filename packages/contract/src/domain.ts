@@ -12,7 +12,8 @@ export type SubscriptionStatus =
 
 export const PLAN_LIMITS: Record<
   Plan,
-  { brands: number; sources: number; leadsPerMonth: number; seats: number; slackAlerts: boolean }
+  // sources: null = no limit. A source costs nothing to run; the AI cost is per lead.
+  { brands: number; sources: number | null; leadsPerMonth: number; seats: number; slackAlerts: boolean }
 > = {
   free: {
     brands: 1,
@@ -23,7 +24,7 @@ export const PLAN_LIMITS: Record<
   },
   solo: {
     brands: 1,
-    sources: 2,
+    sources: null,
     leadsPerMonth: 500,
     seats: 1,
     slackAlerts: true,

@@ -31,6 +31,7 @@ const CREATED_TOAST: Record<SourceKind, string> = {
 };
 
 // Brands are capped at 1 on every plan, so the brand's sources are the account's sources.
+// null = no limit, or the plan is not loaded yet.
 export const $sourceLimit = $plan.map((plan) => {
   return plan ? PLAN_LIMITS[plan].sources : null;
 });

@@ -189,8 +189,8 @@ const TrialOffer = () => {
       <div>
         <h2 className="text-lg font-semibold">Try the paid plan free</h2>
         <p className="text-sm text-slate-600">
-          {PLAN_LIMITS.solo.sources} sources, {PLAN_LIMITS.solo.leadsPerMonth} leads a month and Slack alerts. No card
-          needed, one trial per workspace.
+          Unlimited sources, {PLAN_LIMITS.solo.leadsPerMonth} leads a month and Slack alerts. No card needed, one trial
+          per workspace.
         </p>
       </div>
       <button type="button" disabled={isStarting} onClick={() => trialStartClicked()} className={BUTTON_PRIMARY}>

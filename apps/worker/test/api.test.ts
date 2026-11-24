@@ -325,14 +325,19 @@ describe("API: sources", () => {
     expect(list).toEqual([]);
   });
 
-  it("the paid plan stops at 2 sources with plan_limit", async () => {
+  it("the paid plan has no source limit", async () => {
     const { api, brandId } = await setUp();
 
-    await createSource({ api, brandId, kind: "email" });
-    await createSource({ api, brandId, kind: "webhook" });
-    const third = await createSource({ api, brandId, kind: "webhook" });
+    const created = [];
+    for (const kind of ["email", "webhook", "webhook", "email", "webhook"] as const) {
+      created.push(await createSource({ api, brandId, kind }));
+    }
 
-    expect(third.response.status).toBe(403);
+    expect(
+      created.map(({ response }) => {
+        return response.status;
+      }),
+    ).toEqual([201, 201, 201, 201, 201]);
   });
 });
 

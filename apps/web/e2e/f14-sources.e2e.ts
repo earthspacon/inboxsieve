@@ -37,10 +37,10 @@ describe("Adding sources shows what happened, and the plan limit up front", () =
     await browser.close();
   });
 
-  it("Sources: the page says how many sources the plan allows", async () => {
+  it("Sources: the paid plan says sources are unlimited", async () => {
     const { page } = trial;
     await page.goto("/app/sources");
-    await page.getByText("1 of 2 sources used").waitFor();
+    await page.getByText("1 source connected, no limit on your plan.").waitFor();
 
     expect(await addButton(page, WEBHOOK).isEnabled()).toBe(true);
   });
@@ -67,13 +67,14 @@ describe("Adding sources shows what happened, and the plan limit up front", () =
     expect((card?.x ?? 0) + (card?.width ?? Infinity)).toBeLessThanOrEqual(MOBILE.width);
   });
 
-  it("Sources: at the limit both add buttons are off and the page says why, with no error toast", async () => {
+  it("Sources: on the paid plan a third source can still be added", async () => {
     const { page } = trial;
-    await page.getByText("2 of 2 sources used").waitFor();
+    await page.getByText("2 sources connected, no limit on your plan.").waitFor();
+    await addButton(page, FORWARD_EMAIL).click();
+    await page.getByText("3 sources connected, no limit on your plan.").waitFor();
 
-    expect(await addButton(page, WEBHOOK).isDisabled()).toBe(true);
-    expect(await addButton(page, FORWARD_EMAIL).isDisabled()).toBe(true);
-    expect(await page.getByText("Remove one to add another.").isVisible()).toBe(true);
+    expect(await addButton(page, WEBHOOK).isEnabled()).toBe(true);
+    expect(await addButton(page, FORWARD_EMAIL).isEnabled()).toBe(true);
     expect(await page.getByText("no room for another source").count()).toBe(0);
   });
 
@@ -85,7 +86,7 @@ describe("Adding sources shows what happened, and the plan limit up front", () =
       await addButton(page, FORWARD_EMAIL).click();
     }
     await page.getByText("1 of 1 sources used").waitFor();
-    const upgrade = page.getByRole("link", { name: "Get 2 sources" });
+    const upgrade = page.getByRole("link", { name: "Get unlimited sources" });
 
     expect(await upgrade.getAttribute("href")).toBe("/app/billing");
     expect(await addButton(page, WEBHOOK).isDisabled()).toBe(true);

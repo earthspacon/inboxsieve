@@ -1,4 +1,4 @@
-import { PLAN_LIMITS, type SourceKind } from "@inboxsieve/contract";
+import type { SourceKind } from "@inboxsieve/contract";
 import { useGate, useUnit } from "effector-react";
 import { Loader2, Mail, Webhook, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -88,23 +88,28 @@ const PlanUsage = () => {
     status: sourcesRemote.$status,
   });
 
-  if (limit === null || status !== "ready") {
+  if (!plan || status !== "ready") {
     return null;
+  }
+  if (limit === null) {
+    return (
+      <p className="text-sm text-slate-500">
+        {used} {used === 1 ? "source" : "sources"} connected, no limit on your plan.
+      </p>
+    );
   }
   return (
     <p className="text-sm text-slate-500">
-      {used} of {limit} sources used. {isAtLimit && <LimitHint isFree={plan === "free"} />}
+      {used} of {limit} sources used. {isAtLimit && <LimitHint />}
     </p>
   );
 };
 
-const LimitHint = ({ isFree }: { isFree: boolean }) => {
-  if (!isFree) {
-    return <span>Remove one to add another.</span>;
-  }
+// Only Free has a source limit; the paid plan has none.
+const LimitHint = () => {
   return (
     <Link to="/app/billing" className="font-semibold text-brand-ink underline">
-      Get {PLAN_LIMITS.solo.sources} sources
+      Get unlimited sources
     </Link>
   );
 };

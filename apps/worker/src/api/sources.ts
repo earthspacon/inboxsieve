@@ -45,8 +45,11 @@ export const sourceRoutes: Route<ApiContext>[] = [
     if (!isSourceKind(kind)) {
       throw new HttpError(400, "invalid_field", '"kind" must be "email" or "webhook"');
     }
+    const sourceLimit = PLAN_LIMITS[account.plan].sources;
+
     if (
-      (await countAccountSources({ db: deps.db, accountId: account.accountId })) >= PLAN_LIMITS[account.plan].sources
+      sourceLimit !== null &&
+      (await countAccountSources({ db: deps.db, accountId: account.accountId })) >= sourceLimit
     ) {
       throw new HttpError(403, "plan_limit", "Your plan has no room for another source");
     }
