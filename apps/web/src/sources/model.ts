@@ -1,7 +1,8 @@
-import type { SourceDto, SourceKind } from "@inboxsieve/contract";
-import { createEffect, createEvent, sample } from "effector";
+import { PLAN_LIMITS, type SourceDto, type SourceKind } from "@inboxsieve/contract";
+import { combine, createEffect, createEvent, createStore, sample } from "effector";
 import { createGate } from "effector-react";
 
+import { $plan } from "../session/model";
 import { apiCommand, apiRequest } from "../shared/api";
 import { createRemote } from "../shared/remote";
 import { toastShown } from "../shared/toast-model";
@@ -23,6 +24,25 @@ export const sourcesRemote = createRemote({
   },
   initial: [],
 });
+
+const CREATED_TOAST: Record<SourceKind, string> = {
+  email: "Forwarding address added",
+  webhook: "Webhook added",
+};
+
+// Brands are capped at 1 on every plan, so the brand's sources are the account's sources.
+export const $sourceLimit = $plan.map((plan) => {
+  return plan ? PLAN_LIMITS[plan].sources : null;
+});
+
+export const $sourceCount = sourcesRemote.$data.map((sources) => sources.length);
+
+export const $isAtSourceLimit = combine($sourceCount, $sourceLimit, (count, limit) => {
+  return limit !== null && count >= limit;
+});
+
+export const $creatingKind = createStore<SourceKind | null>(null);
+const $createdSourceId = createStore<string | null>(null);
 
 export const createSourceFx = createEffect(({ brandId, kind }: BrandParams & { kind: SourceKind }) => {
   return apiRequest<SourceDto>({
@@ -61,6 +81,13 @@ const copyFx = createEffect((text: string) => {
   return navigator.clipboard.writeText(text);
 });
 
+// A new card lands at the end of the list, below the fold on a phone: bring it into view.
+const scrollToSourceFx = createEffect((sourceId: string) => {
+  requestAnimationFrame(() => {
+    document.getElementById(`source-${sourceId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+
 // #region load
 sample({
   clock: [
@@ -88,6 +115,40 @@ sample({
     };
   },
   target: createSourceFx,
+});
+
+sample({
+  clock: sourceCreateClicked,
+  target: $creatingKind,
+});
+
+sample({
+  clock: createSourceFx.finally,
+  target: $creatingKind.reinit,
+});
+
+sample({
+  clock: createSourceFx.doneData,
+  fn: (source) => source.id,
+  target: $createdSourceId,
+});
+
+sample({
+  clock: createSourceFx.doneData,
+  fn: (source) => {
+    return {
+      text: CREATED_TOAST[source.kind],
+      tone: "success" as const,
+    };
+  },
+  target: toastShown,
+});
+
+sample({
+  clock: sourcesRemote.fx.done,
+  source: $createdSourceId,
+  filter: Boolean,
+  target: [scrollToSourceFx, $createdSourceId.reinit],
 });
 
 sample({
