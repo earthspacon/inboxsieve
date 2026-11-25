@@ -3,7 +3,7 @@ import { admitLead } from "../leads/pipeline";
 import { findSourceByToken, updateSourceState } from "../repo";
 import { pickLeadFields, type FieldPair } from "./fields";
 
-export const MAX_WEBHOOK_BYTES = 1024 * 1024;
+export const MAX_WEBHOOK_BYTES = 128 * 1024;
 
 const WEBHOOK_SUBJECT = "Website form submission";
 const INVALID_PAYLOAD_ERROR = "Last webhook payload could not be parsed";
@@ -35,9 +35,12 @@ export async function handleWebhook({
     return json({ error: "gone", message: "This webhook is disabled" }, 410);
   }
 
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_WEBHOOK_BYTES) {
+    return tooLarge();
+  }
   const raw = new TextDecoder().decode(await request.arrayBuffer());
   if (raw.length > MAX_WEBHOOK_BYTES) {
-    return json({ error: "too_large", message: "Payload is larger than 1 MiB" }, 413);
+    return tooLarge();
   }
 
   const sourceRef = {
@@ -204,4 +207,8 @@ function stringifyValue(value: unknown): string {
     return stringifyValue(value.label ?? value.labels ?? value.text ?? Object.values(value));
   }
   return String(value);
+}
+
+function tooLarge() {
+  return json({ error: "too_large", message: "Payload is larger than 128 KB" }, 413);
 }

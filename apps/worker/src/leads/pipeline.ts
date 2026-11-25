@@ -11,7 +11,8 @@ export type AdmitResult = {
   duplicate: boolean;
 };
 
-const RAW_MAX_CHARS = 1_000_000;
+// "View original" needs the start of a message, not all of it; a public webhook must not be able to fill the database.
+export const RAW_MAX_CHARS = 64 * 1024;
 
 export async function admitLead({
   db,

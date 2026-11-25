@@ -4,13 +4,31 @@ import { describe, expect, it } from "vitest";
 
 import { API_ROUTES } from "../src/app";
 import { createAuth } from "../src/auth";
-import { admitLead } from "../src/leads/pipeline";
+import { handleWebhook, MAX_WEBHOOK_BYTES } from "../src/ingest/webhook";
+import { admitLead, RAW_MAX_CHARS } from "../src/leads/pipeline";
 import { runQueues } from "../src/leads/jobs";
 import { createLogMailer } from "../src/mailer";
 import { consumeRateLimit } from "../src/repo/shield";
 import { MAGIC_LINK_LIMITS } from "../src/shield/auth-guard";
-import { addSeatByHand, buildLeadInput, buildTestDeps, countRows, createMockAnalyzer, db, seedSource, uniqueEmail } from "./helpers";
-import { BASE, followMagicLink, readMagicLink, readSessionCookie, requestMagicLink, signIn, signInTrial } from "./session";
+import {
+  addSeatByHand,
+  buildLeadInput,
+  buildTestDeps,
+  countRows,
+  createMockAnalyzer,
+  db,
+  seedSource,
+  uniqueEmail,
+} from "./helpers";
+import {
+  BASE,
+  followMagicLink,
+  readMagicLink,
+  readSessionCookie,
+  requestMagicLink,
+  signIn,
+  signInTrial,
+} from "./session";
 import { siteverifyRequests } from "./turnstile";
 
 const ONE_DAY_MS = 24 * 60 * 60_000;
@@ -211,6 +229,62 @@ describe("Abuse shield: webhook ingest", () => {
     expect(statuses.slice(0, 120).every((status) => status === 202)).toBe(true);
     expect(statuses.at(-1)).toBe(429);
   }, 120_000);
+});
+
+describe("Abuse shield: oversized payloads", () => {
+  it("Shield: a 1 MB raw message is stored cut to 64 KB", async () => {
+    const owner = await signInTrial({ email: uniqueEmail("raw-cap") });
+    const source = await seedSource({ brandId: owner.brandId, kind: "webhook" });
+    const { leadId } = await admitLead({
+      db,
+      brandId: owner.brandId,
+      sourceId: source.id,
+      dedupeKey: null,
+      parsed: { ok: true, lead: buildLeadInput() },
+      raw: "x".repeat(1_000_000),
+      authResults: null,
+      now: new Date(),
+    });
+
+    const stored = await countRows({ sql: "SELECT LENGTH(raw) AS n FROM leads WHERE id = ?", binds: [leadId] });
+    expect(RAW_MAX_CHARS).toBe(64 * 1024);
+    expect(stored).toBe(RAW_MAX_CHARS);
+  });
+
+  it("Shield: the webhook answers 413 from Content-Length without reading the body", async () => {
+    const owner = await signInTrial({ email: uniqueEmail("hook-length") });
+    const source = await seedSource({ brandId: owner.brandId, kind: "webhook" });
+    let bodyRead = false;
+    const request = {
+      headers: new Headers({ "content-type": "application/json", "content-length": String(200 * 1024) }),
+      arrayBuffer: async () => {
+        bodyRead = true;
+        return new ArrayBuffer(0);
+      },
+    } as unknown as Request;
+
+    const response = await handleWebhook({ db, request, token: source.token ?? "", now: new Date() });
+
+    expect(MAX_WEBHOOK_BYTES).toBe(128 * 1024);
+    expect(response.status).toBe(413);
+    expect(bodyRead).toBe(false);
+  });
+
+  it("Shield: a webhook body over 128 KB without Content-Length still gets 413 and no lead", async () => {
+    const owner = await signInTrial({ email: uniqueEmail("hook-chunked") });
+    const source = await seedSource({ brandId: owner.brandId, kind: "webhook" });
+    const body = new Blob([JSON.stringify({ email: "lead@buyer.example", message: "y".repeat(200 * 1024) })]).stream();
+
+    const response = await SELF.fetch(`${BASE}/h/${source.token}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+      duplex: "half",
+    } as RequestInit);
+
+    expect(response.status).toBe(413);
+    expect(await countRows({ sql: "SELECT COUNT(*) AS n FROM leads WHERE source_id = ?", binds: [source.id] })).toBe(0);
+  });
 });
 
 describe("Abuse shield: daily LLM budget", () => {

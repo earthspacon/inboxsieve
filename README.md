@@ -89,7 +89,7 @@ Secrets are set with `wrangler secret put`, or in `.dev.vars` locally:
 ## Privacy
 
 - Logs carry no message bodies or addresses: a failed request logs only the error class.
-- Raw messages are kept for "View original", capped at 1 MB per lead. The 90-day purge comes with the data slice.
+- Raw messages are kept for "View original", capped at 64 KB per lead. The 90-day purge comes with the data slice.
 
 ## License
 
